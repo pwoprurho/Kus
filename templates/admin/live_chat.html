@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+
+{% block title %}Live Command Center{% endblock %}
+
+{% block content %}
+<style>
+    /* --- 1. GLOBAL OVERRIDES (Matches Client Dashboard) --- */
+    /* Hide public nav/footer to reveal the 3D orbit */
+    header, footer, #chat-widget-container { display: none !important; }
+    
+    body {
+        background-color: #000; /* Dark base for orbit contrast */
+        overflow: hidden; /* Lock scrollbar for app-like feel */
+        height: 100vh;
+        width: 100vw;
+    }
+
+    /* --- 2. GLASS LAYOUT WRAPPER --- */
+    .terminal-wrapper {
+        position: relative;
+        z-index: 10; /* Sits above the 3D orbit */
+        display: grid;
+        grid-template-columns: 300px 1fr; /* Sidebar | Main Chat */
+        height: 100vh;
+        width: 100vw;
+        color: #e0e0e0;
+        font-family: 'Inter', monospace;
+    }
+
+    /* --- 3. SIDEBAR (Client List) --- */
+    .terminal-sidebar {
+        background: rgba(10, 10, 10, 0.75); /* Transparent! */
+        backdrop-filter: blur(12px);         /* Blurs the orbit behind it */
+        -webkit-backdrop-filter: blur(12px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .sidebar-header {
+        padding: 25px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .client-scroll-area {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    /* Client Item Styling */
+    .client-item {
+        padding: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        cursor: pointer;
+        transition: background 0.2s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .client-item:hover { background: rgba(255, 255, 255, 0.05); }
+    .client-item.active { 
+        background: rgba(0, 114, 255, 0.15); 
+        border-left: 3px solid #0072ff; 
+    }
+
+    .client-info h4 { margin: 0; color: #fff; font-size: 0.9rem; font-weight: 600; }
+    .client-info span { font-size: 0.8rem; color: #888; }
+    .status-dot { width: 8px; height: 8px; background: #444; border-radius: 50%; box-shadow: 0 0 5px #000; }
+    .status-dot.online { background: #00ff88; box-shadow: 0 0 8px #00ff88; }
+
+    /* Footer Buttons */
+    .sidebar-footer {
+        padding: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.3);
+    }
+    .btn-dashboard {
+        display: block; width: 100%; text-align: center;
+        padding: 10px; border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ccc; border-radius: 6px; text-decoration: none;
+        transition: 0.2s; font-size: 0.85rem;
+    }
+    .btn-dashboard:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+    /* --- 4. MAIN CHAT AREA --- */
+    .terminal-main {
+        display: flex;
+        flex-direction: column;
+        /* Subtle gradient to let orbit shine through */
+        background: radial-gradient(circle at center, rgba(17,17,17,0.8) 0%, rgba(0,0,0,0.9) 100%);
+        position: relative;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .terminal-header {
+        padding: 20px 40px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(10, 10, 10, 0.6);
+        display: flex; justify-content: space-between; align-items: center;
+        flex-shrink: 0;
+    }
+    .terminal-title { font-family: 'Garamond', serif; font-size: 1.6rem; color: #fff; }
+    .terminal-subtitle { font-size: 0.9rem; color: #0072ff; display: flex; gap: 8px; align-items: center; }
+
+    /* Messages Area */
+    #messages-area {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        scroll-behavior: smooth;
+    }
+
+    /* Context Panel (Audit Info) */
+    .context-panel {
+        background: rgba(0, 114, 255, 0.1);
+        border: 1px dashed rgba(0, 114, 255, 0.4);
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(5px);
+    }
+    .context-panel h4 { margin: 0 0 5px 0; color: #0072ff; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+    .context-panel p { margin: 0; font-size: 0.9rem; color: #ddd; font-style: italic; }
+
+    /* Chat Bubbles */
+    .msg-bubble {
+        max-width: 65%;
+        padding: 15px 20px;
+        line-height: 1.6;
+        font-size: 1rem;
+        position: relative;
+        border-radius: 12px;
+        word-wrap: break-word;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        /* Animation: Only runs once when appended */
+        animation: fadeUp 0.3s forwards;
+    }
+
+    .msg-client {
+        align-self: flex-start;
+        background: rgba(40, 40, 40, 0.8); /* Semi-transparent dark */
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #e0e0e0;
+        border-top-left-radius: 2px;
+    }
+
+    .msg-admin {
+        align-self: flex-end;
+        background: rgba(0, 114, 255, 0.9); /* Semi-transparent blue */
+        color: white;
+        border-top-right-radius: 2px;
+        box-shadow: 0 0 20px rgba(0, 114, 255, 0.2);
+    }
+
+    /* Attachments */
+    .attachment-view { margin-top: 10px; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); background: #000; }
+    .attachment-view img { max-width: 100%; max-height: 300px; display: block; }
+    .file-download {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: rgba(0,0,0,0.4); padding: 10px 15px;
+        border-radius: 6px; color: #fff; text-decoration: none;
+        margin-top: 8px; border: 1px solid rgba(255,255,255,0.2);
+        transition: 0.2s;
+    }
+    .file-download:hover { background: rgba(255,255,255,0.1); border-color: #fff; }
+
+    /* Input Area */
+    .input-wrapper {
+        padding: 25px 40px;
+        background: rgba(10, 10, 10, 0.9);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .chat-input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 16px;
+        color: white;
+        font-size: 1rem;
+        border-radius: 8px;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+    .chat-input:focus { border-color: #0072ff; box-shadow: 0 0 15px rgba(0, 114, 255, 0.1); }
+
+    .icon-btn {
+        width: 50px; height: 50px;
+        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        color: #ccc; border-radius: 8px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; transition: 0.2s;
+    }
+    .icon-btn:hover { border-color: #0072ff; color: #0072ff; background: rgba(0,114,255,0.1); }
+    .icon-btn.has-file { border-color: #00ff88; color: #00ff88; background: rgba(0,255,136,0.1); }
+
+    .send-btn {
+        width: 50px; height: 50px;
+        background: #0072ff; color: white;
+        border: none; border-radius: 8px; cursor: pointer;
+        font-size: 1.2rem; transition: 0.2s;
+    }
+    .send-btn:hover { background: #005bb5; transform: scale(1.05); }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .empty-placeholder {
+        height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666;
+    }
+</style>
+
+<div class="terminal-wrapper">
+    <aside class="terminal-sidebar">
+        <div class="sidebar-header">
+            <h2 style="font-size: 1.2rem; color: #fff; margin:0;"><i class="fas fa-satellite-dish"></i> ACTIVE UPLINKS</h2>
+        </div>
+        
+        <div class="client-scroll-area">
+            {% for client in clients %}
+            <div class="client-item" onclick="selectClient('{{ client.id }}', '{{ client.full_name or client.email }}', this)">
+                <div class="client-info">
+                    <h4>{{ client.full_name or "Unknown Entity" }}</h4>
+                    <span>{{ client.email }}</span>
+                </div>
+                <div class="status-dot online"></div>
+            </div>
+            {% else %}
+            <div style="padding: 30px; text-align: center; color: #666;">No active sessions.</div>
+            {% endfor %}
+        </div>
+
+        <div class="sidebar-footer">
+            <a href="{{ url_for('admin.dashboard') }}" class="btn-dashboard"><i class="fas fa-arrow-left"></i> Return to Command Center</a>
+        </div>
+    </aside>
+
+    <main class="terminal-main">
+        <header class="terminal-header">
+            <div class="terminal-title" id="chat-title">Select a secure channel...</div>
+            <div class="terminal-subtitle"><i class="fas fa-shield-alt"></i> AES-256 ENCRYPTED</div>
+        </header>
+
+        <div id="messages-area">
+            <div class="empty-placeholder">
+                <i class="fas fa-lock" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.5;"></i>
+                <p>Awaiting Admin Selection</p>
+            </div>
+        </div>
+
+        <div class="input-wrapper" id="input-area" style="display:none;">
+            <input type="file" id="admin-file" hidden>
+            
+            <button class="icon-btn" id="btn-attach" title="Attach File"><i class="fas fa-paperclip"></i></button>
+            
+            <input type="text" id="admin-input" class="chat-input" placeholder="Type your directive here..." autocomplete="off">
+            
+            <button onclick="sendAdminMessage()" class="send-btn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </main>
+</div>
+
+<script>
+    let currentClientId = null;
+    let pollingInterval = null;
+    // CRITICAL: Set to track rendered IDs to prevent flashing/re-rendering
+    let knownMessageIds = new Set();
+    
+    const fileInput = document.getElementById('admin-file');
+    const attachBtn = document.getElementById('btn-attach');
+    const textInput = document.getElementById('admin-input');
+    const messagesArea = document.getElementById('messages-area');
+
+    // 1. File Selection Logic
+    attachBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            attachBtn.classList.add('has-file');
+            textInput.placeholder = `File Ready: ${fileInput.files[0].name} (Press Send)`;
+            textInput.focus();
+        } else {
+            attachBtn.classList.remove('has-file');
+            textInput.placeholder = "Type your directive here...";
+        }
+    });
+
+    // 2. Client Selection
+    function selectClient(clientId, name, element) {
+        currentClientId = clientId;
+        document.getElementById('chat-title').innerHTML = `<i class="fas fa-user-shield"></i> ${name}`;
+        document.getElementById('input-area').style.display = 'flex';
+        
+        // Highlight Active Item
+        document.querySelectorAll('.client-item').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+        
+        // Clear View for New Client
+        messagesArea.innerHTML = '';
+        knownMessageIds.clear();
+
+        // Fetch immediately then poll
+        fetchMessages();
+        if (pollingInterval) clearInterval(pollingInterval);
+        pollingInterval = setInterval(fetchMessages, 3000);
+    }
+
+    // 3. Sync Logic (APPEND ONLY - FIXES FLASHING)
+    async function fetchMessages() {
+        if (!currentClientId) return;
+        try {
+            const res = await fetch(`/admin/api/chat/${currentClientId}`);
+            const data = await res.json();
+            renderMessages(data.history, data.context);
+        } catch (e) {
+            console.error("Sync Error:", e);
+        }
+    }
+
+    function renderMessages(messages, context) {
+        // Remove empty placeholder if messages arrive
+        if (messages.length > 0) {
+            const empty = document.querySelector('.empty-placeholder');
+            if (empty) empty.remove();
+        }
+
+        // Render Context (Once)
+        if (context && context.original_challenge !== 'N/A' && !document.querySelector('.context-panel')) {
+            const ctx = document.createElement('div');
+            ctx.className = 'context-panel';
+            ctx.innerHTML = `<h4>Strategic Objective (Filed: ${context.date_filed})</h4><p>"${context.original_challenge}"</p>`;
+            messagesArea.prepend(ctx);
+        }
+
+        let hasNew = false;
+        
+        messages.forEach(msg => {
+            // THE FIX: Check ID before appending
+            if (!knownMessageIds.has(msg.id)) {
+                appendMessage(msg);
+                knownMessageIds.add(msg.id);
+                hasNew = true;
+            }
+        });
+
+        // Scroll ONLY if new messages were added
+        if (hasNew) {
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+    }
+
+    function appendMessage(msg) {
+        const div = document.createElement('div');
+        div.className = `msg-bubble ${msg.sender_type === 'admin' ? 'msg-admin' : 'msg-client'}`;
+        
+        let content = msg.message || "";
+        
+        // Handle Attachments
+        if (msg.signed_attachment) {
+            if (msg.attachment_type === 'image') {
+                content += `<div class="attachment-view"><img src="${msg.signed_attachment}" alt="Secure Attachment" onload="this.parentElement.scrollIntoView({behavior:'smooth'})"></div>`;
+            } else {
+                content += `<a href="${msg.signed_attachment}" target="_blank" class="file-download"><i class="fas fa-file-download"></i> Download Secure File</a>`;
+            }
+        }
+        
+        div.innerHTML = content;
+        messagesArea.appendChild(div);
+    }
+
+    // 4. Send Message Logic
+    async function sendAdminMessage() {
+        const text = textInput.value.trim();
+        const file = fileInput.files[0];
+        
+        if ((!text && !file) || !currentClientId) return;
+
+        // Optimistic Append (Temp ID)
+        const tempMsg = {
+            id: 'temp-' + Date.now(),
+            sender_type: 'admin',
+            message: text || (file ? `[Sending ${file.name}...]` : ''),
+            signed_attachment: null
+        };
+        appendMessage(tempMsg);
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+
+        try {
+            const formData = new FormData();
+            formData.append('client_id', currentClientId);
+            formData.append('message', text);
+            if (file) formData.append('file', file);
+
+            await fetch('/admin/api/chat/send', {
+                method: 'POST',
+                body: formData
+            });
+
+            // Cleanup Inputs
+            textInput.value = '';
+            fileInput.value = '';
+            attachBtn.classList.remove('has-file');
+            textInput.placeholder = "Type your directive here...";
+            
+            // Force Sync to get real ID
+            setTimeout(fetchMessages, 500); 
+        } catch (e) {
+            alert("Transmission Failed");
+        }
+    }
+
+    textInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendAdminMessage();
+    });
+</script>
+{% endblock %}

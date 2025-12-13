@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Intelligence Briefings{% endblock %}
+
+{% block content %}
+<style>
+    .blog-header {
+        text-align: center;
+        margin-top: 120px;
+        margin-bottom: 60px;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .blog-header h1 {
+        font-size: 3rem;
+        background: -webkit-linear-gradient(#fff, #888);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 15px;
+    }
+    
+    .blog-header p {
+        color: #0072ff;
+        font-family: 'Inter', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 0.9rem;
+    }
+
+    .blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 30px;
+        max-width: 1200px;
+        margin: 0 auto 100px;
+        padding: 0 20px;
+        position: relative;
+        z-index: 10;
+    }
+
+    .blog-card {
+        background: rgba(15, 15, 15, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: transform 0.3s, border-color 0.3s;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .blog-card:hover {
+        transform: translateY(-5px);
+        border-color: #0072ff;
+        box-shadow: 0 10px 30px rgba(0, 114, 255, 0.15);
+    }
+
+    .card-body {
+        padding: 30px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-date {
+        color: #666;
+        font-size: 0.8rem;
+        margin-bottom: 15px;
+        font-family: 'Inter', monospace;
+    }
+
+    .card-title {
+        font-size: 1.4rem;
+        color: #fff;
+        margin-bottom: 15px;
+        line-height: 1.4;
+    }
+
+    .card-summary {
+        color: #aaa;
+        font-size: 0.95rem;
+        margin-bottom: 25px;
+        flex-grow: 1;
+        line-height: 1.6;
+    }
+
+    .btn-read {
+        align-self: flex-start;
+        color: #0072ff;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-bottom: 1px solid transparent;
+        transition: all 0.3s;
+    }
+
+    .btn-read:hover {
+        color: #fff;
+        border-bottom-color: #fff;
+    }
+</style>
+
+<div class="blog-header fade-in">
+    <h1>Engineering Certainty</h1>
+    <p>Strategic Intelligence & Technical Briefings</p>
+</div>
+
+<div class="blog-grid fade-in">
+    {% if posts %}
+        {% for post in posts %}
+        <div class="blog-card">
+            <div class="card-body">
+                <div class="card-date">{{ post.published_at.split('T')[0] if post.published_at else 'Draft' }}</div>
+                <h3 class="card-title">{{ post.title }}</h3>
+                <p class="card-summary">{{ post.summary }}</p>
+                <a href="{{ url_for('public.blog_post', post_id=post.id) }}" class="btn-read">Read Briefing &rarr;</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="grid-column: 1/-1; text-align: center; color: #666; padding: 50px;">
+            <h3>System Standby</h3>
+            <p>No intelligence briefings have been declassified yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | {% block title %}Kusmus AI{% endblock %}</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 0; }
+        
+        /* Header */
+        .admin-header { background-color: #0072ff; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .admin-header h1 { margin: 0; font-size: 1.5rem; font-family: 'Garamond', serif; }
+        .admin-nav a { color: white; text-decoration: none; margin-left: 15px; font-size: 0.9rem; }
+        .admin-nav a:hover { text-decoration: underline; }
+        
+        /* Container */
+        .container { max-width: 1200px; margin: 30px auto; padding: 20px; background-color: #1e1e1e; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        
+        /* Flash Messages */
+        .flash-msg { padding: 15px; margin-bottom: 20px; border-radius: 4px; color: #fff; }
+        .flash-success { background-color: #28a745; }
+        .flash-error { background-color: #dc3545; }
+        .flash-info { background-color: #17a2b8; }
+
+        /* Forms */
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #0072ff; font-weight: bold; }
+        .form-group input, .form-group textarea, .form-group select { 
+            width: 100%; padding: 12px; border: 1px solid #444; background-color: #2c2c2c; color: #fff; border-radius: 4px; box-sizing: border-box;
+        }
+        .form-group input:focus { border-color: #0072ff; outline: none; }
+
+        /* Buttons */
+        .btn-primary { background-color: #0072ff; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: background 0.3s; }
+        .btn-primary:hover { background-color: #005bb5; }
+        
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #333; }
+        th { color: #888; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
+        tr:hover td { background-color: #252525; }
+    </style>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="admin-header">
+        <h1>Kusmus AI Command Center</h1>
+        <div class="admin-nav">
+            {% if current_user.is_authenticated %}
+                <span>Officer: <strong>{{ current_user.full_name }}</strong></span>
+                <a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="{{ url_for('public.home') }}" target="_blank"><i class="fas fa-globe"></i> Live Site</a>
+                <a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="container">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-msg flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+</body>
+</html>

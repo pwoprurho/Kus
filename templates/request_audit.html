@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Initiate Strategic Audit | Kusmus AI{% endblock %}
+
+{% block content %}
+<style>
+    .audit-container {
+        max-width: 800px;
+        margin: 120px auto 80px;
+        padding: 0 20px;
+        position: relative;
+        z-index: 10;
+    }
+
+    .form-card {
+        background: rgba(10, 10, 10, 0.8);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 60px;
+        border-radius: 4px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+
+    .form-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .form-header h1 {
+        font-family: 'Garamond', serif;
+        font-size: 3rem;
+        background: -webkit-linear-gradient(#fff, #888);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 15px;
+    }
+
+    .form-header p {
+        font-family: 'Inter', sans-serif;
+        color: #888;
+        font-size: 1.1rem;
+    }
+
+    /* Form Elements */
+    .input-group {
+        margin-bottom: 30px;
+    }
+
+    .input-group label {
+        display: block;
+        color: #0072ff;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+
+    .input-group input, 
+    .input-group textarea {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid #333;
+        padding: 15px;
+        color: #fff;
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        border-radius: 2px;
+        transition: border-color 0.3s, background 0.3s;
+    }
+
+    .input-group input:focus, 
+    .input-group textarea:focus {
+        outline: none;
+        border-color: #0072ff;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .submit-btn {
+        width: 100%;
+        background: #0072ff;
+        color: #fff;
+        border: none;
+        padding: 18px;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-top: 10px;
+    }
+
+    .submit-btn:hover {
+        background: #005bb5;
+    }
+</style>
+
+<div class="audit-container fade-in">
+    <div class="form-card">
+        <div class="form-header">
+            <h1>Strategic Audit Request</h1>
+            <p>Engage Kusmus AI to evaluate your enterprise infrastructure.</p>
+        </div>
+
+        <form method="post">
+            <div class="input-group">
+                <label for="name">Entity / Representative Name</label>
+                <input type="text" id="name" name="name" required placeholder="e.g. Dangote Refinery PLC">
+            </div>
+
+            <div class="input-group">
+                <label for="email">Secure Contact Protocol (Email)</label>
+                <input type="email" id="email" name="email" required placeholder="director@company.com">
+            </div>
+
+            <div class="input-group">
+                <label for="message">Operational Challenge (Brief)</label>
+                <textarea id="message" name="message" rows="5" placeholder="Describe the friction points in your current workflow..."></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">Transmit Request</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

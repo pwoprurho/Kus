@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Our Team | Proof of Expertise{% endblock %}
+
+{% block content %}
+    <header class="page-header container fade-in">
+        <h2>The Proof of Expertise</h2>
+        <p>Our premium is justified by our people. Meet the enterprise-grade leaders driving your success.</p>
+    </header>
+
+    <section class="container">
+        <div class="team-grid">
+            
+            <div class="team-card fade-in">
+                <div class="team-photo-container">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Expert 1" class="team-photo">
+                </div>
+                <h3 class="team-name">Dr. [Name Required]</h3>
+                <p class="team-role">Lead Solutions Architect</p>
+                <p class="team-bio">
+                    Led the digital transformation of a major Nigerian bank, restructuring core infrastructure for multi-million Naira efficiency gains. Certified AWS & Azure Architect with a decade of high-stakes project delivery.
+                </p>
+                <a href="#" class="linkedin-btn"><i class="fab fa-linkedin"></i> View Credentials</a>
+            </div>
+
+            <div class="team-card fade-in" style="animation-delay: 0.2s;">
+                <div class="team-photo-container">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Expert 2" class="team-photo">
+                </div>
+                <h3 class="team-name">[Name Required]</h3>
+                <p class="team-role">Lead AI/ML Engineer</p>
+                <p class="team-bio">
+                    Developed proprietary deep-learning models for global hedge funds. Holds a PhD in Computational Mathematics and specializes in ethical, explainable AI systems for regulated industries.
+                </p>
+                <a href="#" class="linkedin-btn"><i class="fab fa-linkedin"></i> View Credentials</a>
+            </div>
+
+            <div class="team-card fade-in" style="animation-delay: 0.4s;">
+                <div class="team-photo-container">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Expert 3" class="team-photo">
+                </div>
+                <h3 class="team-name">[Name Required]</h3>
+                <p class="team-role">Head of Infrastructure Security</p>
+                <p class="team-bio">
+                    Former Head of Infrastructure Security for a national telecom operator, securing over 50 million active endpoints. Ensures our deployments exceed ISO 27001 standards.
+                </p>
+                <a href="#" class="linkedin-btn"><i class="fab fa-linkedin"></i> View Credentials</a>
+            </div>
+
+            <div class="team-card fade-in" style="animation-delay: 0.6s;">
+                <div class="team-photo-container">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Expert 4" class="team-photo">
+                </div>
+                <h3 class="team-name">[Name Required]</h3>
+                <p class="team-role">Senior Project Manager</p>
+                <p class="team-bio">
+                    Certified PMP & SCRUM Master. Track record of delivering 100% of large-scale projects on-time and under budget for Fortune 500 clients across four continents.
+                </p>
+                <a href="#" class="linkedin-btn"><i class="fab fa-linkedin"></i> View Credentials</a>
+            </div>
+
+            <div class="team-card fade-in" style="animation-delay: 0.8s;">
+                <div class="team-photo-container">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Expert 5" class="team-photo">
+                </div>
+                <h3 class="team-name">[Name Required]</h3>
+                <p class="team-role">Lead Full-Stack Engineer</p>
+                <p class="team-bio">
+                    Oversaw the development of a national e-commerce platform handling 500k+ daily transactions. Specializes in highly scalable, resilient Python/Flask architectures.
+                </p>
+                <a href="#" class="linkedin-btn"><i class="fab fa-linkedin"></i> View Credentials</a>
+            </div>
+
+        </div>
+
+        <div style="text-align: center; margin-bottom: 80px;">
+            <p style="color: #888; margin-bottom: 20px;">We do not outsource. These are the people who will handle your data.</p>
+            <a href="{{ url_for('public.home') }}#audit-form" class="cta-button">Engage Our Team</a>
+        </div>
+    </section>
+{% endblock %}

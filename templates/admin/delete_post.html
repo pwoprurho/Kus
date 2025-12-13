@@ -1,0 +1,17 @@
+# ----------------------------------------------------------------------
+# ENDPOINT 5: DELETE POST
+# ----------------------------------------------------------------------
+@admin_bp.route('/post/delete/<int:post_id>')
+@login_required
+@role_required('supa_admin', 'admin')
+def delete_post(post_id):
+    from app import supabase_admin
+    try:
+        # Check if exists first (Optional safety)
+        # Delete the record
+        supabase_admin.table('blog_posts').delete().eq('id', post_id).execute()
+        flash("Insight deleted from database.", "info")
+    except Exception as e:
+        flash(f"Delete failed: {e}", "error")
+        
+    return redirect(url_for('admin.dashboard'))

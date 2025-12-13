@@ -1,0 +1,85 @@
+{% extends "base.html" %} 
+
+{% block title %}
+    {% if post %}Edit Insight{% else %}New Insight{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 15px;">
+    <h2 style="margin:0; color:#fff;">{% if post %}Edit Insight{% else %}Create New Insight{% endif %}</h2>
+    
+    {% if not post %}
+    <button type="button" id="ai-generate-btn" class="btn-primary" style="background-color: #FFC107; color: #000;">
+        <i class="fas fa-magic"></i> AI Auto-Draft
+    </button>
+    {% endif %}
+</div>
+
+<form method="post">
+    <div class="form-group">
+        <label for="title">Headline</label>
+        <input type="text" id="title" name="title" required value="{{ post.title if post else '' }}" placeholder="Enter the insight title...">
+    </div>
+
+    <div class="form-group">
+        <label for="summary">Executive Summary</label>
+        <input type="text" id="summary" name="summary" required value="{{ post.summary if post else '' }}" placeholder="Brief overview for the card display...">
+    </div>
+
+    <div class="form-group">
+        <label for="content">Deep Dive Content (HTML Supported)</label>
+        <textarea id="content" name="content" rows="20" placeholder="Write your article content here... (HTML tags allowed)">{{ post.content_html if post else '' }}</textarea>
+    </div>
+
+    <div style="margin-top: 30px; display: flex; gap: 15px;">
+        <button type="submit" class="btn-primary">
+            {% if post %}Update Database{% else %}Save Draft{% endif %}
+        </button>
+        <a href="{{ url_for('admin.dashboard') }}" style="padding: 12px 24px; color: #bbb; text-decoration: none; border: 1px solid #555; border-radius: 4px; background: #2c2c2c; font-weight: 600;">Cancel</a>
+    </div>
+</form>
+
+<script>
+    const aiBtn = document.getElementById('ai-generate-btn');
+    if(aiBtn) {
+        aiBtn.addEventListener('click', async function() {
+            const title = document.getElementById('title').value;
+            const btn = this;
+            
+            if (!title) {
+                alert("Please enter a Headline first so the AI knows what to write about.");
+                return;
+            }
+
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch("{{ url_for('admin.generate_content') }}", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ topic: title })
+                });
+                
+                const data = await response.json();
+                
+                if (data.content) {
+                    document.getElementById('content').value = data.content;
+                    if(data.summary) document.getElementById('summary').value = data.summary;
+                } else {
+                    alert("AI Error: " + (data.error || "Unknown error"));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Failed to connect to AI engine.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+    }
+</script>
+
+{% endblock %}

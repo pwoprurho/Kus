@@ -1,0 +1,50 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Review Lead{% endblock %}
+
+{% block content %}
+
+<div style="margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+    <h2 style="margin:0; color:#fff;">Audit Request Details</h2>
+    <div style="font-family: monospace; color: #888;">ID: #{{ lead.id }}</div>
+</div>
+
+<div style="background: #252525; border: 1px solid #333; border-radius: 8px; padding: 30px; max-width: 800px;">
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+        <div class="form-group">
+            <label style="color: #0072ff;">Client Entity</label>
+            <div style="font-size: 1.2rem; font-weight: bold;">{{ lead.name }}</div>
+        </div>
+        <div class="form-group">
+            <label style="color: #0072ff;">Contact Email</label>
+            <div style="font-size: 1.1rem;"><a href="mailto:{{ lead.email }}" style="color: #fff; text-decoration: underline;">{{ lead.email }}</a></div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label style="color: #0072ff;">Core Challenge / Message</label>
+        <div style="background: #1a1a1a; padding: 20px; border-radius: 4px; border: 1px solid #444; line-height: 1.6; min-height: 150px; white-space: pre-wrap;">{{ lead.message }}</div>
+    </div>
+
+    <div style="margin-top: 20px; color: #666; font-size: 0.9rem;">
+        Received on: {{ lead.created_at.replace('T', ' ').split('.')[0] }}
+    </div>
+
+    <div style="margin-top: 40px; border-top: 1px solid #333; padding-top: 20px; display: flex; gap: 15px;">
+        <a href="mailto:{{ lead.email }}?subject=Re: Strategic Audit Request - Kusmus AI" class="btn-primary" style="text-decoration: none;">
+            <i class="fas fa-reply"></i> Reply via Email
+        </a>
+
+        <a href="{{ url_for('admin.delete_lead', lead_id=lead.id) }}" 
+           onclick="return confirm('Delete this lead permanently?')"
+           style="background: #ff4444; color: white; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: 600;">
+           <i class="fas fa-trash"></i> Delete
+        </a>
+
+        <a href="{{ url_for('admin.dashboard') }}" style="padding: 12px 24px; color: #bbb; text-decoration: none; align-self: center;">Cancel</a>
+    </div>
+
+</div>
+
+{% endblock %}

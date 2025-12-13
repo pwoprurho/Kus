@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Restricted Access | 403{% endblock %}
+
+{% block content %}
+<style>
+    .error-container {
+        position: relative;
+        z-index: 100;
+        height: 80vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .error-code {
+        font-family: 'Garamond', serif;
+        font-size: 8rem;
+        font-weight: bold;
+        /* Amber Gradient for Warning/Restricted */
+        background: -webkit-linear-gradient(#ffaa00, #b8860b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1;
+        margin-bottom: 20px;
+        text-shadow: 0 0 30px rgba(255, 170, 0, 0.2);
+    }
+
+    .error-msg {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.5rem;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+        border-bottom: 2px solid #ffaa00;
+        padding-bottom: 5px;
+    }
+
+    .error-desc {
+        color: #aaa;
+        max-width: 500px;
+        margin-bottom: 40px;
+        font-size: 1.1rem;
+    }
+
+    .btn-home {
+        background: transparent;
+        border: 1px solid #ffaa00;
+        color: #ffaa00;
+        padding: 12px 30px;
+        border-radius: 4px;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+    .btn-home:hover {
+        background: #ffaa00;
+        color: #000;
+        box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
+    }
+    
+    /* Lock Icon Animation */
+    .lock-icon {
+        font-size: 3rem;
+        color: #ffaa00;
+        margin-bottom: 20px;
+        animation: shake 2s infinite;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: rotate(0deg); }
+        10% { transform: rotate(-10deg); }
+        20% { transform: rotate(10deg); }
+        30% { transform: rotate(-10deg); }
+        40% { transform: rotate(10deg); }
+        50% { transform: rotate(0deg); }
+    }
+</style>
+
+<div class="error-container fade-in">
+    <div class="lock-icon"><i class="fas fa-lock"></i></div>
+    <div class="error-code">403</div>
+    <div class="error-msg">Security Clearance Required</div>
+    <p class="error-desc">Access to this sector is restricted to authorized personnel only. Your credentials do not meet the required security level.</p>
+    
+    <a href="{{ url_for('public.home') }}" class="btn-home">Return to Safety</a>
+</div>
+{% endblock %}

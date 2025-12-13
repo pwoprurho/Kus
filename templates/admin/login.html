@@ -1,0 +1,151 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}System Access{% endblock %}
+
+{% block content %}
+<style>
+    /* --- LOGIN SPECIFIC STYLES --- */
+    .login-wrapper {
+        min-height: 80vh; /* Takes up most of the screen */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 10; /* Sits above the orbits */
+    }
+
+    .login-card {
+        background: rgba(10, 10, 10, 0.75); /* Dark Glass */
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid #333;
+        border-top: 3px solid #0072ff; /* Kusmus Blue Accent */
+        padding: 50px 40px;
+        width: 100%;
+        max-width: 450px;
+        border-radius: 12px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+
+    .login-card:hover {
+        border-color: #555;
+        border-top-color: #0072ff;
+        transform: translateY(-5px);
+    }
+
+    .login-header h1 {
+        font-family: 'Garamond', serif;
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+        background: linear-gradient(180deg, #fff, #aaa);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .login-header p {
+        color: #888;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.9rem;
+        margin-bottom: 30px;
+        letter-spacing: 0.5px;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+        text-align: left;
+    }
+
+    .form-group label {
+        display: block;
+        color: #0072ff;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 14px;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid #333;
+        border-radius: 6px;
+        color: #fff;
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #0072ff;
+        box-shadow: 0 0 15px rgba(0, 114, 255, 0.2);
+    }
+
+    .btn-login {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(90deg, #005bb5, #0072ff);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    .btn-login:hover {
+        background: linear-gradient(90deg, #0072ff, #00aaff);
+        box-shadow: 0 0 20px rgba(0, 114, 255, 0.4);
+        transform: scale(1.02);
+    }
+
+    .back-link {
+        display: block;
+        margin-top: 25px;
+        color: #666;
+        font-size: 0.85rem;
+        font-family: 'Inter', sans-serif;
+        transition: color 0.3s;
+    }
+
+    .back-link:hover {
+        color: #fff;
+    }
+
+</style>
+
+<div class="login-wrapper fade-in">
+    <div class="login-card">
+        <div class="login-header">
+            <h1>Internal Access</h1>
+            <p>Authorized Personnel Only</p>
+        </div>
+
+        <form method="post" action="{{ url_for('auth.login') }}">
+            <div class="form-group">
+                <label for="email">Operator ID (Email)</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="admin@kusmus.ai" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Security Token</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="••••••••••••" required>
+            </div>
+
+            <button type="submit" class="btn-login">Authenticate</button>
+        </form>
+
+        <a href="{{ url_for('public.home') }}" class="back-link">← Return to Public Terminal</a>
+    </div>
+</div>
+{% endblock %}

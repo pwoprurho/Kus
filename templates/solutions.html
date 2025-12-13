@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Solutions | Engineering Certainty{% endblock %}
+
+{% block content %}
+    <header class="page-header container fade-in">
+        <h2>The Value Proposition</h2>
+        <p>We don't sell technology; we eliminate risk and guarantee a return on your investment through two bespoke AI agents.</p>
+    </header>
+
+    <section class="container solution-section">
+        
+        <div class="solution-card fade-in">
+            <div class="card-content">
+                <h3>The Downtime Mitigation Agent</h3>
+                <p class="body-text">
+                    The multi-million Naira cost of system downtime is no longer an operational risk—it's a management failure. 
+                    Our AI Log Monitoring Agent proactively detects and prevents critical system failures hours before they occur.
+                </p>
+                <ul class="key-benefits">
+                    <li>Guaranteed system uptime compliance (99.9%).</li>
+                    <li>Proactive failure prediction via deep-learning anomaly detection.</li>
+                    <li>Direct translation to predictable, non-disrupted revenue streams.</li>
+                </ul>
+            </div>
+            <div class="card-visual">
+                <i class="fas fa-server"></i>
+                </div>
+        </div>
+
+        <div class="roi-metrics fade-in">
+            <div class="metric-box">
+                <span class="metric-number">40%</span>
+                <span class="metric-label">Reduction in OpEx</span>
+            </div>
+            <div class="metric-box">
+                <span class="metric-number">24/7</span>
+                <span class="metric-label">Autonomous Monitoring</span>
+            </div>
+            <div class="metric-box">
+                <span class="metric-number">Zero</span>
+                <span class="metric-label">Unplanned Outages</span>
+            </div>
+        </div>
+
+        <div class="solution-card reverse fade-in">
+            <div class="card-content">
+                <h3>The Customer Retention Engine</h3>
+                <p class="body-text">
+                    Customer churn is lethal to growth. Our Multi-Lingual Call Agent analyzes voice, sentiment, and context 
+                    across Nigeria's diverse linguistic landscape to predict and prevent churn before it happens.
+                </p>
+                <ul class="key-benefits">
+                    <li>99.9% accuracy in multi-lingual sentiment analysis.</li>
+                    <li>Predictive modeling identifies "At-Risk" high-value clients.</li>
+                    <li>Automated retention workflows triggered instantly.</li>
+                </ul>
+            </div>
+            <div class="card-visual">
+                <i class="fas fa-headset"></i>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 60px;">
+            <h3 style="margin-bottom: 20px;">Ready to secure your infrastructure?</h3>
+            <a href="{{ url_for('public.home') }}#audit-form" class="cta-button">Initiate Phase 1 Audit</a>
+        </div>
+
+    </section>
+{% endblock %}
