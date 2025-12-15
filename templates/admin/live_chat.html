@@ -4,13 +4,12 @@
 
 {% block content %}
 <style>
-    /* --- 1. GLOBAL OVERRIDES (Matches Client Dashboard) --- */
-    /* Hide public nav/footer to reveal the 3D orbit */
+    /* --- 1. GLOBAL OVERRIDES (Glassmorphism & Orbit) --- */
     header, footer, #chat-widget-container { display: none !important; }
     
     body {
-        background-color: #000; /* Dark base for orbit contrast */
-        overflow: hidden; /* Lock scrollbar for app-like feel */
+        background-color: #000;
+        overflow: hidden; 
         height: 100vh;
         width: 100vw;
     }
@@ -18,9 +17,9 @@
     /* --- 2. GLASS LAYOUT WRAPPER --- */
     .terminal-wrapper {
         position: relative;
-        z-index: 10; /* Sits above the 3D orbit */
+        z-index: 10;
         display: grid;
-        grid-template-columns: 300px 1fr; /* Sidebar | Main Chat */
+        grid-template-columns: 300px 1fr; 
         height: 100vh;
         width: 100vw;
         color: #e0e0e0;
@@ -29,8 +28,8 @@
 
     /* --- 3. SIDEBAR (Client List) --- */
     .terminal-sidebar {
-        background: rgba(10, 10, 10, 0.75); /* Transparent! */
-        backdrop-filter: blur(12px);         /* Blurs the orbit behind it */
+        background: rgba(10, 10, 10, 0.75);
+        backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         border-right: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
@@ -89,7 +88,6 @@
     .terminal-main {
         display: flex;
         flex-direction: column;
-        /* Subtle gradient to let orbit shine through */
         background: radial-gradient(circle at center, rgba(17,17,17,0.8) 0%, rgba(0,0,0,0.9) 100%);
         position: relative;
         height: 100%;
@@ -126,6 +124,7 @@
         border-radius: 8px;
         margin-bottom: 20px;
         backdrop-filter: blur(5px);
+        flex-shrink: 0;
     }
     .context-panel h4 { margin: 0 0 5px 0; color: #0072ff; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
     .context-panel p { margin: 0; font-size: 0.9rem; color: #ddd; font-style: italic; }
@@ -140,13 +139,12 @@
         border-radius: 12px;
         word-wrap: break-word;
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        /* Animation: Only runs once when appended */
         animation: fadeUp 0.3s forwards;
     }
 
     .msg-client {
         align-self: flex-start;
-        background: rgba(40, 40, 40, 0.8); /* Semi-transparent dark */
+        background: rgba(40, 40, 40, 0.8); 
         border: 1px solid rgba(255,255,255,0.1);
         color: #e0e0e0;
         border-top-left-radius: 2px;
@@ -154,7 +152,7 @@
 
     .msg-admin {
         align-self: flex-end;
-        background: rgba(0, 114, 255, 0.9); /* Semi-transparent blue */
+        background: rgba(0, 114, 255, 0.9);
         color: white;
         border-top-right-radius: 2px;
         box-shadow: 0 0 20px rgba(0, 114, 255, 0.2);
@@ -274,7 +272,6 @@
 <script>
     let currentClientId = null;
     let pollingInterval = null;
-    // CRITICAL: Set to track rendered IDs to prevent flashing/re-rendering
     let knownMessageIds = new Set();
     
     const fileInput = document.getElementById('admin-file');
@@ -282,7 +279,7 @@
     const textInput = document.getElementById('admin-input');
     const messagesArea = document.getElementById('messages-area');
 
-    // 1. File Selection Logic
+    // 1. File Selection
     attachBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', () => {
         if (fileInput.files.length > 0) {
@@ -301,15 +298,13 @@
         document.getElementById('chat-title').innerHTML = `<i class="fas fa-user-shield"></i> ${name}`;
         document.getElementById('input-area').style.display = 'flex';
         
-        // Highlight Active Item
         document.querySelectorAll('.client-item').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
         
-        // Clear View for New Client
+        // Reset View for New Client
         messagesArea.innerHTML = '';
         knownMessageIds.clear();
 
-        // Fetch immediately then poll
         fetchMessages();
         if (pollingInterval) clearInterval(pollingInterval);
         pollingInterval = setInterval(fetchMessages, 3000);
@@ -320,18 +315,21 @@
         if (!currentClientId) return;
         try {
             const res = await fetch(`/admin/api/chat/${currentClientId}`);
+            if (!res.ok) throw new Error('Failed to fetch chat history');
             const data = await res.json();
             renderMessages(data.history, data.context);
         } catch (e) {
             console.error("Sync Error:", e);
+            // Optionally update the chat title to show connection failed
+            document.getElementById('chat-title').innerHTML = `<i class="fas fa-exclamation-triangle"></i> CONNECTION FAILED`;
         }
     }
 
     function renderMessages(messages, context) {
-        // Remove empty placeholder if messages arrive
-        if (messages.length > 0) {
-            const empty = document.querySelector('.empty-placeholder');
-            if (empty) empty.remove();
+        // Remove empty placeholder
+        const emptyPlaceholder = document.querySelector('.empty-placeholder');
+        if (emptyPlaceholder) {
+            emptyPlaceholder.remove();
         }
 
         // Render Context (Once)
@@ -346,7 +344,7 @@
         
         messages.forEach(msg => {
             // THE FIX: Check ID before appending
-            if (!knownMessageIds.has(msg.id)) {
+            if (msg.id && !knownMessageIds.has(msg.id)) {
                 appendMessage(msg);
                 knownMessageIds.add(msg.id);
                 hasNew = true;
@@ -365,7 +363,6 @@
         
         let content = msg.message || "";
         
-        // Handle Attachments
         if (msg.signed_attachment) {
             if (msg.attachment_type === 'image') {
                 content += `<div class="attachment-view"><img src="${msg.signed_attachment}" alt="Secure Attachment" onload="this.parentElement.scrollIntoView({behavior:'smooth'})"></div>`;
@@ -386,8 +383,9 @@
         if ((!text && !file) || !currentClientId) return;
 
         // Optimistic Append (Temp ID)
+        const tempId = 'temp-' + Date.now();
         const tempMsg = {
-            id: 'temp-' + Date.now(),
+            id: tempId,
             sender_type: 'admin',
             message: text || (file ? `[Sending ${file.name}...]` : ''),
             signed_attachment: null
@@ -401,21 +399,23 @@
             formData.append('message', text);
             if (file) formData.append('file', file);
 
-            await fetch('/admin/api/chat/send', {
+            const res = await fetch('/admin/api/chat/send', {
                 method: 'POST',
                 body: formData
             });
 
-            // Cleanup Inputs
+            if (!res.ok) throw new Error('Server failed to process message.');
+
+            // Cleanup
             textInput.value = '';
             fileInput.value = '';
             attachBtn.classList.remove('has-file');
             textInput.placeholder = "Type your directive here...";
             
-            // Force Sync to get real ID
+            // Force Sync to get the real message ID and display correctly
             setTimeout(fetchMessages, 500); 
         } catch (e) {
-            alert("Transmission Failed");
+            alert("Transmission Failed: " + e.message);
         }
     }
 

@@ -9,7 +9,7 @@ import os
 import secrets
 import json
 
-admin_bp = Blueprint('admin', __name__, url_prefix='/control-v3')
+admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 # =========================================================
 # === ENCRYPTION & SECURITY UTILS ===
