@@ -1,0 +1,443 @@
+{% extends 'base.html' %}
+
+{% block title %}Neural Sandbox | Secure Protocol Testing{% endblock %}
+
+{% block content %}
+<style>
+    /* 1. HUD LAYOUT OVERRIDES */
+    header, footer, #chat-widget-container { display: none !important; }
+
+    body {
+        background-color: #050505;
+        overflow: hidden;
+        height: 100vh;
+        width: 100vw;
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .sandbox-container {
+        position: relative;
+        z-index: 10;
+        display: grid;
+        /* Grid: Directives (Left) | Main Terminal (Center) | Neural/Telemetry (Right) */
+        grid-template-columns: 320px 1fr 380px; 
+        height: 100vh;
+        width: 100vw;
+        color: #e0e0e0;
+    }
+
+    /* --- COLUMN: LEFT (TEST DIRECTIVES) --- */
+    .sidebar-left {
+        background: rgba(10, 10, 10, 0.8);
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 40px 25px;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    /* --- COLUMN: RIGHT (NEURAL LOGS & TELEMETRY) --- */
+    .sidebar-right {
+        background: rgba(10, 10, 10, 0.8);
+        border-left: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .activity-section {
+        height: 50%;
+        padding: 40px 25px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stats-section {
+        height: 50%;
+        padding: 40px 25px;
+    }
+
+    /* --- UI ELEMENTS --- */
+    .hud-label {
+        font-size: 0.7rem;
+        letter-spacing: 2px;
+        color: #0072ff;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        display: block;
+    }
+
+    .directive-btn {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #aaa;
+        padding: 12px;
+        border-radius: 4px;
+        text-align: left;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: 0.3s;
+        margin-bottom: 8px;
+        width: 100%;
+    }
+
+    .directive-btn:hover {
+        background: rgba(0, 114, 255, 0.1);
+        border-color: #0072ff;
+        color: #fff;
+    }
+
+    .nav-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: #666;
+        text-decoration: none;
+        font-size: 0.8rem;
+        transition: 0.3s;
+        margin-bottom: 20px;
+        font-weight: 600;
+        letter-spacing: 1px;
+    }
+    .nav-btn:hover { color: #fff; }
+
+    .neural-log {
+        flex-grow: 1;
+        overflow-y: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.75rem;
+        color: #00ff88;
+        background: rgba(0,0,0,0.3);
+        padding: 15px;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 255, 136, 0.1);
+    }
+
+    /* --- CENTER: MAIN TERMINAL (SCROLL FIXES) --- */
+    .main-terminal {
+        display: flex;
+        flex-direction: column;
+        padding: 40px;
+        position: relative;
+        height: 100vh; /* Lock height to viewport */
+        box-sizing: border-box;
+    }
+
+    #chat-container {
+        flex-grow: 1;
+        overflow-y: auto; /* Enable scrolling for chat only */
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding-right: 10px;
+        margin-bottom: 20px;
+        
+        /* Custom scrollbar for terminal look */
+        scrollbar-width: thin;
+        scrollbar-color: #333 transparent;
+    }
+
+    #chat-container::-webkit-scrollbar { width: 4px; }
+    #chat-container::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+    .input-area-wrapper {
+        flex-shrink: 0; /* Prevents input area from being compressed */
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .terminal-input-group {
+        background: rgba(20, 20, 20, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .terminal-input-group input[type="text"] {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        color: white;
+        outline: none;
+        font-size: 1rem;
+    }
+
+    .file-upload-btn {
+        color: #888;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 5px 10px;
+        transition: 0.3s;
+    }
+
+    .file-upload-btn:hover { color: #0072ff; }
+    .file-upload-btn.active { color: #00ff88; }
+
+    #execute-btn {
+        background: #0072ff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    #file-indicator {
+        font-size: 0.7rem;
+        color: #00ff88;
+        margin-top: 5px;
+    }
+
+    .security-footer {
+        background: rgba(255, 68, 68, 0.1);
+        border: 1px solid rgba(255, 68, 68, 0.2);
+        color: #ff8888;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: fit-content;
+        margin: 0 auto;
+    }
+
+    /* SECURITY INTERCEPT MODAL */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+        z-index: 9999; display: none; align-items: center; justify-content: center;
+    }
+    .modal-content {
+        background: #111; border: 1px solid #ff4444;
+        padding: 30px; border-radius: 8px; max-width: 450px; text-align: center;
+        box-shadow: 0 0 30px rgba(255, 68, 68, 0.2);
+    }
+    .modal-btn {
+        background: #ff4444; color: white; border: none; padding: 10px 20px;
+        border-radius: 4px; margin-top: 20px; cursor: pointer; font-weight: bold;
+    }
+    .modal-btn:hover { background: #cc0000; }
+
+</style>
+
+<div id="security-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 style="color: #ff4444; margin-top:0;"><i class="fas fa-shield-alt"></i> SECURITY INTERCEPT</h2>
+        <p style="color: #ccc; font-size: 0.9rem; line-height: 1.5;">
+            Our neural filter detected high-sensitivity keywords (Credentials/PII).<br><br>
+            <strong>This is a Sandbox Environment.</strong><br>
+            To maintain Tier-1 Compliance, please do not upload production secrets here. Use the encrypted Client Socket for audits.
+        </p>
+        <button class="modal-btn" onclick="document.getElementById('security-modal').style.display='none'">ACKNOWLEDGE & RESUME</button>
+    </div>
+</div>
+
+<div class="sandbox-container">
+    <aside class="sidebar-left">
+        <a href="{{ url_for('public.home') }}" class="nav-btn">
+            <i class="fas fa-arrow-left"></i> RETURN TO TERMINAL
+        </a>
+
+        <div>
+            <span class="hud-label">Neural Protocol</span>
+            <select id="protocol-selector" style="width:100%; padding:12px; background:#111; color:white; border:1px solid #333; border-radius:4px;">
+                <option value="strategic_concierge">Strategic Concierge</option>
+                <option value="downtime_mitigation">Downtime Mitigation</option>
+                <option value="customer_retention">Retention Optimizer</option>
+            </select>
+        </div>
+
+        <div>
+            <span class="hud-label">Test Directives</span>
+            <div id="directive-list"></div>
+        </div>
+    </aside>
+
+    <main class="main-terminal">
+        <div id="chat-container">
+            <div style="opacity: 0.4; font-size: 0.8rem;">[SYSTEM] Neural link 0xFF-42 synchronized. Awaiting directive...</div>
+        </div>
+
+        <div class="input-area-wrapper">
+            <div class="security-footer">
+                <i class="fas fa-lock"></i>
+                <span>SANDBOX MODE: Non-binding inference. No PII retention.</span>
+            </div>
+
+            <div class="terminal-input-group">
+                <label class="file-upload-btn" id="file-label">
+                    <i class="fas fa-paperclip"></i>
+                    <input type="file" id="sandbox-file" style="display:none;" onchange="handleFileSelect()">
+                </label>
+                <input type="text" id="sandbox-input" placeholder="Execute command or upload logs for analysis..." autocomplete="off">
+                <button id="execute-btn" onclick="sendDirective()">EXECUTE</button>
+            </div>
+            <div id="file-indicator"></div>
+        </div>
+    </main>
+
+    <aside class="sidebar-right">
+        <section class="activity-section">
+            <span class="hud-label">Neural Activity Log</span>
+            <div class="neural-log" id="activity-log">
+                > System check: Nominal.<br>
+                > Secure pipe established.
+            </div>
+        </section>
+
+        <section class="stats-section">
+            <span class="hud-label">Telemetry Monitor</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:4px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="font-size: 0.6rem; color:#666; margin-bottom: 5px;">LATENCY</div>
+                    <div id="tele-latency" style="color:#0072ff; font-family: monospace;">22ms</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); padding:15px; border-radius:4px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="font-size: 0.6rem; color:#666; margin-bottom: 5px;">THROUGHPUT</div>
+                    <div id="tele-tokens" style="color:#00ff88; font-family: monospace;">STABLE</div>
+                </div>
+            </div>
+        </section>
+    </aside>
+</div>
+
+<script>
+    let currentProtocol = 'strategic_concierge';
+    let chatHistory = [];
+
+    const directives = {
+        strategic_concierge: ["Why Phase 1 Audit?", "De-risk AI roadmap", "Board Presentation Draft"],
+        downtime_mitigation: ["Check Server-Alpha Health", "Analyze Outage Logs", "Trigger Incident: High"],
+        customer_retention: ["Sentiment Analysis Report", "Draft VIP Retention Plan", "Predict Churn Probability"]
+    };
+
+    function handleFileSelect() {
+        const fileInput = document.getElementById('sandbox-file');
+        const indicator = document.getElementById('file-indicator');
+        const label = document.getElementById('file-label');
+        
+        if (fileInput.files.length > 0) {
+            indicator.style.display = 'block';
+            indicator.innerText = `Attached: ${fileInput.files[0].name}`;
+            label.classList.add('active');
+            logInternal(`File queued: ${fileInput.files[0].name}`);
+        }
+    }
+
+    function updateDirectives() {
+        const list = document.getElementById('directive-list');
+        list.innerHTML = '';
+        directives[currentProtocol].forEach(d => {
+            const btn = document.createElement('button');
+            btn.className = 'directive-btn';
+            btn.innerText = d;
+            btn.onclick = () => { document.getElementById('sandbox-input').value = d; };
+            list.appendChild(btn);
+        });
+    }
+
+    document.getElementById('protocol-selector').addEventListener('change', (e) => {
+        currentProtocol = e.target.value;
+        logInternal(`Switched to ${currentProtocol.replace('_', ' ')} protocol.`);
+        updateDirectives();
+    });
+
+    function logInternal(msg) {
+        const log = document.getElementById('activity-log');
+        log.innerHTML += `<div>> ${msg}</div>`;
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function appendMessage(role, text) {
+        const container = document.getElementById('chat-container');
+        const div = document.createElement('div');
+        div.style.padding = "18px";
+        div.style.borderRadius = "8px";
+        div.style.fontSize = "0.95rem";
+        div.style.lineHeight = "1.5";
+        div.style.maxWidth = "85%";
+        
+        if(role === 'user') {
+            div.style.alignSelf = "flex-end";
+            div.style.background = "rgba(0, 114, 255, 0.1)";
+            div.style.border = "1px solid rgba(0, 114, 255, 0.3)";
+        } else {
+            div.style.alignSelf = "flex-start";
+            div.style.background = "rgba(255, 255, 255, 0.04)";
+            div.style.border = "1px solid rgba(255, 255, 255, 0.05)";
+        }
+        
+        div.innerHTML = text.replace(/\n/g, '<br>');
+        container.appendChild(div);
+        
+        // AUTO-SCROLL TO BOTTOM
+        container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendDirective() {
+        const input = document.getElementById('sandbox-input');
+        const fileInput = document.getElementById('sandbox-file');
+        const msg = input.value.trim();
+        
+        const sensitivityRegex = /(password|secret|private_key|api_key|ssn|credit card)/i;
+        if (sensitivityRegex.test(msg)) {
+            document.getElementById('security-modal').style.display = 'flex';
+            logInternal("BLOCKED: Sensitive content detected in output stream.");
+            return;
+        }
+
+        if (!msg && fileInput.files.length === 0) return;
+
+        appendMessage('user', msg || "[Uploaded Document for Analysis]");
+        logInternal(`Inference cycle started...`);
+        
+        const formData = new FormData();
+        formData.append('demo_id', currentProtocol);
+        formData.append('message', msg);
+        formData.append('history', JSON.stringify(chatHistory));
+        if (fileInput.files[0]) formData.append('file', fileInput.files[0]);
+
+        input.value = '';
+        document.getElementById('file-indicator').style.display = 'none';
+        document.getElementById('file-label').classList.remove('active');
+
+        try {
+            const res = await fetch('/api/sandbox/chat', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            
+            if (data.response) {
+                appendMessage('ai', data.response);
+                logInternal(`Protocol return: Success. Tokens integrated.`);
+                chatHistory.push({role: "user", parts: [msg]});
+                chatHistory.push({role: "model", parts: [data.response]});
+            } else if (data.error) {
+                appendMessage('ai', `<span style="color:#ff4444">[SYSTEM ALERT]</span> ${data.error}`);
+                logInternal(`Error: ${data.error}`);
+            }
+        } catch (e) {
+            logInternal("CRITICAL: Link Failure.");
+            appendMessage('ai', "Neural link timed out. Re-establishing...");
+        }
+        fileInput.value = ''; 
+    }
+
+    updateDirectives();
+    
+    document.getElementById('sandbox-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            sendDirective();
+        }
+    });
+</script>
+{% endblock %}

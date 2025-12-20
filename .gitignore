@@ -28,7 +28,7 @@ pip-wheel-metadata/
 venv/
 ENV/
 env/
-.env/
+.env
 .venv/
 venv.bak/
 

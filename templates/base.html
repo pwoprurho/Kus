@@ -19,7 +19,7 @@
             visibility: hidden;
             position: fixed; bottom: 80px; right: 20px;
             width: 340px; max-height: 480px;
-            background: rgba(15, 15, 15, 0.95); /* Glass-like dark background */
+            background: rgba(15, 15, 15, 0.95);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
@@ -46,7 +46,6 @@
             display: flex; flex-direction: column; gap: 15px;
             background: transparent;
         }
-        /* Custom Scrollbar */
         .chat-body::-webkit-scrollbar { width: 6px; }
         .chat-body::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
         .chat-body::-webkit-scrollbar-track { background: transparent; }
@@ -84,7 +83,6 @@
         }
         .chat-toggle:hover { transform: scale(1.05); background: #005bb5; }
         
-        /* Message Bubbles - Cleaner Look */
         .user-message {
             align-self: flex-end; 
             background: #0072ff; color: white;
@@ -133,7 +131,7 @@
                 <li><a href="{{ url_for('public.team') }}">Team</a></li>
                 <li><a href="{{ url_for('public.chairman') }}">Mandate</a></li> 
                 <li><a href="{{ url_for('public.blog') }}">Insights</a></li>
-                <li><a href="{{ url_for('public.audit_request') }}" class="nav-cta">Audit Request</a></li>
+                <li><a href="{{ url_for('public.sandbox_home') }}" class="nav-cta">Try-Our-Demo</a></li>
                 <li>
                     <a href="{{ url_for('auth.client_access') }}" class="nav-cta" style="display: flex; align-items: center; gap: 8px;">
                         <i class="fas fa-lock" style="font-size: 0.8rem;"></i> Client Portal
@@ -186,29 +184,53 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- 1. CONFIGURATION & STATE ---
             const chatWindow = document.getElementById('chat-window');
-            const chatToggleBtn = document.getElementById('chat-toggle-btn');
             const chatBody = document.getElementById('chat-body');
-            const chatInputText = document.getElementById('chat-input-text');
+            const chatInput = document.getElementById('chat-input-text');
             const chatSendBtn = document.getElementById('chat-send-btn');
+            const chatToggleBtn = document.getElementById('chat-toggle-btn');
             
-            // CLEAN, STRIPPED GREETING
-            const initialGreeting = "Welcome. I am the **Kusmus AI Client Care Assistant**.<br><br>Please indicate how I may be of service. We are prepared to assist with your **Solutions**, facilitate an **Audit Request**, or direct you to the **Client Portal**.";
+            // Default to Concierge if accessed directly
+            window.currentDemoId = 'strategic_concierge'; 
+            
+            // Local registry of greetings to ensure instant UI response (matches backend)
+            const PROTOCOL_GREETINGS = {
+                'downtime_mitigation': "System initialized. Ready for infrastructure log analysis. Please provide logs or describe your current latency patterns.",
+                'customer_retention': "Sentiment Analysis Protocol active. Upload transcripts or feedback to calculate Churn Risk Scores.",
+                'strategic_concierge': "Welcome to the Strategic Suite. Shall we discuss how the Kusmus Method applies to your specific enterprise scale?"
+            };
 
-            // --- UI/Toggle Logic ---
-            chatToggleBtn.addEventListener('click', () => {
-                chatWindow.classList.toggle('visible');
-                if (chatWindow.classList.contains('visible') && chatBody.children.length === 0) {
-                    appendMessage('ai', initialGreeting);
-                }
-            });
+            // --- 2. GLOBAL PROTOCOL LAUNCHER ---
+            // This function is called by the buttons in neural_assets.html
+            window.launchProtocol = async function(demoId) {
+                console.log("Initializing Protocol:", demoId);
+                
+                // A. Set State
+                window.currentDemoId = demoId;
+                
+                // B. Reset UI
+                chatBody.innerHTML = ''; // Clear history
+                
+                // C. Open Window
+                chatWindow.classList.add('visible');
+                chatWindow.classList.add('active'); // Ensure compatibility with CSS
+                
+                // D. Inject Greeting
+                const greeting = PROTOCOL_GREETINGS[demoId] || "Protocol Active. Awaiting input.";
+                appendMessage('ai', `<strong>[${demoId.toUpperCase().replace(/_/g, ' ')}]</strong><br>${greeting}`);
+            };
+            
+            // Support for legacy naming
+            window.switchDemo = window.launchProtocol; 
 
+            // --- 3. CORE CHAT FUNCTIONS ---
             function appendMessage(sender, text) {
                 const cssClass = sender === 'user' ? 'user-message' : 'ai-message';
                 const row = document.createElement('div');
                 row.className = cssClass;
                 
-                // Markdown to HTML (Bold only for simplicity)
+                // Simple formatting
                 const formattedText = text
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                     .replace(/\n/g, '<br>');
@@ -219,52 +241,70 @@
             }
 
             async function sendMessage() {
-                const message = chatInputText.value.trim();
+                const message = chatInput.value.trim();
                 if (!message) return;
 
-                chatInputText.value = '';
-                chatInputText.disabled = true;
+                // UI Updates
+                chatInput.value = '';
+                chatInput.disabled = true;
                 chatSendBtn.disabled = true;
-
                 appendMessage('user', message);
-                
-                // Minimal loading state
-                const loadingIndicator = document.createElement('div');
-                loadingIndicator.className = 'ai-message';
-                loadingIndicator.id = 'ai-loading';
-                loadingIndicator.innerHTML = '<span style="opacity:0.6;">Processing request...</span>';
-                chatBody.appendChild(loadingIndicator);
+
+                // Loading Indicator
+                const loadingId = 'loading-' + Date.now();
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'ai-message';
+                loadingDiv.id = loadingId;
+                loadingDiv.innerHTML = '<span style="opacity:0.6;"><i class="fas fa-circle-notch fa-spin"></i> Processing...</span>';
+                chatBody.appendChild(loadingDiv);
                 chatBody.scrollTop = chatBody.scrollHeight;
 
                 try {
-                    const response = await fetch('/api/chat', { 
+                    const response = await fetch('/api/sandbox/chat', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: message })
+                        body: JSON.stringify({
+                            message: message,
+                            demo_id: window.currentDemoId,
+                            history: [] // Future: Pass client-side history if needed
+                        })
                     });
 
                     const data = await response.json();
                     
-                    if(document.getElementById('ai-loading')) document.getElementById('ai-loading').remove();
-                    
+                    if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+
                     if (data.response) {
                         appendMessage('ai', data.response);
                     } else if (data.error) {
                         appendMessage('ai', `System Alert: ${data.error}`);
+                    } else {
+                        appendMessage('ai', "Protocol Error: No response data.");
                     }
 
-                } catch (e) {
-                    if(document.getElementById('ai-loading')) document.getElementById('ai-loading').remove();
-                    appendMessage('ai', `Connection disrupted.`);
+                } catch (err) {
+                    console.error(err);
+                    if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+                    appendMessage('ai', "Connection disrupted. Re-establishing link...");
                 } finally {
-                    chatInputText.disabled = false;
+                    chatInput.disabled = false;
                     chatSendBtn.disabled = false;
-                    chatInputText.focus();
+                    chatInput.focus();
                 }
             }
-            
+
+            // --- 4. EVENT LISTENERS ---
+            chatToggleBtn.addEventListener('click', () => {
+                chatWindow.classList.toggle('visible');
+                // If opening empty, trigger default
+                if (chatWindow.classList.contains('visible') && chatBody.children.length === 0) {
+                     window.launchProtocol('strategic_concierge');
+                }
+            });
+
             chatSendBtn.addEventListener('click', sendMessage);
-            chatInputText.addEventListener('keypress', (e) => {
+            
+            chatInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendMessage();
             });
 

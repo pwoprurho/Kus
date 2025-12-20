@@ -4,6 +4,10 @@ from flask import Flask, render_template, redirect, url_for
 from flask_login import LoginManager
 from supabase import create_client
 from models import User  # Imports the User class with the critical __eq__ fix
+# Add this import
+from routes.sandbox import sandbox_bp
+
+
 
 # 1. Load Environment Variables
 load_dotenv()
@@ -83,6 +87,10 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html'), 500
+
+# Register the sandbox blueprint
+app.register_blueprint(sandbox_bp)
+
 
 # 6. Run Application
 if __name__ == "__main__":

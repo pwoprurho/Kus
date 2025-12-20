@@ -1,44 +1,17 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, session, Response
 from werkzeug.utils import secure_filename
-from cryptography.fernet import Fernet
-import google.generativeai as genai
-import os
 import secrets
-import json
+import os
 
-# Define the Public Blueprint
+# --- NEW IMPORTS ---
+from core.security import encrypt_text, decrypt_text
+from core.engine import KusmusAIEngine
+from services.personas import MAIN_ASSISTANT
+
 public_bp = Blueprint('public', __name__)
 
 # =========================================================
-# === HIGH-LEVEL ENCRYPTION ENGINE (AES-128 via Fernet) ===
-# =========================================================
-
-def get_cipher_suite():
-    key = os.environ.get("ENCRYPTION_KEY")
-    if not key:
-        print("WARNING: 'ENCRYPTION_KEY' not found. Using ephemeral key.")
-        return Fernet(Fernet.generate_key())
-    return Fernet(key.encode())
-
-def encrypt_text(text):
-    try:
-        if not text: return None
-        cipher = get_cipher_suite()
-        return cipher.encrypt(text.encode()).decode()
-    except Exception as e:
-        print(f"Encryption Failure: {e}")
-        return None
-
-def decrypt_text(encrypted_text):
-    try:
-        if not encrypted_text: return ""
-        cipher = get_cipher_suite()
-        return cipher.decrypt(encrypted_text.encode()).decode()
-    except Exception as e:
-        return "[CONTENT LOCKED]"
-
-# =========================================================
-# === CORE PAGE ROUTES ===
+# === CORE PAGE ROUTES (Unchanged) ===
 # =========================================================
 
 @public_bp.route("/")
@@ -62,7 +35,7 @@ def chairman():
     return render_template("chairmans_mandate.html")
 
 # =========================================================
-# === BLOG / INSIGHTS ===
+# === BLOG / INSIGHTS (Unchanged) ===
 # =========================================================
 
 @public_bp.route("/blog")
@@ -96,14 +69,12 @@ def blog_post(post_id):
         return redirect(url_for('public.blog'))
 
 # =========================================================
-# === STRATEGIC AUDIT & KEY GENERATION ===
+# === STRATEGIC AUDIT (Unchanged Logic) ===
 # =========================================================
-
 @public_bp.route("/request-audit", methods=["GET", "POST"])
 def audit_request():
     if request.method == "POST":
         from app import supabase_admin
-        
         name = request.form.get("name")
         email = request.form.get("email")
         message = request.form.get("message")
@@ -129,7 +100,6 @@ def audit_request():
                 mimetype="text/plain",
                 headers={"Content-Disposition": "attachment;filename=kusmus-private-key.txt"}
             )
-            
         except Exception as e:
             print(f"Audit Error: {e}")
             flash("Transmission interrupted. Handshake failed.", "error")
@@ -138,7 +108,7 @@ def audit_request():
     return render_template("request_audit.html")
 
 # =========================================================
-# === SECURE DASHBOARD & ENCRYPTED CHAT API ===
+# === SECURE DASHBOARD (Now uses Core Security) ===
 # =========================================================
 
 @public_bp.route("/secure-dashboard")
@@ -150,24 +120,18 @@ def client_dashboard():
 
 @public_bp.route("/api/client/chat/sync", methods=["GET"])
 def client_sync_chat():
-    """Fetches DECRYPTED history + Generates Signed URLs for files."""
     if not session.get('client_access'): return jsonify([]), 403
-    
     client_id = session.get('client_id')
     if not client_id: return jsonify([]), 403
 
     from app import supabase_admin
     try:
-        res = supabase_admin.table('secure_chat_messages')\
-            .select('*')\
-            .eq('client_id', client_id)\
-            .order('created_at', desc=False)\
-            .execute()
-        
+        res = supabase_admin.table('secure_chat_messages').select('*').eq('client_id', client_id).order('created_at', desc=False).execute()
         messages = res.data if res.data else []
         
         for msg in messages:
             if msg.get('encrypted_content'):
+                # USING CORE DECRYPTION
                 msg['message'] = decrypt_text(msg['encrypted_content'])
                 del msg['encrypted_content']
             else:
@@ -175,16 +139,9 @@ def client_sync_chat():
 
             if msg.get('attachment_url'):
                 try:
-                    signed = supabase_admin.storage.from_('secure-files')\
-                        .create_signed_url(msg['attachment_url'], 3600)
-                    
-                    if isinstance(signed, dict) and 'signedURL' in signed:
-                        msg['signed_attachment'] = signed['signedURL']
-                    else:
-                        msg['signed_attachment'] = signed
-                except Exception as ex:
-                    print(f"Signing Error: {ex}")
-                    msg['signed_attachment'] = None
+                    signed = supabase_admin.storage.from_('secure-files').create_signed_url(msg['attachment_url'], 3600)
+                    msg['signed_attachment'] = signed['signedURL'] if isinstance(signed, dict) and 'signedURL' in signed else signed
+                except: msg['signed_attachment'] = None
 
         return jsonify(messages)
     except Exception as e:
@@ -193,19 +150,15 @@ def client_sync_chat():
 
 @public_bp.route("/api/client/chat/send", methods=["POST"])
 def client_send_msg():
-    """Handles Text (Encrypted) AND File Uploads."""
     if not session.get('client_access'): return jsonify({'error': 'Unauthorized'}), 403
-    
     client_id = session.get('client_id')
     if not client_id: return jsonify({'error': 'Client ID missing'}), 403
 
     from app import supabase_admin
-    
     message_text = request.form.get('message', '')
     uploaded_file = request.files.get('file')
     
-    if not message_text and not uploaded_file:
-        return jsonify({'error': 'Empty transmission'}), 400
+    if not message_text and not uploaded_file: return jsonify({'error': 'Empty transmission'}), 400
 
     try:
         attachment_path = None
@@ -214,20 +167,17 @@ def client_send_msg():
         if uploaded_file:
             filename = secure_filename(uploaded_file.filename)
             file_path = f"{client_id}/{secrets.token_hex(4)}_{filename}"
-            content_type = uploaded_file.content_type
-            
-            file_bytes = uploaded_file.read()
-            
             supabase_admin.storage.from_('secure-files').upload(
                 path=file_path,
-                file=file_bytes,
-                file_options={"content-type": content_type}
+                file=uploaded_file.read(),
+                file_options={"content-type": uploaded_file.content_type}
             )
-            
             attachment_path = file_path
-            attachment_type = 'image' if 'image' in content_type else 'document'
+            attachment_type = 'image' if 'image' in uploaded_file.content_type else 'document'
 
         final_message = message_text if message_text else "[FILE ATTACHMENT]"
+        
+        # USING CORE ENCRYPTION
         encrypted_content = encrypt_text(final_message)
 
         supabase_admin.table('secure_chat_messages').insert({
@@ -240,13 +190,11 @@ def client_send_msg():
         }).execute()
         
         return jsonify({'status': 'sent'})
-        
     except Exception as e:
-        print(f"Send Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 # =========================================================
-# === PUBLIC AI CHAT API (WIDGET BACKEND) ===
+# === REFACTORED AI CHAT API (Using Core Engine) ===
 # =========================================================
 
 @public_bp.route("/api/chat", methods=["POST"])
@@ -257,62 +205,34 @@ def chat_ai_assistant():
     if not user_message: return jsonify({'error': 'No message provided'}), 400
     
     try:
-        # 1. Verify API Key
-        if not os.getenv("GEMINI_API_KEY"):
-            return jsonify({'error': 'System Error: AI Key Missing'}), 500
-        
-        # 2. Configure Model (CORRECTED MODEL NAME)
-        SYSTEM_INSTRUCTION = (
-            "You are the 'Kusmus AI Client Care Assistant.' "
-            "Your tone is premium, polite, and authoritative ('Engineering Certainty'). "
-            "Function: Provide quick, accurate answers about company services. "
-            "Direct users to: Solutions, Audit Request, or Client Portal. "
-            "Keep answers short and professional."
-        )
-
-        # FIX: Changed from 'gemini-2.5-flash' to 'gemini-1.5-flash'
-        model = genai.GenerativeModel(
-            'gemini-2.5-flash', 
-            system_instruction=SYSTEM_INSTRUCTION
+        # 1. Initialize Engine with MAIN Persona
+        engine = KusmusAIEngine(
+            system_instruction=MAIN_ASSISTANT['instruction'],
+            model_name=MAIN_ASSISTANT['model']
         )
         
-        # 3. Handle History (Using Simple Dictionaries)
+        # 2. Retrieve History
         raw_history = session.get('chat_history', [])
-        formatted_history = []
-        
-        # Ensure history is in the correct format for the SDK
-        for turn in raw_history:
-            if 'role' in turn and 'parts' in turn:
-                formatted_history.append({
-                    "role": turn['role'],
-                    "parts": turn['parts']
-                })
 
-        # 4. Generate Response
-        chat = model.start_chat(history=formatted_history)
-        response = chat.send_message(user_message)
+        # 3. Generate Response
+        response_text = engine.generate_response(user_message, history=raw_history)
 
-        # 5. Save History (Serializable Format)
-        new_turn_user = {"role": "user", "parts": [user_message]}
-        new_turn_model = {"role": "model", "parts": [response.text]}
+        # 4. Save History (Standard format)
+        raw_history.append({"role": "user", "parts": [user_message]})
+        raw_history.append({"role": "model", "parts": [response_text]})
+        session['chat_history'] = raw_history
         
-        formatted_history.append(new_turn_user)
-        formatted_history.append(new_turn_model)
-        
-        session['chat_history'] = formatted_history
-        
-        return jsonify({'response': response.text})
+        return jsonify({'response': response_text})
 
     except Exception as e:
-        # Logs specific error to console for debugging
         print(f"AI Chat Error: {e}")
-        return jsonify({'error': 'Connection interrupted or System Integrity compromised.'}), 500
+        return jsonify({'error': 'Connection interrupted.'}), 500
 
 @public_bp.route("/api/chat/reset", methods=["POST"])
 def reset_chat():
     session.pop('chat_history', None)
     return jsonify({'status': 'success'})
 
-@public_bp.route("/chat", methods=["POST"])
-def old_chat_redirect():
-    return redirect(url_for('public.chat_ai_assistant'), code=307)
+@public_bp.route("/sandbox")
+def sandbox_home():
+    return render_template("sandbox.html")

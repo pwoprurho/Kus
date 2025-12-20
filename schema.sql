@@ -214,3 +214,18 @@ CREATE POLICY "System insert secure chats" ON public.secure_chat_messages
 -- 5. STORAGE BUCKET SETUP (For File Uploads)
 -- You must manually create a bucket named 'secure-files' in your Supabase Dashboard
 -- Go to Storage -> New Bucket -> Name: 'secure-files' -> Public: False
+
+-- Create table for Sandbox tracking
+CREATE TABLE IF NOT EXISTS public.sandbox_logs (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    persona_id text NOT NULL, -- e.g., 'downtime_mitigation'
+    user_message_length int,   -- Track engagement depth
+    created_at timestamp with time zone DEFAULT now()
+);
+
+-- Enable RLS (Internal only)
+ALTER TABLE public.sandbox_logs ENABLE ROW LEVEL SECURITY;
+
+-- Allow the Service Role (Admin App) to manage logs
+CREATE POLICY "Admin full access to logs" ON public.sandbox_logs
+    FOR ALL USING (true);

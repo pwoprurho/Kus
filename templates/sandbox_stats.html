@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Neural Analytics | Command Center{% endblock %}
+
+{% block content %}
+<style>
+    /* Admin HUD Overrides */
+    header, footer, #chat-widget-container { display: none !important; }
+    body { background: #050505; color: #e0e0e0; overflow-y: auto !important; }
+
+    .stats-wrapper {
+        max-width: 1200px;
+        margin: 60px auto;
+        padding: 20px;
+        position: relative;
+        z-index: 100;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-top: 40px;
+    }
+
+    .stat-card {
+        background: rgba(15, 15, 15, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 30px;
+        border-radius: 12px;
+        text-align: center;
+        transition: border-color 0.3s;
+    }
+
+    .stat-card:hover { border-color: #0072ff; }
+
+    .stat-value {
+        display: block;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #fff;
+        margin: 10px 0;
+    }
+
+    .stat-label {
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.8rem;
+    }
+
+    .back-nav {
+        display: inline-flex;
+        align-items: center;
+        color: #0072ff;
+        text-decoration: none;
+        margin-bottom: 20px;
+        font-size: 0.9rem;
+    }
+
+    .protocol-table {
+        width: 100%;
+        margin-top: 50px;
+        border-collapse: collapse;
+        background: rgba(10, 10, 10, 0.5);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .protocol-table th, .protocol-table td {
+        padding: 20px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .protocol-table th { color: #888; font-weight: 500; text-transform: uppercase; font-size: 0.75rem; }
+</style>
+
+<div class="stats-wrapper">
+    <a href="{{ url_for('admin.dashboard') }}" class="back-nav">
+        <i class="fas fa-arrow-left" style="margin-right: 8px;"></i> Back to Command Center
+    </a>
+
+    <header style="margin-bottom: 40px;">
+        <h1 style="font-family: 'Garamond', serif; font-size: 2.5rem;">Neural Engagement Telemetry</h1>
+        <p style="color: #666;">Real-time analysis of Sandbox protocol utilization.</p>
+    </header>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-label">Total Neural Inferences</span>
+            <span class="stat-value">{{ total_inferences }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Active Protocols</span>
+            <span class="stat-value">3</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">System Integrity</span>
+            <span class="stat-value" style="color: #00ff88;">NOMINAL</span>
+        </div>
+    </div>
+
+    <table class="protocol-table">
+        <thead>
+            <tr>
+                <th>Neural Protocol</th>
+                <th>Invocations</th>
+                <th>Avg. Complexity</th>
+                <th>Attachments</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in protocol_stats %}
+            <tr>
+                <td style="color: #fff; font-weight: 600;">{{ stat.persona_id.replace('_', ' ').title() }}</td>
+                <td>{{ stat.count }}</td>
+                <td>{{ stat.avg_length|round|int }} chars</td>
+                <td>{{ stat.attachment_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

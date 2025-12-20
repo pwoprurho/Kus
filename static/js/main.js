@@ -32,41 +32,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Toggle Window
     if (chatToggle && chatWindow) {
         chatToggle.addEventListener('click', () => {
-            const isOpen = chatWindow.classList.contains('open');
-            
+            const isOpen = chatWindow.classList.contains('active');
             if (isOpen) {
-                // CLOSING: Hide window and Reset Chat
-                chatWindow.classList.remove('open');
-                // Optional: Change icon back
-                chatToggle.innerHTML = '<i class="fas fa-comment-dots"></i>';
-                
-                // Reset the conversation for privacy/fresh context
-                setTimeout(resetChat, 300); // Small delay to wait for close animation
-                
+                chatWindow.classList.remove('active');
+                chatWindow.style.height = "0";
+                chatWindow.style.opacity = "0";
+                chatWindow.style.visibility = "hidden";
             } else {
-                // OPENING
-                chatWindow.classList.add('open');
-                chatToggle.innerHTML = '<i class="fas fa-times"></i>';
-                
-                if (chatInput) {
-                    setTimeout(() => chatInput.focus(), 100);
-                }
+                chatWindow.classList.add('active');
+                chatWindow.style.height = "480px";
+                chatWindow.style.opacity = "1";
+                chatWindow.style.visibility = "visible";
             }
         });
     }
 
     // 2. Append Message to UI
-    function appendMessage(sender, text) {
+    function appendMessage(role, text) {
         if (!chatMessages) return;
-        
-        const div = document.createElement('div');
-        div.className = `msg ${sender}`;
-        div.innerText = text;
-        
-        chatMessages.appendChild(div);
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `msg ${role}`;
+        msgDiv.innerText = text;
+        chatMessages.appendChild(msgDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        return div; 
     }
 
     // 3. Send Message to API
@@ -77,25 +65,23 @@ document.addEventListener('DOMContentLoaded', () => {
         appendMessage('user', text);
         chatInput.value = '';
 
-        // Add temporary loading indicator
+        // Show Loading
         const loadingDiv = document.createElement('div');
-        loadingDiv.className = 'msg bot';
-        loadingDiv.innerText = 'Analyzing...';
+        loadingDiv.className = 'msg bot loading';
+        loadingDiv.id = 'ai-loading';
+        loadingDiv.innerText = '...';
         chatMessages.appendChild(loadingDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
 
         try {
-            const response = await fetch('/chat', { 
+            const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: text })
             });
 
             const data = await response.json();
-            
-            // Remove loading message
             loadingDiv.remove();
-            
+
             if (data.response) {
                 appendMessage('bot', data.response);
             } else {

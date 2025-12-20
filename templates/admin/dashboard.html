@@ -4,246 +4,282 @@
 
 {% block content %}
 <style>
-    /* --- HYBRID OVERRIDES --- */
-    /* 1. Hide Public Elements defined in base.html so they don't overlap the Admin UI */
+    /* --- HUD OVERRIDES --- */
     header, footer, #chat-widget-container { display: none !important; }
-    
-    /* 2. Allow scrolling for admin content */
-    body { overflow-y: auto !important; height: auto !important; }
+    body { overflow-y: auto !important; height: auto !important; background: #050505; color: #e0e0e0; }
 
-    /* --- DASHBOARD UI LAYER --- */
     .command-center-wrapper {
         position: relative;
-        z-index: 100; /* Sits ABOVE the 3D Orbits */
+        z-index: 100;
         max-width: 1400px;
         margin: 0 auto;
         padding: 40px 20px;
         min-height: 100vh;
     }
 
-    /* Admin Header (Glass) */
+    /* Glass Header */
     .glass-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         background: rgba(10, 10, 10, 0.75);
         backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.1);
         padding: 20px 30px;
         border-radius: 12px;
         margin-bottom: 40px;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
     }
 
-    .glass-header h1 {
-        font-family: 'Garamond', serif;
-        font-size: 2rem;
-        margin: 0;
-        background: -webkit-linear-gradient(#fff, #999);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .admin-nav-links a {
-        color: #bbb;
-        margin-left: 20px;
-        text-decoration: none;
-        font-size: 0.9rem;
-        transition: color 0.3s;
-        font-family: 'Inter', sans-serif;
-    }
-    .admin-nav-links a:hover { color: #fff; }
-    .admin-nav-links .logout { color: #ff4444; }
-
-    /* Stats Cards (Glass) */
+    /* Key Cards */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 25px;
-        margin-bottom: 50px;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
     }
 
     .stat-card {
-        background: rgba(20, 20, 20, 0.65);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(20, 20, 20, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.05);
         padding: 25px;
-        border-radius: 10px;
-        transition: transform 0.3s, border-color 0.3s;
+        border-radius: 12px;
+        text-align: center;
+        transition: 0.3s;
     }
-    .stat-card:hover { transform: translateY(-5px); border-color: #0072ff; }
-    .stat-card h3 { color: #888; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 10px; font-family: 'Inter', sans-serif; letter-spacing: 1px; }
-    .stat-card .value { font-size: 2.5rem; color: #fff; font-weight: bold; font-family: 'Garamond', serif; }
+    .stat-card:hover { border-color: rgba(0, 114, 255, 0.3); background: rgba(20, 20, 20, 0.8); }
 
-    /* Tables (Glass) */
-    .table-container {
-        background: rgba(15, 15, 15, 0.85);
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+    .stat-value { font-size: 2rem; font-weight: bold; color: #fff; display: block; }
+    .stat-label { font-size: 0.7rem; color: #0072ff; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Panels & Tables */
+    .glass-panel {
+        background: rgba(15, 15, 15, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
         border-radius: 12px;
         padding: 30px;
-        margin-bottom: 50px;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        margin-bottom: 30px;
     }
 
-    .section-title {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding-bottom: 15px;
-    }
-    .section-title h2 { font-size: 1.5rem; margin: 0; color: #fff; }
+    .hud-label { font-size: 0.7rem; letter-spacing: 2px; color: #0072ff; text-transform: uppercase; margin-bottom: 20px; display: block; }
 
-    table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; padding: 15px; color: #aaa; border-bottom: 1px solid rgba(255,255,255,0.1); font-family: 'Inter', sans-serif; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
-    td { padding: 15px; color: #e0e0e0; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: 'Inter', sans-serif; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: rgba(255,255,255,0.02); }
-    
-    .btn-create { background: #0072ff; color: #fff; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: background 0.3s; }
-    .btn-create:hover { background: #005bb5; }
-    
-    .btn-action { color: #ccc; border: 1px solid #555; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; margin-right: 8px; text-decoration: none; transition: all 0.3s; }
+    .admin-table { width: 100%; border-collapse: collapse; color: #ccc; }
+    .admin-table th { text-align: left; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; color: #666; }
+    .admin-table td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.9rem; }
+
+    /* Buttons & Badges */
+    .btn-action {
+        padding: 6px 14px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        color: #eee;
+        text-decoration: none;
+        font-size: 0.75rem;
+        transition: 0.2s;
+        display: inline-block;
+        margin-right: 5px;
+        cursor: pointer;
+        background: transparent;
+    }
     .btn-action:hover { background: #fff; color: #000; border-color: #fff; }
+    
+    .badge {
+        background: rgba(0, 255, 136, 0.1);
+        color: #00ff88;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        border: 1px solid rgba(0, 255, 136, 0.2);
+    }
+
+    /* Pagination UI */
+    .pagination-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 15px;
+        margin-top: 20px;
+        font-size: 0.8rem;
+        color: #555;
+    }
 </style>
 
-<div class="command-center-wrapper fade-in">
+<div class="command-center-wrapper">
     
     <div class="glass-header">
         <div>
-            <h1>Command Center</h1>
-            <div style="font-size: 0.85rem; color: #666; font-family: 'Inter', sans-serif; margin-top: 5px;">
-                User: <span style="color: #ccc;">{{ current_user.full_name }}</span> | 
-                Role: <span style="color: #0072ff;">{{ current_user.role|upper }}</span>
-            </div>
+            <h1 style="margin:0; font-size: 1.5rem; letter-spacing: -1px; color: #fff;">COMMAND CENTER</h1>
+            <p style="margin:5px 0 0 0; font-size: 0.8rem; color: #555;">KUSMUS ARCHITECTURE | NEURAL CONTROL</p>
         </div>
-        <div class="admin-nav-links">
-            
-            <a href="{{ url_for('admin.live_chat') }}" 
-               style="color: #00ff88; font-weight: 700; margin-right: 20px; border: 1px solid #00ff88; padding: 8px 15px; border-radius: 4px;">
-               <i class="fas fa-headset"></i> Live Client Channels
-            </a>
-            
-            <a href="{{ url_for('public.home') }}" target="_blank"><i class="fas fa-external-link-alt"></i> View Live Site</a>
-            <a href="{{ url_for('auth.logout') }}" class="logout"><i class="fas fa-power-off"></i> Disconnect</a>
+        <div style="display: flex; gap: 15px;">
+            <a href="{{ url_for('admin.new_post') }}" class="btn-action" style="background:#0072ff; border:none; color:white; font-weight:bold;">+ NEW INSIGHT</a>
+            <a href="{{ url_for('auth.logout') }}" class="btn-action">LOGOUT</a>
         </div>
     </div>
 
     <div class="stats-grid">
         <div class="stat-card">
-            <h3>Active Leads</h3>
-            <div class="value">{{ audit_requests|length }}</div>
+            <span class="stat-value">{{ audit_requests|length }}</span>
+            <span class="stat-label">Priority Leads</span>
         </div>
         <div class="stat-card">
-            <h3>Intelligence Briefings</h3>
-            <div class="value">{{ draft_posts|length }}</div>
+            <span class="stat-value">{{ draft_posts|length }}</span>
+            <span class="stat-label">Total Insights</span>
         </div>
         <div class="stat-card">
-            <h3>System Status</h3>
-            <div class="value" style="color: #00ff41">NOMINAL</div>
+            <span class="stat-value" style="color: #00ff88;">{{ sandbox_count }}</span>
+            <span class="stat-label">Neural Sessions</span>
         </div>
     </div>
 
-    <div class="table-container">
-        <div class="section-title">
-            <h2>Audit Requests</h2>
+    <div class="glass-panel">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <span class="hud-label" style="color: #00ff88;">Neural Sandbox Telemetry</span>
+            <span style="font-size: 0.6rem; color: #444; font-family: monospace;">STATUS: STABLE</span>
         </div>
-        <table>
+        <table class="admin-table">
             <thead>
                 <tr>
-                    <th>Client Entity</th>
-                    <th>Contact Email</th>
-                    <th>Message / Challenge</th>
-                    <th>Date Received</th>
-                    <th>Actions</th>
+                    <th>Timestamp</th>
+                    <th>Protocol</th>
+                    <th>Engagement Depth</th>
+                    <th>Attachment</th>
                 </tr>
             </thead>
-            <tbody>
-                {% if audit_requests %}
-                    {% for req in audit_requests %}
+            <tbody id="sandbox-table-body">
+                {% if sandbox_logs %}
+                    {% for log in sandbox_logs %}
                     <tr>
-                        <td style="font-weight: bold; color: #fff;">{{ req.name }}</td>
-                        <td>{{ req.email }}</td>
-                        <td style="color: #aaa; max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            {{ req.message or 'N/A' }}
-                        </td>
-                        <td style="font-family: monospace;">{{ req.created_at.split('T')[0] if req.created_at else 'Unknown' }}</td>
-                        <td>
-                            <a href="{{ url_for('admin.view_lead', lead_id=req.id) }}" class="btn-action">Review</a>
-                            
-                            <a href="{{ url_for('admin.delete_lead', lead_id=req.id) }}" 
-                               class="btn-action" 
-                               style="border-color: #ff4444; color: #ff4444; margin-left: 5px;"
-                               onclick="return confirm('WARNING: Are you sure you want to delete this lead?')">
-                               &times;
-                            </a>
-                        </td>
+                        <td style="font-family: monospace; font-size: 0.8rem; color: #666;">{{ log.created_at }}</td>
+                        <td><span class="badge">{{ log.persona_id }}</span></td>
+                        <td>{{ log.user_message_length }} chars</td>
+                        <td><span style="color: {{ '#00ff88' if log.has_attachment else '#333' }};">{{ 'YES' if log.has_attachment else 'NO' }}</span></td>
                     </tr>
                     {% endfor %}
                 {% else %}
-                    <tr><td colspan="5" style="text-align: center; color: #777; padding: 30px;">No active leads found in the queue.</td></tr>
+                    <tr><td colspan="4" style="text-align: center; color: #444; padding: 40px;">No neural activity detected.</td></tr>
                 {% endif %}
             </tbody>
         </table>
+
+        <div class="pagination-wrapper">
+            <span>Showing page {{ current_page }} of {{ total_pages }}</span>
+            <div style="display: flex; gap: 5px;">
+                {% if current_page > 1 %}
+                <a href="{{ url_for('admin.dashboard', page=current_page-1) }}" class="btn-action">PREV</a>
+                {% endif %}
+                {% if current_page < total_pages %}
+                <a href="{{ url_for('admin.dashboard', page=current_page+1) }}" class="btn-action">NEXT</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
-    <div class="table-container">
-        <div class="section-title">
-            <h2>Insight Management</h2>
-            <a href="{{ url_for('admin.new_post') }}" class="btn-create">+ New Insight</a>
-        </div>
-        <table>
+    <div class="glass-panel">
+        <span class="hud-label">Insight Ecosystem (CMS)</span>
+        <table class="admin-table">
             <thead>
                 <tr>
                     <th>Status</th>
                     <th>Title</th>
-                    <th>Author</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% if draft_posts %}
-                    {% for post in draft_posts %}
-                    <tr>
-                        <td>
-                            {% if post.status == 'Published' %}
-                                <span style="color:#00ff41; font-weight: bold;">● Published</span>
-                            {% else %}
-                                <span style="color:#ffaa00; font-weight: bold;">● Draft</span>
-                            {% endif %}
-                        </td>
-                        <td style="color: #fff; font-weight: 500;">{{ post.title }}</td>
-                        <td>System AI</td>
-                        <td>
-                            <a href="{{ url_for('admin.edit_post', post_id=post.id) }}" class="btn-action">Edit</a>
-                            
-                            {% if post.status != 'Published' %}
-                            <a href="{{ url_for('admin.publish_post', post_id=post.id) }}" 
-                               class="btn-action" 
-                               style="border-color:#0072ff; color:#0072ff;" 
-                               onclick="return confirm('Ready to deploy this insight to the live site?')">
-                               Deploy
-                            </a>
-                            {% endif %}
+                {% for post in draft_posts %}
+                <tr>
+                    <td>
+                        <span class="badge" style="color: {{ '#0072ff' if post.status == 'Published' else '#ffaa00' }}; border-color: transparent; background: rgba(255,255,255,0.03);">
+                            {{ post.status }}
+                        </span>
+                    </td>
+                    <td style="color: #fff; font-weight: 500;">{{ post.title }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.edit_post', post_id=post.id) }}" class="btn-action">Edit</a>
+                        
+                        {% if post.status != 'Published' %}
+                        <a href="{{ url_for('admin.publish_post', post_id=post.id) }}" 
+                           class="btn-action" 
+                           style="border-color:#0072ff; color:#0072ff;"
+                           onclick="return confirm('Deploy this insight to live environment?')">Deploy</a>
+                        {% endif %}
 
-                            <a href="{{ url_for('admin.delete_post', post_id=post.id) }}" 
-                               class="btn-action" 
-                               style="border-color: #ff4444; color: #ff4444;"
-                               onclick="return confirm('WARNING: This action is irreversible.\n\nAre you sure you want to delete this insight?')">
-                               Delete
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr><td colspan="4" style="text-align: center; color: #777; padding: 30px;">No insights created yet.</td></tr>
-                {% endif %}
+                        <a href="{{ url_for('admin.delete_post', post_id=post.id) }}" 
+                           class="btn-action btn-delete" 
+                           style="border-color: #ff4444; color: #ff4444;"
+                           data-title="{{ post.title }}">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="glass-panel">
+        <span class="hud-label">Audit Requests (Leads)</span>
+        <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+            <input type="text" id="dashboard-search" placeholder="Filter records by name, title, or protocol..." 
+            style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 6px; color: #fff; width: 300px; outline: none;">
+        </div>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>Contact</th>
+                    <th>Preview</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in audit_requests %}
+                <tr>
+                    <td style="font-family: monospace; font-size: 0.8rem; color: #555;">{{ req.created_at.split('T')[0] }}</td>
+                    <td style="font-weight: bold; color: #fff;">{{ req.name }}</td>
+                    <td>{{ req.email }}</td>
+                    <td style="max-width: 300px; color: #888; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ req.decrypted_message }}
+                    </td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
 
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. DELETE CONFIRMATION
+        const deleteBtns = document.querySelectorAll('.btn-delete');
+        deleteBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const title = this.dataset.title;
+                if (!confirm(`CRITICAL: You are about to permanently delete "${title}". This cannot be undone. Continue?`)) {
+                    e.preventDefault();
+                } else {
+                    window.location.href = this.getAttribute('href');
+                }
+            });
+        });
+
+        // 2. SYSTEM PULSE (Visual heartbeat for telemetry)
+        const telemetryHeader = document.querySelector('.hud-label[style*="color: #00ff88"]');
+        if (telemetryHeader) {
+            setInterval(() => {
+                telemetryHeader.style.opacity = telemetryHeader.style.opacity === '0.6' ? '1' : '0.6';
+            }, 2000);
+        }
+
+        // 3. TABLE ROW HOVER EFFECT
+        const rows = document.querySelectorAll('.admin-table tr');
+        rows.forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.style.background = 'rgba(255, 255, 255, 0.02)';
+            });
+            row.addEventListener('mouseleave', () => {
+                row.style.background = 'transparent';
+            });
+        });
+    });
+</script>
 {% endblock %}
