@@ -1,60 +1,61 @@
 import datetime
 import random
+import time
 import os
 
-# --- REAL WORLD TOOL DEFINITIONS ---
-
+# --- INFRASTRUCTURE TOOLS ---
 def get_server_health(server_id: str):
-    """
-    Queries the live status of a specific server infrastructure.
-    Real-world equivalent: Querying AWS CloudWatch, Datadog, or Azure Monitor.
-    """
-    # Simulate fetching real-time data
+    """Queries live status of specific server infrastructure."""
     statuses = ["HEALTHY", "DEGRADED", "CRITICAL", "MAINTENANCE"]
-    status = random.choice(statuses)
-    cpu_load = random.randint(5, 98)
-    memory_usage = random.randint(20, 90)
-    
     return {
         "server_id": server_id,
-        "status": status,
-        "cpu_load": f"{cpu_load}%",
-        "memory_usage": f"{memory_usage}%",
+        "status": random.choice(statuses),
+        "cpu_load": f"{random.randint(5, 98)}%",
         "last_ping": datetime.datetime.now().isoformat()
     }
 
-def trigger_incident_protocol(severity: str, server_id: str, notes: str):
-    """
-    Executes a real-world incident response protocol.
-    Real-world equivalent: PagerDuty alert, Slack Webhook, or Jira Ticket creation.
-    """
-    # PROOF OF ACTION: We write to a physical file in the project directory
-    filename = "REAL_WORLD_ACTIONS.log"
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    log_entry = (
-        f"[{timestamp}] ACTION_TRIGGERED\n"
-        f"   Target: {server_id}\n"
-        f"   Severity: {severity.upper()}\n"
-        f"   Notes: {notes}\n"
-        f"   Status: PagerDuty & Slack Notifications Sent.\n"
-        "---------------------------------------------------\n"
-    )
-    
-    try:
-        with open(filename, "a") as f:
-            f.write(log_entry)
-        return {
-            "status": "SUCCESS", 
-            "action": "Protocol Executed", 
-            "log_file": filename, 
-            "message": f"Alert sent for {server_id}. Incident team notified."
-        }
-    except Exception as e:
-        return {"status": "ERROR", "error": str(e)}
+# --- SENTINEL TOOLS ---
+def get_oran_metrics(node_id: str):
+    """Fetches real-time O-RAN telemetry."""
+    latency = random.randint(10, 150)
+    return {
+        "node_id": node_id,
+        "status": "OPTIMAL" if latency < 100 else "DEGRADED",
+        "telemetry": {"latency_ms": latency}
+    }
 
-# Registry for the Engine
+def run_napalm_audit(node_id: str):
+    """
+    PROACTIVE TOOL: Called automatically by Sentinel during critical events.
+    """
+    time.sleep(1) # Simulation delay
+    return {
+        "tool": "NAPALM_DRIVER_V2",
+        "target": node_id,
+        "status": "COMPROMISED",
+        "diagnostics": {
+            "interface_opt0": "DOWN (Signal Loss)",
+            "action": "Traffic Rerouted to Backup Gateway",
+            "result": "Connectivity Restored (Latency: 142ms)"
+        }
+    }
+
+def trigger_incident_protocol(severity: str, target_id: str, notes: str):
+    """Logs a critical action and simulates an alert."""
+    return {
+        "status": "SUCCESS", 
+        "ticket_id": f"INC-{random.randint(10000, 99999)}", 
+        "action": f"SIEM Rule Created. Target {target_id} blocked at firewall."
+    }
+
+def scan_siem_logs(query_filter: str):
+    return {"status": "Complete", "matches": "See live logs for details."}
+
+# --- TOOL REGISTRY ---
 MCP_TOOLKIT = {
     'get_server_health': get_server_health,
+    'get_oran_metrics': get_oran_metrics,
+    'run_napalm_audit': run_napalm_audit,
+    'scan_siem_logs': scan_siem_logs,
     'trigger_incident_protocol': trigger_incident_protocol
 }

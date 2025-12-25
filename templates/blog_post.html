@@ -36,7 +36,7 @@
     /* Content Styling */
     .article-content {
         color: #d0d0d0;
-        font-family: 'Georgia', serif; /* Serif for better long-form reading */
+        font-family: 'Georgia', serif;
         font-size: 1.15rem;
         line-height: 1.8;
     }
@@ -76,7 +76,7 @@
     </div>
 
     <div class="article-content">
-        {{ post.content_html | safe }}
+        {{ post.content | safe }}
     </div>
 
     <a href="{{ url_for('public.blog') }}" class="back-link">&larr; Return to Intelligence Hub</a>

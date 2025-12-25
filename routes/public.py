@@ -11,7 +11,7 @@ from services.personas import MAIN_ASSISTANT
 public_bp = Blueprint('public', __name__)
 
 # =========================================================
-# === CORE PAGE ROUTES (Unchanged) ===
+# === CORE PAGE ROUTES ===
 # =========================================================
 
 @public_bp.route("/")
@@ -35,7 +35,7 @@ def chairman():
     return render_template("chairmans_mandate.html")
 
 # =========================================================
-# === BLOG / INSIGHTS (Unchanged) ===
+# === BLOG / INSIGHTS ===
 # =========================================================
 
 @public_bp.route("/blog")
@@ -44,6 +44,7 @@ def blog():
     posts = []
     if supabase_admin:
         try:
+            # Added 'id' to the select query to ensure links work
             response = supabase_admin.table('blog_posts')\
                 .select('id, title, summary, published_at')\
                 .eq('status', 'Published')\
@@ -58,9 +59,11 @@ def blog_post(post_id):
     from app import supabase_admin
     post = None
     try:
+        # Fetching by ID
         res = supabase_admin.table('blog_posts').select('*').eq('id', post_id).limit(1).execute()
         if res.data: post = res.data[0]
-    except: pass
+    except Exception as e: 
+        print(f"Post Detail Error: {e}")
     
     if post and post.get('status') == 'Published':
         return render_template("blog_post.html", post=post)
@@ -69,7 +72,7 @@ def blog_post(post_id):
         return redirect(url_for('public.blog'))
 
 # =========================================================
-# === STRATEGIC AUDIT (Unchanged Logic) ===
+# === STRATEGIC AUDIT ===
 # =========================================================
 @public_bp.route("/request-audit", methods=["GET", "POST"])
 def audit_request():
@@ -108,7 +111,7 @@ def audit_request():
     return render_template("request_audit.html")
 
 # =========================================================
-# === SECURE DASHBOARD (Now uses Core Security) ===
+# === SECURE DASHBOARD ===
 # =========================================================
 
 @public_bp.route("/secure-dashboard")
@@ -131,7 +134,6 @@ def client_sync_chat():
         
         for msg in messages:
             if msg.get('encrypted_content'):
-                # USING CORE DECRYPTION
                 msg['message'] = decrypt_text(msg['encrypted_content'])
                 del msg['encrypted_content']
             else:
@@ -177,7 +179,6 @@ def client_send_msg():
 
         final_message = message_text if message_text else "[FILE ATTACHMENT]"
         
-        # USING CORE ENCRYPTION
         encrypted_content = encrypt_text(final_message)
 
         supabase_admin.table('secure_chat_messages').insert({
@@ -194,7 +195,7 @@ def client_send_msg():
         return jsonify({'error': str(e)}), 500
 
 # =========================================================
-# === REFACTORED AI CHAT API (Using Core Engine) ===
+# === AI CHAT API ===
 # =========================================================
 
 @public_bp.route("/api/chat", methods=["POST"])
@@ -205,19 +206,14 @@ def chat_ai_assistant():
     if not user_message: return jsonify({'error': 'No message provided'}), 400
     
     try:
-        # 1. Initialize Engine with MAIN Persona
         engine = KusmusAIEngine(
             system_instruction=MAIN_ASSISTANT['instruction'],
             model_name=MAIN_ASSISTANT['model']
         )
         
-        # 2. Retrieve History
         raw_history = session.get('chat_history', [])
-
-        # 3. Generate Response
         response_text = engine.generate_response(user_message, history=raw_history)
 
-        # 4. Save History (Standard format)
         raw_history.append({"role": "user", "parts": [user_message]})
         raw_history.append({"role": "model", "parts": [response_text]})
         session['chat_history'] = raw_history

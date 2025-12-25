@@ -28,6 +28,45 @@
         font-size: 0.9rem;
     }
 
+    /* SEARCH STYLES */
+    .search-container {
+        max-width: 600px;
+        margin: 0 auto 40px;
+        padding: 0 20px;
+        position: relative;
+        z-index: 20;
+    }
+
+    .search-wrapper {
+        position: relative;
+    }
+
+    .search-wrapper i {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #0072ff;
+    }
+
+    #blog-search {
+        width: 100%;
+        background: rgba(15, 15, 15, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 15px 15px 15px 50px;
+        border-radius: 30px;
+        color: #fff;
+        outline: none;
+        backdrop-filter: blur(10px);
+        font-family: 'Inter', sans-serif;
+        transition: 0.3s;
+    }
+
+    #blog-search:focus {
+        border-color: #0072ff;
+        box-shadow: 0 0 20px rgba(0, 114, 255, 0.2);
+    }
+
     .blog-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -99,11 +138,26 @@
         color: #fff;
         border-bottom-color: #fff;
     }
+    
+    #no-results {
+        display: none;
+        grid-column: 1 / -1;
+        text-align: center;
+        color: #666;
+        padding: 40px;
+    }
 </style>
 
 <div class="blog-header fade-in">
     <h1>Engineering Certainty</h1>
     <p>Strategic Intelligence & Technical Briefings</p>
+</div>
+
+<div class="search-container fade-in">
+    <div class="search-wrapper">
+        <i class="fas fa-search"></i>
+        <input type="text" id="blog-search" placeholder="Search briefings...">
+    </div>
 </div>
 
 <div class="blog-grid fade-in">
@@ -118,6 +172,7 @@
             </div>
         </div>
         {% endfor %}
+        <div id="no-results">No briefings match your query.</div>
     {% else %}
         <div style="grid-column: 1/-1; text-align: center; color: #666; padding: 50px;">
             <h3>System Standby</h3>
@@ -125,4 +180,32 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('blog-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const cards = document.querySelectorAll('.blog-card');
+                let hasVisible = false;
+
+                cards.forEach(card => {
+                    const title = card.querySelector('.card-title').innerText.toLowerCase();
+                    const summary = card.querySelector('.card-summary').innerText.toLowerCase();
+                    
+                    if (title.includes(searchTerm) || summary.includes(searchTerm)) {
+                        card.style.display = 'flex';
+                        hasVisible = true;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                const noRes = document.getElementById('no-results');
+                if (noRes) noRes.style.display = hasVisible ? 'none' : 'block';
+            });
+        }
+    });
+</script>
 {% endblock %}

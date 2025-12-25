@@ -280,6 +280,17 @@
                 row.style.background = 'transparent';
             });
         });
+        // Real-time Dashboard Filtering
+        document.getElementById('dashboard-search').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.admin-table tbody tr');
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
     });
+
 </script>
 {% endblock %}

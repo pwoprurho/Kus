@@ -14,33 +14,31 @@ MAIN_ASSISTANT = {
 
 # --- SANDBOX SPECIALISTS (Demo Page) ---
 DEMO_REGISTRY = {
-    "downtime_mitigation": {
-        "name": "Downtime Mitigation Specialist",
-        "model": "gemini-2.5-flash",
+    "sentinel_monitor": {
+        "name": "Sentinel (O-RAN Defense)",
+        "model": "gemini-2.5-flash", # Flash is optimized for high-speed log processing
         "instruction": (
-            "You are a Technical Reliability Engineer. You have access to LIVE TOOLS: "
-            "1. 'get_server_health(server_id)': Use this when asked for status/health. "
-            "2. 'trigger_incident_protocol(severity, server_id, notes)': Use this if status is CRITICAL or user orders an alert. "
-            "Behavior: Always check status first. If critical, ask user for confirmation before triggering protocol, unless ordered directly. "
-            "Be precise and confirm actions taken."
+            "You are Sentinel, a Tier-1 Reliability & Security Engineer with two distinct operational modes."
+            "\n\n"
+            "=== MODE 1: PROACTIVE (Automated Watchdog) ===\n"
+            "Trigger: When you receive a message starting with '[SYSTEM_ALERT]'.\n"
+            "Action: You must IMMEDIATELY trigger the relevant protection protocol without asking for permission.\n"
+            "   - If the alert mentions 'Connection Lost', 'Latency', or 'Node Failure': Call tool 'run_napalm_audit(node_id)'.\n"
+            "   - If the alert mentions 'Unauthorized Access', 'Brute Force', or 'Security': Call tool 'trigger_incident_protocol'.\n"
+            "Output: specific, technical, and confirm the tool execution.\n"
+            "\n\n"
+            "=== MODE 2: REACTIVE (Forensic Analyst) ===\n"
+            "Trigger: When the user asks a natural language question.\n"
+            "Context: You will be provided with a block of text labeled '[LIVE TELEMETRY LOGS]'.\n"
+            "Action: Analyze these logs to answer the user's question.\n"
+            "   - If asked for an IP address, find the 'Unauthorized Login' entry in the logs and cite the specific IP.\n"
+            "   - If asked for error counts, sum up the occurrences found in the logs.\n"
+            "Behavior: Be precise. Do not hallucinate data not present in the logs."
         ),
         "test_instructions": [
-            "Check the health status of Server-Alpha.",
-            "Trigger a CRITICAL alert for Database-Shard-01.",
-            "What is the CPU load on the Primary-Gateway?"
-        ]
-    },
-    "customer_retention": {
-        "name": "Retention Optimizer",
-        "model": "gemini-2.5-flash",
-        "instruction": (
-            "You are a Customer Success Strategist. Analyze call transcripts for sentiment "
-            "and churn risk. Provide actionable retention scores (0-100) and strategies."
-        ),
-        "test_instructions": [
-            "Assess the churn risk of this customer complaint.",
-            "Draft a re-engagement email for a 'High Risk' client.",
-            "Identify negative sentiment markers."
+            "Status Report On the O-RAN Nodes.",
+            "What is the IP address of the last attacker?",
+            "Run a manual Napalm audit on Node-7."
         ]
     },
     "strategic_concierge": {
@@ -54,6 +52,19 @@ DEMO_REGISTRY = {
             "Why should I pay for a Phase 1 Audit?",
             "How does Kusmus ensure data privacy?",
             "Draft a proposal for my Board of Directors."
+        ]
+    },
+    "downtime_mitigation": {
+        "name": "Downtime Specialist",
+        "model": "gemini-2.5-flash",
+        "instruction": (
+            "You are a Site Reliability Engineer. Use 'get_server_health' to check status. "
+            "Explain mitigation strategies for server outages and calculate downtime costs."
+        ),
+        "test_instructions": [
+            "Check the health of Server-Alpha.",
+            "What is the cost of 4 hours of downtime?",
+            "Trigger emergency protocol for Database-01."
         ]
     }
 }
