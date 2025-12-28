@@ -1,0 +1,70 @@
+Project Tree
+
+(root):
+- .gitignore
+- app.py
+- db.py
+- models.py
+- requirements.txt
+- schema.sql
+- supa_addmin.py
+- test_gemini.py
+- utils.py
+
+core/:
+- __init__.py
+- engine.py
+- security.py
+
+routes/:
+- admin.py
+- auth.py
+- init.py
+- public.py
+- sandbox.py
+
+services/:
+- mcp_tools.py
+- personas.py
+- vanguard.py
+
+static/:
+  css/
+    - style.css
+  js/
+    - main.js
+  images/
+    - pic01.jpg
+    - advert1.mp4
+    - advert-poster.png
+
+templates/:
+- 403.html
+- 404.html
+- 500.html
+- base.html
+- blog.html
+- blog_post.html
+- chairmans_mandate.html
+- demo_mobile.html
+- index.html
+- method.html
+- our_team.html
+- request_audit.html
+- sandbox.html
+- sandbox_stats.html
+- solutions.html
+
+templates/client/:
+- client_access.html
+- client_dashboard.html
+- client_setup.html
+
+templates/admin/:
+- admin_base.html
+- dashboard.html
+- delete_post.html
+- live_chat.html
+- login.html
+- new_post.html
+- view_lead.html

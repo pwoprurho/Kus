@@ -1,10 +1,12 @@
+# routes/sandbox.py
 import json
 import os
 from flask import Blueprint, request, jsonify, session
 from core.engine import KusmusAIEngine
+from core.security import sign_forensic_trace # NEW
 from services.personas import DEMO_REGISTRY
 from services.vanguard import calculate_vanguard_score, get_lead_tier
-from services.mcp_tools import MCP_TOOLKIT  # NEW: Import Toolkit
+from services.mcp_tools import MCP_TOOLKIT
 
 sandbox_bp = Blueprint('sandbox', __name__)
 
@@ -15,14 +17,17 @@ def sandbox_chat():
     # 1. DATA EXTRACTION
     if request.content_type and 'application/json' in request.content_type:
         data = request.get_json()
-        demo_id = data.get('demo_id', 'strategic_concierge')
+        demo_id = data.get('demo_id', 'sentinel_monitor')
         user_message = data.get('message', '').strip()
         history_raw = data.get('history', [])
+        context_logs = data.get('context_logs', []) # NEW: Get logs from frontend
         uploaded_file = None
     else:
-        demo_id = request.form.get('demo_id', 'strategic_concierge')
+        # Fallback for form data
+        demo_id = request.form.get('demo_id', 'sentinel_monitor')
         user_message = request.form.get('message', '').strip()
         history_raw = request.form.get('history', '[]')
+        context_logs = []
         uploaded_file = request.files.get('file')
 
     try:
@@ -48,40 +53,52 @@ def sandbox_chat():
     if not persona:
         return jsonify({'error': 'Neural protocol undefined.'}), 404
 
-    # 5. TELEMETRY LOGGING
+    # 5. EXECUTION WITH THINKING ENGINE
     try:
+        engine = KusmusAIEngine(
+            system_instruction=persona['instruction'],
+            model_name=persona['model'] # Ensure this is gemini-2.0-flash-thinking-exp in personas.py
+        )
+        
+        # Pass logs and tools to the new engine
+        response_text, thought_trace = engine.generate_response(
+            user_message, 
+            history=history,
+            context_logs=context_logs,
+            tools=MCP_TOOLKIT 
+        )
+
+        # 6. SIGNATURE & INTERCEPT
+        trace_sig, _ = sign_forensic_trace(thought_trace, user_message)
+
+        # Premium Intercept: If they are a 'Whale' and we fixed a problem, sell the audit.
+        if new_score > 75 and "SUCCESS" in response_text:
+            response_text += (
+                "\n\n[SYSTEM_NOTE]: Mitigation successful. "
+                "I have generated a signed forensic trace of this incident. "
+                "I recommend a Phase 1 Formal Audit to secure the logs. "
+                "Shall I generate the request?"
+            )
+        
+        # 7. LOGGING (Supabase)
         if supabase_admin:
             supabase_admin.table('sandbox_logs').insert({
                 'persona_id': demo_id,
                 'user_message_length': len(user_message),
-                'has_attachment': bool(uploaded_file),
                 'vanguard_score': new_score,
-                'lead_tier': lead_tier
+                'lead_tier': lead_tier,
+                'trace_signature': trace_sig
             }).execute()
-    except Exception as e:
-        print(f"Telemetry Error: {e}")
-
-    # 6. EXECUTION
-    try:
-        engine = KusmusAIEngine(
-            system_instruction=persona['instruction'],
-            model_name=persona['model']
-        )
-        
-        # FIX: Pass the MCP_TOOLKIT to the engine so it can execute tools
-        response_text, thought_trace = engine.generate_response(
-            user_message, 
-            history=history,
-            tools=MCP_TOOLKIT 
-        )
         
         return jsonify({
             'response': response_text,
             'thought_trace': thought_trace,
+            'trace_signature': trace_sig,
             'v_score': new_score,
             'tier': lead_tier,
             'status': 'linked'
         })
+
     except Exception as e:
         print(f"Engine Error: {e}")
         return jsonify({'error': "Neural link timeout."}), 500

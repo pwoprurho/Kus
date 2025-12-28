@@ -1,200 +1,278 @@
 {% extends 'base.html' %}
-{% block title %}Sentinel | Security Posture Sandbox{% endblock %}
+{% block title %}Sentinel | Converged Defense Sandbox{% endblock %}
 
 {% block content %}
 <style>
     /* --- HUD & LAYOUT --- */
     header, footer, #chat-widget-container { display: none !important; }
-    body { background-color: #050505; color: #e0e0e0; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; margin: 0; }
+    body { background-color: #000; color: #e0e0e0; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; margin: 0; }
 
-    /* --- THE 3D ORBITAL BACKGROUND --- */
+    /* --- 3D ORBITAL BACKGROUND --- */
     .orbit-container {
         position: absolute; top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        width: 600px; height: 600px;
-        pointer-events: none; z-index: 1; opacity: 0.12;
+        transform: translate(-50%, -50%) perspective(1200px);
+        width: 80vh; height: 80vh; 
+        pointer-events: none; z-index: 1; opacity: 0.25; 
     }
     .orbit-ring {
-        position: absolute; border: 1px solid #0072ff;
+        position: absolute; border: 1px solid rgba(0, 114, 255, 0.4);
         border-radius: 50%; width: 100%; height: 100%;
-        animation: orbit 30s linear infinite;
         transform-style: preserve-3d;
+        box-shadow: 0 0 20px rgba(0, 114, 255, 0.1);
     }
-    @keyframes orbit { from { transform: rotateX(75deg) rotateZ(0deg); } to { transform: rotateX(75deg) rotateZ(360deg); } }
+    .ring-1 { animation: orbit1 25s linear infinite; }
+    .ring-2 { animation: orbit2 35s linear infinite; width: 80%; height: 80%; top: 10%; left: 10%; border-color: rgba(0, 255, 136, 0.2); }
+    .ring-3 { animation: orbit3 30s linear infinite reverse; width: 60%; height: 60%; top: 20%; left: 20%; border-color: rgba(255, 255, 255, 0.1); }
 
+    @keyframes orbit1 { from { transform: rotateX(65deg) rotateZ(0deg); } to { transform: rotateX(65deg) rotateZ(360deg); } }
+    @keyframes orbit2 { from { transform: rotateY(65deg) rotateZ(0deg); } to { transform: rotateY(65deg) rotateZ(360deg); } }
+    @keyframes orbit3 { from { transform: rotateX(45deg) rotateY(45deg) rotateZ(0deg); } to { transform: rotateX(45deg) rotateY(45deg) rotateZ(360deg); } }
+
+    /* --- GRID SYSTEM --- */
     .sandbox-container {
         position: relative; z-index: 10;
-        display: grid; grid-template-columns: 280px 1fr 350px; 
+        display: grid; grid-template-columns: 320px 1fr 380px; 
         height: 100vh; width: 100vw;
     }
 
-    /* --- SIDEBARS --- */
-    .sidebar-left, .sidebar-right {
-        background: rgba(10, 10, 10, 0.98);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        padding: 40px 20px;
+    .glass-panel {
+        background: rgba(5, 5, 5, 0.95);
+        backdrop-filter: blur(20px);
         display: flex; flex-direction: column;
-        z-index: 20;
+        border-right: 1px solid #111;
     }
 
-    /* --- TERMINAL & SCROLLING --- */
-    .main-terminal { display: flex; flex-direction: column; position: relative; background: #000; height: 100vh; }
-    #chat-container {
-        flex-grow: 1; overflow-y: auto;
-        padding: 60px 30px 180px;
-        display: flex; flex-direction: column; gap: 15px;
+    /* --- SIDEBAR LEFT --- */
+    .sidebar-left { padding: 40px 25px; }
+    .btn-back {
+        display: flex; align-items: center; gap: 10px;
+        color: #555; text-decoration: none; font-size: 0.7rem; 
+        letter-spacing: 1.5px; margin-bottom: 50px; text-transform: uppercase;
+    }
+    .btn-back:hover { color: #0072ff; }
+
+    .stat-box {
+        border: 1px solid #ffffff11; border-radius: 4px;
+        padding: 20px; margin-bottom: 20px; background: rgba(255, 255, 255, 0.02);
+    }
+    .stat-label { font-size: 0.6rem; color: #0072ff; letter-spacing: 1px; margin-bottom: 10px; font-weight: bold; }
+    .stat-value { font-size: 2.2rem; font-weight: 700; color: #fff; }
+
+    /* MOOD TOGGLE */
+    .mood-control { margin-top: auto; padding-bottom: 20px; }
+    .mood-select {
+        width: 100%; background: #000; color: #fff; border: 1px solid #222;
+        padding: 12px; border-radius: 4px; font-size: 0.8rem; outline: none; cursor: pointer;
+    }
+
+    /* --- CENTER: INDEPENDENT SCROLLING --- */
+    .main-terminal { position: relative; display: flex; flex-direction: column; background: transparent; overflow: hidden; }
+    #chat-container { 
+        flex-grow: 1; 
+        overflow-y: auto; /* ENABLED SCROLLING */
+        padding: 60px 60px 180px; 
+        display: flex; flex-direction: column; gap: 20px; 
         scroll-behavior: smooth;
     }
-    #chat-container::-webkit-scrollbar { width: 3px; }
-    #chat-container::-webkit-scrollbar-thumb { background: #0072ff; }
-
-    /* --- RAISED INPUT (8% Bottom) --- */
-    .input-wrapper { position: absolute; bottom: 24%; width: 90%; left: 5%; z-index: 50; }
-    .terminal-input-group {
-        background: #111; border: 1px solid #333;
-        padding: 12px 20px; border-radius: 8px;
-        display: flex; align-items: center; gap: 12px;
-    }
-    .terminal-input-group input { flex-grow: 1; background: transparent; border: none; color: white; outline: none; }
-
-    /* --- STAT CARDS --- */
-    .stat-card { background: #0a0a0a; border: 1px solid #222; padding: 15px; border-radius: 4px; margin-bottom: 10px; }
-    .vanguard-label { font-size: 0.6rem; color: #0072ff; letter-spacing: 1px; margin-bottom: 5px; }
-    .vanguard-value { font-size: 1.8rem; font-weight: bold; color: #fff; }
     
-    #activity-log { font-family: monospace; font-size: 0.7rem; color: #444; height: 300px; overflow: hidden; }
-    
-    .system-trigger-bubble {
-        align-self: center; background: rgba(255, 0, 0, 0.05); border: 1px solid #ff4444;
-        color: #ff4444; padding: 15px; font-family: monospace; font-size: 0.8rem; width: 90%;
+    .bubble { max-width: 85%; padding: 18px 22px; border-radius: 4px; font-size: 0.9rem; line-height: 1.6; }
+    .ai-bubble { align-self: flex-start; background: #0a0a0a; border: 1px solid #222; color: #ccc; border-left: 4px solid #0072ff; }
+    .user-bubble { align-self: flex-end; background: #0072ff; color: #fff; }
+    .system-trigger-bubble { 
+        align-self: center; width: 100%; background: rgba(0, 255, 136, 0.02); 
+        border: 1px solid #00ff8866; color: #00ff88; font-family: monospace; padding: 25px;
     }
-    .ai-bubble { align-self: flex-start; background: #111; border-left: 3px solid #0072ff; padding: 15px; max-width: 80%; }
-    .user-bubble { align-self: flex-end; background: #0072ff; color: white; padding: 12px; border-radius: 8px; }
+
+    .input-wrapper {
+        position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%);
+        width: 85%; background: #080808; border: 1px solid #222;
+        border-radius: 8px; padding: 15px 25px; display: flex; align-items: center; gap: 15px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+    }
+    .input-wrapper input { flex: 1; background: transparent; border: none; color: #fff; outline: none; font-size: 0.95rem; }
+
+    /* --- SIDEBAR RIGHT: INDEPENDENT SCROLLING --- */
+    .sidebar-right { padding: 40px 25px; border-left: 1px solid #111; overflow: hidden; }
+    #activity-log { 
+        font-family: 'Courier New', monospace; font-size: 0.7rem; color: #444; 
+        overflow-y: auto; /* ENABLED SCROLLING */
+        height: 100%; display: flex; flex-direction: column-reverse; 
+    }
+
+    /* SCROLLBAR AESTHETICS */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #0072ff; border-radius: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+
+    /* AUDIT MODAL */
+    #audit-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 1000;
+        align-items: center; justify-content: center;
+    }
 </style>
 
-<div class="orbit-container"><div class="orbit-ring"></div><div class="orbit-ring"></div></div>
+<div class="orbit-container">
+    <div class="orbit-ring ring-1"></div>
+    <div class="orbit-ring ring-2"></div>
+    <div class="orbit-ring ring-3"></div>
+</div>
+
+<div id="audit-overlay">
+    <div class="stat-box" style="max-width: 400px; text-align: center; border: 1px solid #222; padding: 40px;">
+        <h3 style="color: white; margin-bottom: 15px;">TERMINATE SESSION?</h3>
+        <p style="color: #666; font-size: 0.8rem; margin-bottom: 30px;">Purging telemetry buffer. Would you like to request a Phase 1 Audit report before redirecting?</p>
+        <div style="display: flex; gap: 10px;">
+            <a href="/request-audit" style="flex:1; background:#0072ff; color:white; padding:12px; text-decoration:none; font-size:0.7rem; border-radius:4px; font-weight:bold;">GET AUDIT</a>
+            <a href="/" style="flex:1; border:1px solid #333; color:#888; padding:12px; text-decoration:none; font-size:0.7rem; border-radius:4px;">DISCARD & EXIT</a>
+        </div>
+    </div>
+</div>
 
 <div class="sandbox-container">
-    <aside class="sidebar-left">
-        <div class="stat-card">
-            <div class="vanguard-label">VANGUARD SECURITY SCORE</div>
-            <div id="v-score-val" class="vanguard-value">100</div>
-            <div id="v-status" style="font-size: 0.6rem; color: #00ff88; margin-top: 5px;">OPTIMAL DEFENSE</div>
+    <aside class="sidebar-left glass-panel">
+        <a href="javascript:void(0)" onclick="document.getElementById('audit-overlay').style.display='flex'" class="btn-back">
+            <i class="fas fa-chevron-left"></i> Return to Command
+        </a>
+        
+        <div class="stat-box">
+            <div class="stat-label">VANGUARD SCORE</div>
+            <div class="stat-value" id="v-score">100</div>
         </div>
 
-        <div class="stat-card">
-            <div class="vanguard-label">NODE LATENCY</div>
-            <div id="latency-val" style="font-size: 1.2rem; font-weight: bold; color: #00ff88;">12ms</div>
+        <div class="stat-box">
+            <div class="stat-label">AVG LATENCY</div>
+            <div class="stat-value" id="latency-avg">--ms</div>
         </div>
 
-        <span style="font-size:0.6rem; color:#666; margin-top: 20px;">MODE SELECT</span>
-        <select id="mood" onchange="currentMood = this.value" style="background:#000; color:white; border:1px solid #333; padding:8px; margin-top:5px; font-size:0.7rem;">
-            <option value="proactive">PROACTIVE (Auto-Neutralize)</option>
-            <option value="reactive">REACTIVE (Manual Only)</option>
-        </select>
+        <div class="mood-control">
+            <label style="font-size:0.6rem; color:#444; margin-bottom:20%; display:block; letter-spacing:1px;">OPERATIONAL MODE</label>
+            <select class="mood-select" id="mood-selector" onchange="currentMood = this.value">
+                <option value="reactive">REACTIVE (Manual Approval)</option>
+                <option value="proactive">PROACTIVE (Autonomous)</option>
+            </select>
+        </div>
     </aside>
 
     <main class="main-terminal">
         <div id="chat-container">
-            <div class="ai-bubble">Sentinel Defense Systems Online. Vanguard monitoring active.</div>
-        </div>
-        <div class="input-wrapper">
-            <div class="terminal-input-group">
-                <input type="text" id="sandbox-input" placeholder="Execute protocol..." onkeypress="if(event.key==='Enter') sendDirective()">
-                <button onclick="sendDirective()" style="background:none; border:none; color:#0072ff; cursor:pointer;"><i class="fas fa-bolt"></i></button>
+            <div class="bubble ai-bubble">
+                <strong>SENTINEL OS v4.2</strong><br>
+                Neural link established. Monitoring O-RAN signals and forensic telemetry.
             </div>
+        </div>
+        
+        <div class="input-wrapper">
+            <input type="text" id="sandbox-input" placeholder="Initiate directive..." onkeypress="if(event.key==='Enter') sendDirective()">
+            <i class="fas fa-shield-alt"></i>
         </div>
     </main>
 
-    <aside class="sidebar-right">
-        <span style="font-size:0.6rem; color:#0072ff; letter-spacing:2px;">THREAT TELEMETRY</span>
-        <div id="activity-log" style="margin-top:15px;"></div>
+    <aside class="sidebar-right glass-panel">
+        <div style="font-size: 0.6rem; color: #0072ff; letter-spacing: 2px; margin-bottom: 20px;">LIVE TELEMETRY FEED</div>
+        <div id="activity-log"></div>
     </aside>
 </div>
 
 <script>
-    const chatContainer = document.getElementById('chat-container');
-    const logContainer = document.getElementById('activity-log');
-    let currentMood = 'proactive';
-    let lock = false;
+    let currentMood = 'reactive';
+    let autoResponseLock = false;
+    let logBuffer = [];
+    let chatHistory = [];
     let vanguardScore = 100;
-
-    function updateVanguard(points) {
-        vanguardScore = Math.max(10, Math.min(100, vanguardScore + points));
-        const valDisplay = document.getElementById('v-score-val');
-        const statusDisplay = document.getElementById('v-status');
-        valDisplay.innerText = vanguardScore;
-
-        if (vanguardScore >= 80) { valDisplay.style.color = "#00ff88"; statusDisplay.innerText = "EXCELLENT PROTECTION"; }
-        else if (vanguardScore >= 50) { valDisplay.style.color = "#ffcc00"; statusDisplay.innerText = "ATTACKED: DEFENSE HOLDING"; }
-        else { valDisplay.style.color = "#ff4444"; statusDisplay.innerText = "SYSTEM COMPROMISED"; }
-    }
+    let latencyBuffer = [];
 
     function logInternal(msg, isCrit = false) {
         const entry = document.createElement('div');
-        entry.innerHTML = `> [${new Date().toLocaleTimeString()}] ${msg}`;
+        const time = new Date().toLocaleTimeString([], {hour12:false});
+        entry.style.marginBottom = "8px";
+        entry.innerHTML = `<span style="opacity:0.3">[${time}]</span> ${msg}`;
+        
         if (isCrit) {
             entry.style.color = "#ff4444";
-            updateVanguard(-15); // Drop score on attack
+            vanguardScore = Math.max(20, vanguardScore - 10);
+            document.getElementById('v-score').innerText = vanguardScore;
+            triggerAlertUI(msg);
         }
-        logContainer.prepend(entry);
 
-        if (isCrit && !lock) {
-            lock = true;
-            const reason = msg.includes("503") ? "O-RAN Signal Injection" : "Brute Force Attempt";
-            
-            if (currentMood === 'proactive') {
-                appendMessage('system-trigger', `<strong>VANGUARD ALERT:</strong> ${reason} identified.<br>REASON: Packet anomaly detected on Node-7.<br>ACTION: Engaging Napalm-Auto-Remediation.`);
-                setTimeout(() => {
-                    sendDirective(`[SYSTEM_ALERT] ${msg}. Automated fix.`, true);
-                    updateVanguard(10); // Recovery points for fixing
-                }, 1500);
-            } else {
-                appendMessage('system-trigger', `<strong>VANGUARD ALERT:</strong> ${reason} identified.<br>REASON: Signature match on unauthorized IP.<br>STATUS: Awaiting operator intervention.`);
-                lock = false;
-            }
+        document.getElementById('activity-log').prepend(entry);
+        logBuffer.unshift(`[${time}] ${msg}`);
+        if (logBuffer.length > 20) logBuffer.pop();
+    }
+
+    function triggerAlertUI(msg) {
+        if (autoResponseLock) return;
+        
+        appendMessage('system-trigger', `
+            <strong>DETECTION:</strong> Critical O-RAN Failure<br>
+            <strong>STATUS:</strong> ${currentMood === 'proactive' ? 'Executing Autonomous Remediation...' : 'Awaiting manual directive.'}
+        `);
+
+        if (currentMood === 'proactive') {
+            sendDirective(`[SYSTEM_ALERT] ${msg}`, true);
         }
     }
 
-    // Telemetry Cycle
-    setInterval(() => {
-        const lat = Math.floor(Math.random() * 150);
-        document.getElementById('latency-val').innerText = `${lat}ms`;
-        document.getElementById('latency-val').style.color = lat > 100 ? "#ff4444" : "#00ff88";
-
-        const normal = ["Heartbeat: OK", "SIEM: Stable", "Port 80: Clear"];
-        if (Math.random() > 0.8) {
-            logInternal("CRITICAL: Node-7 Connection Drop (503)", true);
-        } else {
-            logInternal(normal[Math.floor(Math.random()*normal.length)]);
-        }
-    }, 7000);
-
+    // CONTEXT INJECTION LOGIC
     async function sendDirective(customMsg = null, isAuto = false) {
         const input = document.getElementById('sandbox-input');
-        const msg = customMsg || input.value.trim();
-        if (!msg) return;
-        if (!isAuto) appendMessage('user', msg);
-        input.value = '';
+        const userMsg = customMsg || input.value.trim();
+        if (!userMsg) return;
+
+        if (!isAuto) {
+            appendMessage('user', userMsg);
+            input.value = '';
+        }
+        
+        autoResponseLock = true; 
+
+        const liveContext = logBuffer.join('\n');
+        const fullPrompt = `[LIVE TELEMETRY LOGS]:\n${liveContext}\n\n[USER INSTRUCTION]:\n${userMsg}`;
+
+        const formData = new FormData();
+        formData.append('demo_id', 'sentinel_monitor');
+        formData.append('message', fullPrompt);
+        formData.append('history', JSON.stringify(chatHistory));
 
         try {
-            const res = await fetch('/api/sandbox/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ demo_id: 'sentinel_monitor', message: msg, history: [] })
-            });
+            const res = await fetch('/api/sandbox/chat', { method: 'POST', body: formData });
             const data = await res.json();
-            if (data.response) appendMessage('ai', data.response);
-        } catch (e) { console.error(e); }
-        if (isAuto) lock = false;
+            
+            if (data.response) {
+                appendMessage('ai', data.response);
+                chatHistory.push({role: "user", parts: [userMsg]}); 
+                chatHistory.push({role: "model", parts: [data.response]});
+                if (isAuto) {
+                    vanguardScore = Math.min(100, vanguardScore + 15);
+                    document.getElementById('v-score').innerText = vanguardScore;
+                }
+            }
+            autoResponseLock = false;
+        } catch (e) {
+            console.error(e);
+            autoResponseLock = false;
+        }
     }
 
-    function appendMessage(role, text) {
+    function appendMessage(role, html) {
         const div = document.createElement('div');
-        div.className = `bubble ${role}-bubble ${role === 'system-trigger' ? 'system-trigger-bubble' : ''}`;
-        div.innerHTML = text.replace(/\n/g, '<br>');
-        chatContainer.appendChild(div);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+        div.className = `bubble ${role === 'user' ? 'user-bubble' : (role === 'system-trigger' ? 'system-trigger-bubble' : 'ai-bubble')}`;
+        div.innerHTML = html;
+        const container = document.getElementById('chat-container');
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
     }
+
+    // Simulation
+    setInterval(() => {
+        const lat = Math.floor(Math.random() * 140);
+        document.getElementById('latency-avg').innerText = lat + "ms";
+        
+        if (Math.random() > 0.94) {
+            logInternal("CRITICAL: O-RAN Node-7 Signal Loss (503)", true);
+        } else {
+            logInternal("SRE: Heartbeat Node-Alpha OK");
+        }
+    }, 4500);
 </script>
 {% endblock %}
