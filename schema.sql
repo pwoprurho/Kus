@@ -94,6 +94,23 @@ CREATE TABLE public.chat_messages (
 );
 
 
+-- 1.7 TAX LAW EMBEDDINGS (pgvector RAG)
+-- Requires pgvector extension enabled on your Supabase project
+CREATE TABLE public.tax_law_chunks (
+    id bigserial primary key,
+    chunk_text text not null,
+    page_num int,
+    embedding vector(768) not null, -- 768 for Google embedding, adjust if needed
+    created_at timestamptz default now()
+);
+
+-- Create an index for fast vector search
+CREATE INDEX tax_law_chunks_embedding_idx ON public.tax_law_chunks USING ivfflat (embedding vector_l2_ops) WITH (lists = 100);
+
+-- Optional: full-text search index
+CREATE INDEX tax_law_chunks_text_idx ON public.tax_law_chunks USING gin (to_tsvector('english', chunk_text));
+
+
 -- ---------------------------------------------------------
 -- 2. AUTOMATION & TRIGGERS
 -- ---------------------------------------------------------
@@ -125,6 +142,7 @@ ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tax_law_chunks ENABLE ROW LEVEL SECURITY;
 
 -- Helper Functions for Roles
 CREATE OR REPLACE FUNCTION public.is_admin()
@@ -172,6 +190,45 @@ CREATE POLICY "Editors manage all posts" ON public.blog_posts FOR ALL USING ((SE
 CREATE POLICY "Public insert chat" ON public.chat_sessions FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public insert messages" ON public.chat_messages FOR INSERT WITH CHECK (true);
 CREATE POLICY "Admins read chats" ON public.chat_messages FOR SELECT USING (public.is_admin());
+
+-- POLICIES: TAX LAW CHUNKS
+CREATE POLICY "Staff manage tax law chunks" ON public.tax_law_chunks
+    FOR ALL USING (
+        (SELECT role FROM public.user_profiles WHERE id = auth.uid()) 
+        IN ('supa_admin', 'admin', 'editor')
+    );
+
+-- ---------------------------------------------------------
+-- 4. RPC FUNCTIONS (For RAG)
+-- ---------------------------------------------------------
+
+create or replace function match_tax_documents (
+  query_embedding vector(768),
+  match_threshold float,
+  match_count int
+)
+returns table (
+  id bigint,
+  chunk_text text,
+  page_num int,
+  similarity float
+)
+language plpgsql
+as $$
+begin
+  return query
+  select
+    tax_law_chunks.id,
+    tax_law_chunks.chunk_text,
+    tax_law_chunks.page_num,
+    1 - (tax_law_chunks.embedding <=> query_embedding) as similarity
+  from tax_law_chunks
+  where 1 - (tax_law_chunks.embedding <=> query_embedding) > match_threshold
+  order by tax_law_chunks.embedding <=> query_embedding
+  limit match_count;
+end;
+$$;
+
 
 -- 1. Add verification_code column to audit_requests table
 ALTER TABLE audit_requests 

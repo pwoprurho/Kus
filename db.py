@@ -1,5 +1,25 @@
 # db.py
+import os
+from dotenv import load_dotenv
 from flask import g
+from supabase import create_client
+
+# Load Environment Variables
+load_dotenv(override=True)
+
+# Initialize Supabase Client
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    print("CRITICAL WARNING: Supabase credentials not found in .env file.")
+    supabase_admin = None
+else:
+    try:
+        supabase_admin = create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as e:
+        print(f"Failed to initialize Supabase client: {e}")
+        supabase_admin = None
 
 def close_db_connection(e=None):
     """

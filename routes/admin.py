@@ -8,38 +8,11 @@ from flask_login import login_required, current_user
 from flask_mail import Message
 from werkzeug.utils import secure_filename
 from cryptography.fernet import Fernet
-from utils import role_required
+from db import supabase_admin
+from utils import role_required, get_cipher_suite, encrypt_text, decrypt_text
+from core.key_manager import key_manager
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
-
-# =========================================================
-# === ENCRYPTION & SECURITY UTILS ===
-# =========================================================
-
-def get_cipher_suite():
-    """Retrieves the encryption key."""
-    key = os.environ.get("ENCRYPTION_KEY")
-    if not key:
-        # Fallback for dev safety
-        return Fernet(Fernet.generate_key())
-    return Fernet(key.encode())
-
-def encrypt_text(text):
-    """Encrypts database content."""
-    try:
-        if not text: return None
-        return get_cipher_suite().encrypt(text.encode()).decode()
-    except Exception as e:
-        print(f"Encryption Error: {e}")
-        return None
-
-def decrypt_text(encrypted_text):
-    """Decrypts database content."""
-    try:
-        if not encrypted_text: return ""
-        return get_cipher_suite().decrypt(encrypted_text.encode()).decode()
-    except Exception:
-        return "[CONTENT LOCKED]"
 
 # =========================================================
 # === DASHBOARD (Command Center) ===
@@ -49,7 +22,6 @@ def decrypt_text(encrypted_text):
 @login_required
 @role_required('supa_admin', 'admin', 'editor')
 def dashboard():
-    from app import supabase_admin
     
     # Pagination Logic for Sandbox Logs
     page = request.args.get('page', 1, type=int)
@@ -98,7 +70,6 @@ def dashboard():
 @role_required('supa_admin', 'admin')
 def sandbox_analytics():
     """Complete view of AI Sandbox engagement metrics."""
-    from app import supabase_admin
     analytics = {'total_interactions': 0, 'persona_distribution': {}, 'recent_activity': []}
 
     try:
@@ -114,6 +85,150 @@ def sandbox_analytics():
 
     return render_template('admin/sandbox_stats.html', stats=analytics)
 
+
+# =========================================================
+# === SUPA ADMIN INTERFACE (Privilege Management + Zoho Chat)
+# =========================================================
+
+
+@admin_bp.route('/supa-admin')
+@login_required
+@role_required('supa_admin')
+def supa_admin():
+    users = []
+    try:
+        res = supabase_admin.table('users').select('id, full_name, email, role').order('created_at', desc=False).execute()
+        if res.data: users = res.data
+    except Exception as e:
+        print(f"Load Supa Admin Users Error: {e}")
+    return render_template('admin/supa_admin.html', users=users)
+
+
+@admin_bp.route('/supa-admin/modify-role', methods=['POST'])
+@login_required
+@role_required('supa_admin')
+def modify_role():
+    data = request.get_json() or {}
+    user_id = data.get('user_id')
+    new_role = data.get('new_role')
+    if not user_id or not new_role:
+        return jsonify({'error': 'Missing parameters'}), 400
+    try:
+        supabase_admin.table('users').update({'role': new_role}).eq('id', user_id).execute()
+        return jsonify({'status': 'updated'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@admin_bp.route('/supa-admin/send-zoho', methods=['POST'])
+@login_required
+@role_required('supa_admin')
+def supa_send_zoho():
+    from services.mailer import send_verification_email
+    data = request.get_json() or {}
+    email = data.get('email')
+    link = data.get('link') or url_for('admin.dashboard', _external=True)
+    if not email:
+        return jsonify({'error': 'Missing email'}), 400
+    ok = send_verification_email(email, link)
+    return jsonify({'status': 'sent' if ok else 'failed'})
+
+
+# =========================================================
+# === Calendar Management (Admin-only) ====================
+# =========================================================
+
+
+@admin_bp.route('/calendar/create', methods=['POST'])
+@login_required
+@role_required('supa_admin')
+def admin_calendar_create():
+    """Create a calendar event via the server-side calendar tool and persist a local record."""
+    try:
+        payload = request.get_json() or {}
+        event = payload.get('event', {})
+        calendar_id = payload.get('calendar_id', 'primary')
+        demo_id = payload.get('demo_id') or None
+
+        # lazy import of calendar helper
+        try:
+            from services.calendar_tool import create_calendar_event
+        except Exception:
+            return jsonify({'error': 'calendar_tool_unavailable'}), 500
+
+        result = create_calendar_event(event, calendar_id=calendar_id)
+
+        # persist a local audit record for manual viewing/edit
+        import uuid
+        record = {
+            'id': uuid.uuid4().hex,
+            'demo_id': demo_id,
+            'event_request': event,
+            'calendar_id': calendar_id,
+            'result': result,
+            'created_at': datetime.datetime.utcnow().isoformat()
+        }
+        try:
+            os.makedirs('data', exist_ok=True)
+            path = os.path.join('data', 'calendar_events.jsonl')
+            with open(path, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(record) + '\n')
+        except Exception:
+            pass
+
+        return jsonify({'status': 'ok', 'record': record})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@admin_bp.route('/calendar/events', methods=['GET', 'POST'])
+@login_required
+@role_required('supa_admin')
+def admin_calendar_events():
+    """Viewer/editor for locally persisted calendar events (stored in data/calendar_events.jsonl)."""
+    try:
+        path = os.path.join('data', 'calendar_events.jsonl')
+        events = []
+        if os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    try:
+                        events.append(json.loads(line))
+                    except Exception:
+                        continue
+
+        if request.method == 'POST':
+            # Expect JSON with 'id' and fields to update
+            payload = request.get_json() or {}
+            eid = payload.get('id')
+            updated = payload.get('update', {})
+            if not eid:
+                return jsonify({'error': 'missing_id'}), 400
+
+            changed = False
+            for ev in events:
+                if ev.get('id') == eid:
+                    ev.update(updated)
+                    ev['modified_at'] = datetime.datetime.utcnow().isoformat()
+                    changed = True
+                    break
+
+            if changed:
+                # write back file
+                try:
+                    with open(path, 'w', encoding='utf-8') as f:
+                        for ev in events:
+                            f.write(json.dumps(ev) + '\n')
+                except Exception:
+                    pass
+                return jsonify({'status': 'ok', 'updated': True})
+            return jsonify({'status': 'not_found'}), 404
+
+        # GET -> render simple template
+        return render_template('calendar_events.html', events=events)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # =========================================================
 # === SECURE LIVE CHAT (ADMIN TERMINAL) ===
 # =========================================================
@@ -122,7 +237,6 @@ def sandbox_analytics():
 @login_required
 @role_required('supa_admin', 'admin')
 def live_chat():
-    from app import supabase_admin
     clients = []
     try:
         res = supabase_admin.table('clients').select('id, full_name, email').order('created_at', desc=True).execute()
@@ -135,7 +249,6 @@ def live_chat():
 @login_required
 def get_chat_history(client_id):
     """Fetches history, DECRYPTS text, and SIGNS file URLs for viewing."""
-    from app import supabase_admin
     audit_context = {'original_challenge': 'N/A', 'date_filed': 'N/A'}
     
     try:
@@ -166,7 +279,6 @@ def get_chat_history(client_id):
 @login_required
 def send_admin_message():
     """Handles Admin Text AND File Uploads."""
-    from app import supabase_admin
     client_id = request.form.get('client_id')
     text = request.form.get('message')
     uploaded_file = request.files.get('file')
@@ -196,7 +308,6 @@ def send_admin_message():
 @login_required
 @role_required('supa_admin', 'admin', 'editor')
 def view_lead(lead_id):
-    from app import supabase_admin
     try:
         res = supabase_admin.table('audit_requests').select('*').eq('id', lead_id).limit(1).execute()
         if res.data: return render_template('admin/view_lead.html', lead=res.data[0])
@@ -207,7 +318,6 @@ def view_lead(lead_id):
 @login_required
 @role_required('supa_admin', 'admin')
 def delete_lead(lead_id):
-    from app import supabase_admin
     try:
         supabase_admin.table('audit_requests').delete().eq('id', lead_id).execute()
         flash("Lead removed from database.", "info")
@@ -218,7 +328,6 @@ def delete_lead(lead_id):
 @login_required
 @role_required('supa_admin', 'admin', 'editor')
 def new_post():
-    from app import supabase_admin
     if request.method == 'POST':
         try:
             supabase_admin.table('blog_posts').insert({
@@ -234,7 +343,6 @@ def new_post():
 @login_required
 @role_required('supa_admin', 'admin', 'editor')
 def edit_post(post_id):
-    from app import supabase_admin
     if request.method == 'POST':
         try:
             supabase_admin.table('blog_posts').update({
@@ -255,7 +363,6 @@ def edit_post(post_id):
 @login_required
 @role_required('supa_admin', 'admin', 'editor')
 def publish_post(post_id):
-    from app import supabase_admin
     try:
         supabase_admin.table('blog_posts').update({"status": "Published", "published_at": "now()"}).eq('id', post_id).execute()
         flash("Insight deployed to live site.", "success")
@@ -266,7 +373,6 @@ def publish_post(post_id):
 @login_required
 @role_required('supa_admin', 'admin')
 def delete_post(post_id):
-    from app import supabase_admin
     try:
         supabase_admin.table('blog_posts').delete().eq('id', post_id).execute()
         flash("Insight deleted permanently.", "info")
@@ -279,9 +385,31 @@ def generate_content():
     """Restored AI content generator for blog posts."""
     data = request.get_json()
     try:
-        if not os.getenv("GEMINI_API_KEY"): return jsonify({'error': 'Gemini API Key missing'}), 500
-        model = genai.GenerativeModel('gemini-2.5-flash')
         prompt = f"Write a blog post about {data.get('topic')}. Return ONLY JSON with 'summary' and 'content' keys."
-        response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
-        return jsonify(json.loads(response.text))
+        
+        # Retry logic with key rotation
+        max_retries = len(key_manager.get_all_keys()) * 2
+        if max_retries == 0: max_retries = 1
+        
+        last_exc = None
+        
+        for attempt in range(max_retries):
+            current_key = key_manager.get_current_key()
+            try:
+                genai.configure(api_key=current_key)
+                model = genai.GenerativeModel('gemini-2.5-flash')
+                response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
+                return jsonify(json.loads(response.text))
+            except Exception as e:
+                last_exc = e
+                error_str = str(e)
+                if any(x in error_str.lower() for x in ["429", "quota", "403", "leaked", "expired", "invalid"]):
+                    key_manager.rotate_key()
+                    continue
+                else:
+                    key_manager.rotate_key()
+                    continue
+        
+        return jsonify({'error': f"Failed to generate content after retries: {str(last_exc)}"}), 500
+
     except Exception as e: return jsonify({'error': str(e)}), 500

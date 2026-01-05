@@ -1,278 +1,520 @@
 {% extends 'base.html' %}
-{% block title %}Sentinel | Converged Defense Sandbox{% endblock %}
+{% block title %}Sovereign Sandbox | Kusmus AI{% endblock %}
 
 {% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
 <style>
-    /* --- HUD & LAYOUT --- */
+    /* GLOBAL LAYOUT */
     header, footer, #chat-widget-container { display: none !important; }
     body { background-color: #000; color: #e0e0e0; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; margin: 0; }
 
-    /* --- 3D ORBITAL BACKGROUND --- */
-    .orbit-container {
-        position: absolute; top: 50%; left: 50%;
-        transform: translate(-50%, -50%) perspective(1200px);
-        width: 80vh; height: 80vh; 
-        pointer-events: none; z-index: 1; opacity: 0.25; 
-    }
-    .orbit-ring {
-        position: absolute; border: 1px solid rgba(0, 114, 255, 0.4);
-        border-radius: 50%; width: 100%; height: 100%;
-        transform-style: preserve-3d;
-        box-shadow: 0 0 20px rgba(0, 114, 255, 0.1);
-    }
-    .ring-1 { animation: orbit1 25s linear infinite; }
-    .ring-2 { animation: orbit2 35s linear infinite; width: 80%; height: 80%; top: 10%; left: 10%; border-color: rgba(0, 255, 136, 0.2); }
-    .ring-3 { animation: orbit3 30s linear infinite reverse; width: 60%; height: 60%; top: 20%; left: 20%; border-color: rgba(255, 255, 255, 0.1); }
+    #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; background: radial-gradient(circle at center, #111 0%, #000 90%); }
 
-    @keyframes orbit1 { from { transform: rotateX(65deg) rotateZ(0deg); } to { transform: rotateX(65deg) rotateZ(360deg); } }
-    @keyframes orbit2 { from { transform: rotateY(65deg) rotateZ(0deg); } to { transform: rotateY(65deg) rotateZ(360deg); } }
-    @keyframes orbit3 { from { transform: rotateX(45deg) rotateY(45deg) rotateZ(0deg); } to { transform: rotateX(45deg) rotateY(45deg) rotateZ(360deg); } }
-
-    /* --- GRID SYSTEM --- */
-    .sandbox-container {
-        position: relative; z-index: 10;
-        display: grid; grid-template-columns: 320px 1fr 380px; 
-        height: 100vh; width: 100vw;
-    }
-
-    .glass-panel {
-        background: rgba(5, 5, 5, 0.95);
-        backdrop-filter: blur(20px);
-        display: flex; flex-direction: column;
-        border-right: 1px solid #111;
-    }
-
-    /* --- SIDEBAR LEFT --- */
-    .sidebar-left { padding: 40px 25px; }
-    .btn-back {
-        display: flex; align-items: center; gap: 10px;
-        color: #555; text-decoration: none; font-size: 0.7rem; 
-        letter-spacing: 1.5px; margin-bottom: 50px; text-transform: uppercase;
-    }
-    .btn-back:hover { color: #0072ff; }
-
-    .stat-box {
-        border: 1px solid #ffffff11; border-radius: 4px;
-        padding: 20px; margin-bottom: 20px; background: rgba(255, 255, 255, 0.02);
-    }
-    .stat-label { font-size: 0.6rem; color: #0072ff; letter-spacing: 1px; margin-bottom: 10px; font-weight: bold; }
-    .stat-value { font-size: 2.2rem; font-weight: 700; color: #fff; }
-
-    /* MOOD TOGGLE */
-    .mood-control { margin-top: auto; padding-bottom: 20px; }
-    .mood-select {
-        width: 100%; background: #000; color: #fff; border: 1px solid #222;
-        padding: 12px; border-radius: 4px; font-size: 0.8rem; outline: none; cursor: pointer;
-    }
-
-    /* --- CENTER: INDEPENDENT SCROLLING --- */
-    .main-terminal { position: relative; display: flex; flex-direction: column; background: transparent; overflow: hidden; }
-    #chat-container { 
-        flex-grow: 1; 
-        overflow-y: auto; /* ENABLED SCROLLING */
-        padding: 60px 60px 180px; 
-        display: flex; flex-direction: column; gap: 20px; 
-        scroll-behavior: smooth;
-    }
+    /* GRID & PANELS */
+    .sandbox-grid { position: relative; z-index: 10; display: grid; grid-template-columns: 350px 1fr 380px; height: 100vh; width: 100vw; overflow: hidden; }
     
-    .bubble { max-width: 85%; padding: 18px 22px; border-radius: 4px; font-size: 0.9rem; line-height: 1.6; }
-    .ai-bubble { align-self: flex-start; background: #0a0a0a; border: 1px solid #222; color: #ccc; border-left: 4px solid #0072ff; }
-    .user-bubble { align-self: flex-end; background: #0072ff; color: #fff; }
-    .system-trigger-bubble { 
-        align-self: center; width: 100%; background: rgba(0, 255, 136, 0.02); 
-        border: 1px solid #00ff8866; color: #00ff88; font-family: monospace; padding: 25px;
+    .glass-panel { 
+        background: rgba(5, 5, 5, 0.85); backdrop-filter: blur(12px); 
+        display: flex; flex-direction: column; 
+        border-right: 1px solid rgba(255,255,255,0.08); border-left: 1px solid rgba(255,255,255,0.08); 
+        height: 100%; overflow: hidden; min-height: 0; 
     }
 
-    .input-wrapper {
-        position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%);
-        width: 85%; background: #080808; border: 1px solid #222;
-        border-radius: 8px; padding: 15px 25px; display: flex; align-items: center; gap: 15px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.9);
-    }
-    .input-wrapper input { flex: 1; background: transparent; border: none; color: #fff; outline: none; font-size: 0.95rem; }
+    /* LEFT SIDEBAR ELEMENTS */
+    .sidebar-left { padding: 30px 20px; gap: 15px; }
+    .btn-back { display: flex; align-items: center; gap: 10px; color: #666; text-decoration: none; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; transition: color 0.3s; margin-bottom: 10px; flex-shrink: 0; }
+    .btn-back:hover { color: #fff; }
 
-    /* --- SIDEBAR RIGHT: INDEPENDENT SCROLLING --- */
-    .sidebar-right { padding: 40px 25px; border-left: 1px solid #111; overflow: hidden; }
-    #activity-log { 
-        font-family: 'Courier New', monospace; font-size: 0.7rem; color: #444; 
-        overflow-y: auto; /* ENABLED SCROLLING */
-        height: 100%; display: flex; flex-direction: column-reverse; 
-    }
+    .stat-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 6px; margin-bottom: 5px; flex-shrink: 0; }
+    .stat-label { font-size: 0.65rem; color: #0072ff; letter-spacing: 1px; font-weight: bold; margin-bottom: 5px; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; color: #fff; font-family: 'Garamond', serif; }
+    .stat-status { font-size: 0.8rem; color: #00ff88; letter-spacing: 1px; font-weight: 600; margin-top: 5px; }
+    
+    .latency-val { color: #ffcc00; font-family: 'Courier New', monospace; font-size: 1.4rem; }
 
-    /* SCROLLBAR AESTHETICS */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-thumb { background: #0072ff; border-radius: 10px; }
-    ::-webkit-scrollbar-track { background: transparent; }
+    /* MODE SELECTOR */
+    .mode-select { width: 100%; background: #111; color: #0072ff; border: 1px solid #333; padding: 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; outline: none; cursor: pointer; text-transform: uppercase; }
 
-    /* AUDIT MODAL */
-    #audit-overlay {
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 1000;
-        align-items: center; justify-content: center;
-    }
-</style>
+    /* HUD */
+    .trace-terminal { flex-grow: 1; margin-top: 10px; background: rgba(0,0,0,0.5); border: 1px solid #222; padding: 15px; font-family: 'Courier New', monospace; overflow-y: auto; font-size: 0.7rem; color: #00ff88; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+    .thought-line { opacity: 0; animation: fadeIn 0.3s forwards; border-left: 2px solid #0072ff; padding-left: 8px; }
 
-<div class="orbit-container">
-    <div class="orbit-ring ring-1"></div>
-    <div class="orbit-ring ring-2"></div>
-    <div class="orbit-ring ring-3"></div>
-</div>
+    /* CENTER CHAT */
+    .main-terminal { position: relative; display: flex; flex-direction: column; background: transparent; height: 100%; overflow: hidden; min-height: 0; }
+    #chat-container { flex-grow: 1; overflow-y: auto; padding: 40px 10% 120px; display: flex; flex-direction: column; gap: 15px; scroll-behavior:auto; min-height: 0; }
+    
+    .bubble { max-width: 80%; padding: 15px 20px; border-radius: 6px; font-size: 0.9rem; line-height: 1.5; overflow-wrap: break-word; }
+    .ai-bubble { align-self: flex-start; background: rgba(20, 20, 20, 0.8); border: 1px solid #333; color: #ccc; border-left: 3px solid #0072ff; }
+    .user-bubble { align-self: flex-end; background: rgba(0, 114, 255, 0.8); color: #fff; border: 1px solid #005bb5; }
 
-<div id="audit-overlay">
-    <div class="stat-box" style="max-width: 400px; text-align: center; border: 1px solid #222; padding: 40px;">
-        <h3 style="color: white; margin-bottom: 15px;">TERMINATE SESSION?</h3>
-        <p style="color: #666; font-size: 0.8rem; margin-bottom: 30px;">Purging telemetry buffer. Would you like to request a Phase 1 Audit report before redirecting?</p>
-        <div style="display: flex; gap: 10px;">
-            <a href="/request-audit" style="flex:1; background:#0072ff; color:white; padding:12px; text-decoration:none; font-size:0.7rem; border-radius:4px; font-weight:bold;">GET AUDIT</a>
-            <a href="/" style="flex:1; border:1px solid #333; color:#888; padding:12px; text-decoration:none; font-size:0.7rem; border-radius:4px;">DISCARD & EXIT</a>
-        </div>
-    </div>
-</div>
+    /* ALERTS */
+    .system-alert-bubble { align-self: center; width: 90%; background: rgba(255, 0, 0, 0.1); border: 1px solid #ff4444; color: #ff4444; padding: 12px; font-family: 'Courier New', monospace; font-size: 0.8rem; text-align: left; border-radius: 4px; margin: 10px 0; transition: all 0.5s ease; }
+    .system-alert-bubble.processing { background: rgba(0, 114, 255, 0.1); border-color: #0072ff; color: #0072ff; animation: pulse-blue 1.5s infinite; text-align: center; }
+    .system-alert-bubble.resolved { background: rgba(0, 255, 136, 0.1); border-color: #00ff88; color: #00ff88; text-align: center; }
+    @keyframes pulse-blue { 50% { box-shadow: 0 0 20px rgba(0,114,255,0.5); } }
 
-<div class="sandbox-container">
+    /* INPUT */
+    .input-wrapper { position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); width: 80%; background: rgba(0,0,0,0.9); border: 1px solid #333; border-radius: 50px; padding: 12px 18px; display: flex; align-items: center; gap: 10px; z-index: 20; }
+    .input-wrapper input { flex: 1; background: transparent; border: none; color: #fff; outline: none; }
+    .input-wrapper button { background: none; border: none; color: #0072ff; cursor: pointer; }
+    .tool-input { width: 300px; background: rgba(255,255,255,0.02); border: 1px solid #222; color: #ddd; padding: 6px 8px; border-radius: 4px; font-size: 0.8rem; }
+    .chat-expanded { position: fixed; top: 40px; left: 50px; right: 50px; bottom: 60px; z-index: 9999; border-radius: 6px; background: rgba(0,0,0,0.92); padding: 20px; overflow: auto; }
+
+    /* LOGS */
+    .sidebar-right { padding: 20px; font-family: 'Courier New', monospace; font-size: 0.65rem; color: #666; height: 100%; overflow: hidden; }
+    #activity-log { height: 100%; overflow-y: auto; display: flex; flex-direction: column-reverse; min-height: 0; gap: 4px; }
+    .log-entry { padding: 4px 0; border-bottom: 1px solid #111; word-break: break-all; }
+    .log-ts { color: #444; margin-right: 5px; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .red-alert-active { border: 1px solid red; box-shadow: inset 0 0 50px rgba(255,0,0,0.2); }
+    .recovery-active { box-shadow: 0 0 40px rgba(46,204,113,0.12); transition: box-shadow 0.4s ease; }
+    .recovery-active #three-canvas { filter: drop-shadow(0 0 12px rgba(46,204,113,0.3)); }
+    .recovery-active .system-alert-bubble { animation: pulse-recover 1s ease-in-out 2; }
+    @keyframes pulse-recover { 0% { transform: translateY(0); } 50% { transform: translateY(-6px); } 100% { transform: translateY(0); } }
+    </style>
+
+<div id="canvas-container"><canvas id="three-canvas"></canvas></div>
+
+<!-- audit modal removed: exit now links directly to request audit -->
+
+<div class="sandbox-grid">
     <aside class="sidebar-left glass-panel">
-        <a href="javascript:void(0)" onclick="document.getElementById('audit-overlay').style.display='flex'" class="btn-back">
-            <i class="fas fa-chevron-left"></i> Return to Command
-        </a>
+        <a href="{{ url_for('public.audit_request') }}" class="btn-back"><i class="fas fa-arrow-left"></i> EXIT DEMO</a>
         
         <div class="stat-box">
-            <div class="stat-label">VANGUARD SCORE</div>
-            <div class="stat-value" id="v-score">100</div>
+            <div class="stat-label">OPERATIONAL MODE</div>
+            <select id="ui-mode-toggle" class="mode-select" onchange="updateUIMode()">
+                <option value="reactive">REACTIVE (Manual)</option>
+                <option value="proactive">PROACTIVE (Auto-Mitigate)</option>
+            </select>
         </div>
 
         <div class="stat-box">
-            <div class="stat-label">AVG LATENCY</div>
-            <div class="stat-value" id="latency-avg">--ms</div>
+            <div class="stat-label">ASSET</div>
+            <div class="stat-value" id="target-system">unknown</div>
         </div>
 
-        <div class="mood-control">
-            <label style="font-size:0.6rem; color:#444; margin-bottom:20%; display:block; letter-spacing:1px;">OPERATIONAL MODE</label>
-            <select class="mood-select" id="mood-selector" onchange="currentMood = this.value">
-                <option value="reactive">REACTIVE (Manual Approval)</option>
-                <option value="proactive">PROACTIVE (Autonomous)</option>
-            </select>
+        <div class="stat-box">
+                <div class="stat-label">VANGUARD SCORE</div>
+                <div class="stat-value" id="v-score">100</div>
+            <div class="stat-status" id="security-status-text">SECURED</div>
+        </div>
+        
+        <div class="stat-box">
+            <div class="stat-label">THREAT LEVEL</div>
+            <div class="stat-value" id="threat-level" style="font-size:1.15rem; color:#2ecc71;">LOW</div>
+        </div>
+
+        <div class="stat-box">
+            <div class="stat-label">NETWORK LATENCY</div>
+            <div class="latency-val" id="latency-text">12ms</div>
+        </div>
+
+        <div class="trace-terminal" id="cognitive-hud">
+            <div style="color: #444;">[Reasoning stream idle...]</div>
         </div>
     </aside>
 
     <main class="main-terminal">
-        <div id="chat-container">
-            <div class="bubble ai-bubble">
-                <strong>SENTINEL OS v4.2</strong><br>
-                Neural link established. Monitoring O-RAN signals and forensic telemetry.
-            </div>
-        </div>
-        
+        <div id="chat-container"></div>
         <div class="input-wrapper">
-            <input type="text" id="sandbox-input" placeholder="Initiate directive..." onkeypress="if(event.key==='Enter') sendDirective()">
-            <i class="fas fa-shield-alt"></i>
+            <input type="text" id="sandbox-input" placeholder="Type command..." autocomplete="off">
+            <button onclick="openScheduler()" title="Schedule appointment"><i class="fas fa-calendar-plus"></i></button>
+            <button onclick="toggleChatView()" title="Show all chat contents"><i class="fas fa-expand"></i></button>
+            <button onclick="sendDirective()"><i class="fas fa-paper-plane"></i></button>
         </div>
     </main>
 
     <aside class="sidebar-right glass-panel">
-        <div style="font-size: 0.6rem; color: #0072ff; letter-spacing: 2px; margin-bottom: 20px;">LIVE TELEMETRY FEED</div>
+        <div class="stat-label" style="margin-bottom:15px; border-bottom:1px solid #222;">LIVE FORENSIC TELEMETRY</div>
         <div id="activity-log"></div>
     </aside>
 </div>
 
 <script>
-    let currentMood = 'reactive';
-    let autoResponseLock = false;
-    let logBuffer = [];
-    let chatHistory = [];
-    let vanguardScore = 100;
-    let latencyBuffer = [];
+    // --- 3D SETUP ---
+    const canvas = document.querySelector('#three-canvas');
+    const renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.physicallyCorrectLights = true;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+    scene.background = new THREE.Color(0x050507);
+    // Lighting: hemisphere for sky/ground fill, directional for strong key light, and warm rim lights
+    const hemi = new THREE.HemisphereLight(0x8899ff, 0x222222, 0.35);
+    scene.add(hemi);
+    const key = new THREE.DirectionalLight(0xffffff, 1.0);
+    key.position.set(5, 8, 5);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.camera.left = -5; key.shadow.camera.right = 5; key.shadow.camera.top = 5; key.shadow.camera.bottom = -5;
+    key.shadow.camera.near = 0.5; key.shadow.camera.far = 20;
+    scene.add(key);
+    const rim1 = new THREE.PointLight(0xffaa66, 0.35);
+    rim1.position.set(-6, 3, -4); scene.add(rim1);
+    const rim2 = new THREE.PointLight(0x66aaff, 0.25);
+    rim2.position.set(4, 2, -6); scene.add(rim2);
 
-    function logInternal(msg, isCrit = false) {
-        const entry = document.createElement('div');
-        const time = new Date().toLocaleTimeString([], {hour12:false});
-        entry.style.marginBottom = "8px";
-        entry.innerHTML = `<span style="opacity:0.3">[${time}]</span> ${msg}`;
-        
-        if (isCrit) {
-            entry.style.color = "#ff4444";
-            vanguardScore = Math.max(20, vanguardScore - 10);
-            document.getElementById('v-score').innerText = vanguardScore;
-            triggerAlertUI(msg);
+    // Ground plane to receive shadows and anchor objects
+    const groundMat = new THREE.MeshStandardMaterial({color: 0x060606, metalness: 0.0, roughness: 0.7});
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), groundMat);
+    ground.rotation.x = -Math.PI/2;
+    ground.position.y = -1.5;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    let currentMesh, isAlertState = false;
+    const urlParams = new URLSearchParams(window.location.search);
+    // prefer server-provided demo_key (passed as template var) but fall back to query param
+    let rawDemo = '{{ demo_key or "" }}' || urlParams.get('demo') || 'sentinel';
+    let backendDemoId = 'sentinel_monitor';
+
+    if(rawDemo === 'concierge' || rawDemo === 'strategic_concierge') backendDemoId = 'strategic_concierge';
+    if(rawDemo === 'robotics' || rawDemo === 'surge_vla') backendDemoId = 'surge_vla';
+
+    function initAsset() {
+        // Build a small group for richer symbolic assets per demo
+        const group = new THREE.Group();
+
+        if (rawDemo === 'concierge' || rawDemo === 'strategic_concierge') {
+            // Briefcase: base box + torus handle with PBR materials
+            const baseMat = new THREE.MeshStandardMaterial({color: 0x2b2b2b, metalness: 0.12, roughness: 0.6});
+            const metalMat = new THREE.MeshStandardMaterial({color: 0x111111, metalness: 0.85, roughness: 0.25});
+            const base = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.2, 1.6), baseMat);
+            base.position.y = 0;
+            base.castShadow = true; base.receiveShadow = true;
+            group.add(base);
+            const handle = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.08, 16, 40), metalMat);
+            handle.rotation.x = Math.PI / 2;
+            handle.position.set(0, 0.85, 0);
+            handle.castShadow = true; handle.receiveShadow = true;
+            group.add(handle);
+        } else if (rawDemo === 'robotics' || rawDemo === 'surge_vla') {
+            // Robotic hand: palm + five fingers
+            const mechMat = new THREE.MeshStandardMaterial({color: 0x555a5f, metalness: 0.8, roughness: 0.25});
+            const palm = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.5, 1.0), mechMat);
+            palm.position.set(0, 0, 0);
+            palm.castShadow = true; palm.receiveShadow = true;
+            group.add(palm);
+            for (let i = 0; i < 5; i++) {
+                const finger = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.8, 0.18), mechMat);
+                finger.position.set(-0.6 + i * 0.3, 0.55, 0.35);
+                finger.rotation.z = 0.1;
+                finger.castShadow = true; finger.receiveShadow = true;
+                group.add(finger);
+            }
+        } else if (rawDemo === 'sentinel' || rawDemo === 'sentinel_monitor') {
+            // Network mast: tall mast + dish + antenna
+            const mastMat = new THREE.MeshStandardMaterial({color: 0x777777, metalness: 0.9, roughness: 0.3});
+            const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 4.0, 12), mastMat);
+            mast.position.set(0, 0, 0);
+            mast.castShadow = true; mast.receiveShadow = true;
+            group.add(mast);
+            const dishMat = new THREE.MeshStandardMaterial({color: 0x99cfff, metalness: 0.6, roughness: 0.2});
+            const dish = new THREE.Mesh(new THREE.CircleGeometry(0.6, 32), dishMat);
+            dish.rotation.x = -Math.PI / 2.2;
+            dish.position.set(0, 1.4, 0.9);
+            dish.castShadow = true; dish.receiveShadow = true;
+            group.add(dish);
+            const antenna = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.4, 8), new THREE.MeshStandardMaterial({color: 0xffcc00, metalness: 0.9, roughness: 0.2}));
+            antenna.position.set(0, 2.1, 0);
+            antenna.castShadow = true; antenna.receiveShadow = true;
+            group.add(antenna);
+        } else if (rawDemo === 'downtime_mitigation') {
+            // Downtime Specialist: server rack / diagnostics box
+            const rackMat = new THREE.MeshStandardMaterial({color: 0x191919, metalness: 0.05, roughness: 0.6});
+            const rack = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.0, 0.8), rackMat);
+            rack.position.y = 0;
+            rack.castShadow = true; rack.receiveShadow = true;
+            group.add(rack);
+            const status = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.1, 0.02), new THREE.MeshStandardMaterial({color: 0xff3333, emissive: 0xff3333, metalness: 0.0, roughness: 0.1}));
+            status.position.set(0, 0.8, 0.42);
+            status.castShadow = false; status.receiveShadow = false;
+            group.add(status);
+        } else {
+            // default: cone
+            const cone = new THREE.Mesh(new THREE.ConeGeometry(1.5, 3, 4), new THREE.MeshPhongMaterial({color: 0x0072ff, wireframe: true}));
+            group.add(cone);
         }
 
-        document.getElementById('activity-log').prepend(entry);
-        logBuffer.unshift(`[${time}] ${msg}`);
-        if (logBuffer.length > 20) logBuffer.pop();
+        currentMesh = group;
+        scene.add(currentMesh);
     }
+    initAsset();
 
-    function triggerAlertUI(msg) {
-        if (autoResponseLock) return;
-        
-        appendMessage('system-trigger', `
-            <strong>DETECTION:</strong> Critical O-RAN Failure<br>
-            <strong>STATUS:</strong> ${currentMood === 'proactive' ? 'Executing Autonomous Remediation...' : 'Awaiting manual directive.'}
-        `);
+    function animate() {
+        requestAnimationFrame(animate);
+        if (currentMesh) {
+            currentMesh.rotation.y += isAlertState ? 0.05 : 0.005;
+            // color children appropriately when alert toggles
+            currentMesh.traverse((c) => {
+                if (c.isMesh && c.material) {
+                    try {
+                        c.material.color.setHex(isAlertState ? 0xff0000 : 0x0072ff);
+                    } catch (e) {}
+                }
+            });
+        }
+        renderer.render(scene, camera);
+    }
+    animate();
 
-        if (currentMood === 'proactive') {
-            sendDirective(`[SYSTEM_ALERT] ${msg}`, true);
+    // audit/exit handlers removed; exit now links directly to the audit request page
+
+    // --- FORENSIC LOG GENERATOR (WITH IPS) ---
+    let logBuffer = [], currentMode = 'reactive';
+    function updateUIMode() { currentMode = document.getElementById('ui-mode-toggle').value; }
+
+    const ATTACK_VECTORS = [
+        { type: "SQL Injection", sig: "UNION SELECT 1,2,3--", severity: "CRITICAL" },
+        { type: "Brute Force", sig: "Failed Login (Root) x50", severity: "WARNING" },
+        { type: "RCE Attempt", sig: "/bin/sh execution via HTTP", severity: "CRITICAL" },
+        { type: "XSS Payload", sig: "<script>alert(1)<\/script>", severity: "WARNING" },
+        { type: "DDoS Traffic", sig: "High SYN Flood Detected", severity: "CRITICAL" },
+        { type: "Phishing Link", sig: "malicious-domain.com/login", severity: "WARNING" },
+        { type: "Malware Download", sig: "exe from hxxp://badsite.com", severity: "CRITICAL" },
+        { type: "Privilege Escalation", sig: "sudo exploit attempt", severity: "CRITICAL" },
+        { type: "Data Exfiltration", sig: "Unusual outbound traffic", severity: "CRITICAL" },
+        { type: "Port Scan", sig: "Multiple ports probed", severity: "WARNING" }
+    ];
+    const SUSPICIOUS_IPS = ["192.168.45.12", "10.0.5.99", "45.33.22.11", "203.0.113.5"];
+    const INTERNAL_IPS = ["10.5.1.20", "10.5.1.21", "10.5.1.22", "10.5.1.23"];
+
+    function generateForensicLog() {
+        const now = new Date();
+        const ts = `[${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}]`;
+        const isAttack = Math.random() > 0.85 && !isAlertState; 
+
+        if (isAttack) {
+            const vector = ATTACK_VECTORS[Math.floor(Math.random() * ATTACK_VECTORS.length)];
+            const src = SUSPICIOUS_IPS[Math.floor(Math.random() * SUSPICIOUS_IPS.length)];
+            const dest = INTERNAL_IPS[Math.floor(Math.random() * INTERNAL_IPS.length)];
+            return {
+                text: `${ts} [${vector.severity}] SRC:${src} -> DEST:${dest} | SIG: ${vector.sig}`,
+                isCrit: true, severity: vector.severity
+            };
+        } else {
+            return {
+                text: `${ts} [INFO] Heartbeat: Nominal | Active Threads: ${Math.floor(Math.random()*50)+20}`,
+                isCrit: false, severity: "INFO"
+            };
         }
     }
 
-    // CONTEXT INJECTION LOGIC
-    async function sendDirective(customMsg = null, isAuto = false) {
+    setInterval(() => {
+        const logData = generateForensicLog();
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        // include target system badge so each log shows which backend demo it's about
+        div.innerHTML = `<span class="log-ts">${logData.text.split('] ')[0]}]</span> <span class="badge" style="background:rgba(255,255,255,0.02); color:#aaa; border-color:transparent; margin-right:6px;">${backendDemoId}</span> ${logData.text.split('] ')[1] || logData.text}`;
+        div.style.color = logData.isCrit ? '#ff4444' : '#666';
+        
+        const logArea = document.getElementById('activity-log');
+        logArea.prepend(div);
+        if(logArea.childNodes.length > 50) logArea.removeChild(logArea.lastChild);
+
+        logBuffer.push(logData.text);
+        if(logBuffer.length > 25) logBuffer.shift();
+
+        if(logData.isCrit && logData.severity === "CRITICAL" && !isAlertState) {
+            isAlertState = true;
+            document.querySelector('.main-terminal').classList.add('red-alert-active');
+            if(currentMode === 'proactive') sendDirective(`[SYSTEM_ALERT] ${logData.text}`);
+        }
+    }, 3000);
+
+    // show backend demo id in the TARGET stat
+    try { document.getElementById('target-system').innerText = backendDemoId; } catch(e) {}
+
+    /* --- CHAT & NETWORK LOGIC --- */
+    async function sendDirective(overrideMsg = null) {
         const input = document.getElementById('sandbox-input');
-        const userMsg = customMsg || input.value.trim();
-        if (!userMsg) return;
+        const text = overrideMsg || input.value.trim();
+        if(!text) return;
 
-        if (!isAuto) {
-            appendMessage('user', userMsg);
+        let sysId = null;
+        if(!overrideMsg) {
+            appendBubble(text, 'user');
             input.value = '';
+        } else {
+            sysId = 'sys-' + Date.now();
+            appendBubble(`<i class="fas fa-shield-alt"></i> VANGUARD TRIGGER:<br>${text}`, 'system-alert', sysId);
+            setTimeout(() => {
+                const el = document.getElementById(sysId);
+                if(el) { el.classList.add('processing'); el.innerHTML = `<i class="fas fa-cog fa-spin"></i> ANALYZING ATTACK VECTOR...`; }
+            }, 500);
         }
-        
-        autoResponseLock = true; 
-
-        const liveContext = logBuffer.join('\n');
-        const fullPrompt = `[LIVE TELEMETRY LOGS]:\n${liveContext}\n\n[USER INSTRUCTION]:\n${userMsg}`;
-
-        const formData = new FormData();
-        formData.append('demo_id', 'sentinel_monitor');
-        formData.append('message', fullPrompt);
-        formData.append('history', JSON.stringify(chatHistory));
 
         try {
-            const res = await fetch('/api/sandbox/chat', { method: 'POST', body: formData });
+            const t0 = performance.now();
+            const res = await fetch('/api/sandbox/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    message: text,
+                    demo_id: backendDemoId,
+                    context_logs: logBuffer,
+                    client_send_ts: Date.now()
+                })
+            });
             const data = await res.json();
-            
-            if (data.response) {
-                appendMessage('ai', data.response);
-                chatHistory.push({role: "user", parts: [userMsg]}); 
-                chatHistory.push({role: "model", parts: [data.response]});
-                if (isAuto) {
-                    vanguardScore = Math.min(100, vanguardScore + 15);
-                    document.getElementById('v-score').innerText = vanguardScore;
+            const rtt = Math.round(performance.now() - t0);
+
+            if(sysId) {
+                const el = document.getElementById(sysId);
+                if(el) { el.classList.remove('processing'); el.classList.add('resolved'); el.innerHTML = `<i class="fas fa-check-circle"></i> ANALYSIS COMPLETE`; }
+            }
+
+            // Append primary response
+            appendBubble(data.response || '[No response]', 'ai');
+
+            if(data.v_score) document.getElementById('v-score').innerText = data.v_score;
+            if(data.status) document.getElementById('security-status-text').innerText = data.status;
+
+            // Update latency using measured RTT
+            if(typeof rtt !== 'undefined') {
+                document.getElementById('latency-text').innerText = rtt + 'ms';
+                document.getElementById('latency-text').style.color = rtt > 300 ? '#ff4444' : (rtt > 100 ? '#ffcc00' : '#2ecc71');
+            } else if(data.latency) {
+                document.getElementById('latency-text').innerText = data.latency;
+            }
+
+            // Update threat level display
+            if(data.threat_level) {
+                const tl = data.threat_level.toLowerCase();
+                const el = document.getElementById('threat-level');
+                el.innerText = tl.toUpperCase();
+                let color = '#2ecc71';
+                if(tl === 'critical') { color = '#ff3333'; isAlertState = true; document.querySelector('.main-terminal').classList.add('red-alert-active'); }
+                else if(tl === 'high') { color = '#ff884d'; isAlertState = true; document.querySelector('.main-terminal').classList.add('red-alert-active'); }
+                else if(tl === 'medium') { color = '#ffd700'; isAlertState = false; document.querySelector('.main-terminal').classList.remove('red-alert-active'); }
+                else { color = '#2ecc71'; isAlertState = false; document.querySelector('.main-terminal').classList.remove('red-alert-active'); }
+                el.style.color = color;
+            }
+
+            // Append demo-specific log to activity stream if present
+            if(data.demo_log) {
+                const div = document.createElement('div');
+                div.className = 'log-entry';
+                div.style.color = '#88ccff';
+                div.innerText = data.demo_log;
+                const logArea = document.getElementById('activity-log');
+                logArea.prepend(div);
+            }
+
+            // Telemetry persisted indicator
+            if(data.telemetry_saved) {
+                const sdiv = document.createElement('div');
+                sdiv.className = 'log-entry';
+                sdiv.style.color = '#9ee6a9';
+                sdiv.innerText = `[${new Date().toLocaleTimeString()}] Telemetry saved`;
+                document.getElementById('activity-log').prepend(sdiv);
+            }
+
+            // Show self-heal summary and animate recovery
+            if(data.self_heal) {
+                const sh = data.self_heal;
+                let content = `<b>Self-Heal:</b> ${sh.status}`;
+                if(sh.actions && sh.actions.length) {
+                    content += '<br><small>' + sh.actions.map(a => a.action + ':' + a.status).join(' | ') + '</small>';
+                }
+                appendBubble(content, 'system-alert');
+
+                // visual recovery pulse on main terminal and asset
+                document.querySelector('.main-terminal').classList.remove('red-alert-active');
+                document.querySelector('.main-terminal').classList.add('recovery-active');
+                if(currentMesh) currentMesh.rotation.y *= 0.2;
+                setTimeout(() => {
+                    document.querySelector('.main-terminal').classList.remove('recovery-active');
+                    if(currentMesh) currentMesh.rotation.y = 0.005;
+                }, 4000);
+            }
+
+            // Update cognitive HUD
+            const hud = document.getElementById('cognitive-hud'); hud.innerHTML = '';
+            if(data.thought_trace) {
+                data.thought_trace.forEach(thought => {
+                    const t = document.createElement('div'); t.className = 'thought-line'; t.innerText = thought; hud.appendChild(t);
+                });
+            }
+
+            // finalize alert state change
+            if((data.response && (data.response.includes("SUCCESS") || data.response.includes("Mitigated"))) || data.v_score > 80) {
+                if(!data.threat_level || data.threat_level === 'low') {
+                    isAlertState = false;
+                    document.querySelector('.main-terminal').classList.remove('red-alert-active');
                 }
             }
-            autoResponseLock = false;
-        } catch (e) {
+
+        } catch(e) {
             console.error(e);
-            autoResponseLock = false;
+            appendBubble('System Error: ' + e.message, 'system-alert');
         }
     }
 
-    function appendMessage(role, html) {
+    // Tool invocation removed from client UI; server-side toolkit remains available via admin endpoints.
+
+    function toggleChatView() {
+        const c = document.getElementById('chat-container');
+        if(c.classList.contains('chat-expanded')) {
+            c.classList.remove('chat-expanded');
+        } else {
+            c.classList.add('chat-expanded');
+        }
+    }
+
+    function appendBubble(html, type, id=null) {
         const div = document.createElement('div');
-        div.className = `bubble ${role === 'user' ? 'user-bubble' : (role === 'system-trigger' ? 'system-trigger-bubble' : 'ai-bubble')}`;
-        div.innerHTML = html;
+        div.className = type === 'system-alert' ? 'system-alert-bubble' : `bubble ${type}-bubble`;
+        div.innerHTML = html; if(id) div.id = id;
         const container = document.getElementById('chat-container');
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
     }
 
-    // Simulation
-    setInterval(() => {
-        const lat = Math.floor(Math.random() * 140);
-        document.getElementById('latency-avg').innerText = lat + "ms";
-        
-        if (Math.random() > 0.94) {
-            logInternal("CRITICAL: O-RAN Node-7 Signal Loss (503)", true);
-        } else {
-            logInternal("SRE: Heartbeat Node-Alpha OK");
-        }
-    }, 4500);
+    document.getElementById('sandbox-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendDirective(); });
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Scheduler modal
+    function openScheduler(){
+        if(document.getElementById('scheduler-modal')) return document.getElementById('scheduler-modal').style.display='block';
+        const div = document.createElement('div');
+        div.id = 'scheduler-modal';
+        div.style.cssText = 'position:fixed;left:50%;top:40%;transform:translate(-50%,-40%);background:#070707;padding:16px;border:1px solid #333;z-index:20000;border-radius:8px;width:420px;color:#ddd;';
+        div.innerHTML = `
+          <h3 style="margin:0 0 8px 0;color:#fff;">Schedule Appointment</h3>
+          <div style="margin-bottom:8px;"><label>Summary</label><input id="sched-summary" style="width:100%"></div>
+          <div style="margin-bottom:8px;"><label>Start (ISO)</label><input id="sched-start" style="width:100%" placeholder="2026-01-04T15:00:00"></div>
+          <div style="margin-bottom:8px;"><label>End (ISO)</label><input id="sched-end" style="width:100%" placeholder="2026-01-04T16:00:00"></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;"><button onclick="submitSchedule()">Create</button><button onclick="document.getElementById('scheduler-modal').style.display='none'">Close</button></div>
+        `;
+        document.body.appendChild(div);
+    }
+
+    async function submitSchedule(){
+        const summary = document.getElementById('sched-summary').value || 'Meeting';
+        const start = document.getElementById('sched-start').value || new Date().toISOString();
+        const end = document.getElementById('sched-end').value || new Date(Date.now()+3600000).toISOString();
+        const event = { summary: summary, start: { 'dateTime': start }, end: { 'dateTime': end }, description: 'Scheduled from Sandbox' };
+        try{
+            const res = await fetch('/admin/calendar/create', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ event: event }) });
+            const j = await res.json();
+            if(j.error) { alert('Create failed: '+j.error); return; }
+            document.getElementById('scheduler-modal').style.display='none';
+            appendBubble('<b>Calendar:</b> Scheduled '+summary, 'ai');
+            const ldiv = document.createElement('div'); ldiv.className='log-entry'; ldiv.innerText = `[${new Date().toLocaleTimeString()}] Calendar: ${summary}`; document.getElementById('activity-log').prepend(ldiv);
+        }catch(err){ alert('Error: '+err.message); }
+    }
 </script>
 {% endblock %}

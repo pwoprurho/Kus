@@ -1,11 +1,25 @@
+
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+import secrets
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from supabase import create_client
+from db import supabase_admin
 from models import User, ClientUser 
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+
+# === CLIENT TOKEN HANDSHAKE ROUTE ===
+@auth_bp.route('/client-token', methods=['POST'])
+def client_token():
+    # Only allow if client session is valid
+    if not session.get('client_access') or not session.get('client_id'):
+        return jsonify({'error': 'Not authenticated'}), 401
+    # Generate a secure token and store in session
+    token = secrets.token_urlsafe(32)
+    session['client_token'] = token
+    return jsonify({'client_token': token, 'client_id': session.get('client_id')})
 
 # Helper: Create a temp client (Safe)
 def get_auth_client():
@@ -24,7 +38,6 @@ def login():
             temp_client = get_auth_client()
             auth_res = temp_client.auth.sign_in_with_password({"email": email, "password": password})
             if auth_res.user:
-                from app import supabase_admin
                 response = supabase_admin.table('user_profiles').select('*').eq('id', auth_res.user.id).single().execute()
                 if response.data:
                     data = response.data
@@ -46,7 +59,6 @@ def client_access():
         email = request.form.get('email')
         auth_input = request.form.get('auth_input').strip()
         
-        from app import supabase_admin
         
         try:
             # Check for existing client
@@ -113,7 +125,6 @@ def client_setup():
         key = session.get('temp_client_key')
         name = session.get('temp_client_name', 'Valued Client')
         
-        from app import supabase_admin
         
         try:
             existing = supabase_admin.table('clients').select('id').eq('email', email).execute()

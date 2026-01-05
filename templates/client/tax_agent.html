@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+{% block title %}Tax Compliance Agent{% endblock %}
+{% block content %}
+<style>
+    /* Page-specific premium styles */
+    .tax-agent-container {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 2rem;
+        height: calc(100vh - 100px); /* Adjust based on header/footer */
+        padding: 2rem;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    .glass-panel {
+        background: rgba(22, 27, 34, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .panel-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .panel-title {
+        font-family: 'Garamond', serif;
+        font-size: 1.5rem;
+        color: #fff;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .panel-body {
+        padding: 1.5rem;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    /* Upload Section */
+    .upload-zone {
+        border: 2px dashed rgba(88, 166, 255, 0.3);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        margin-bottom: 1.5rem;
+        background: rgba(88, 166, 255, 0.05);
+    }
+
+    .upload-zone:hover {
+        border-color: #58a6ff;
+        background: rgba(88, 166, 255, 0.1);
+    }
+
+    .file-list-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Chat Section */
+    .chat-messages {
+        flex: 1;
+        padding: 1.5rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .message {
+        max-width: 80%;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        position: relative;
+    }
+
+    .message.agent {
+        align-self: flex-start;
+        background: rgba(255, 255, 255, 0.08);
+        border-bottom-left-radius: 2px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .message.user {
+        align-self: flex-end;
+        background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%);
+        color: white;
+        border-bottom-right-radius: 2px;
+        box-shadow: 0 4px 15px rgba(0, 114, 255, 0.3);
+    }
+
+    /* Cognitive Trace / Thoughts Styling */
+    .thought-bubble {
+        margin-bottom: 0.8rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+    }
+    
+    .thought-summary {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: #8b949e;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        user-select: none;
+        transition: color 0.2s;
+    }
+    
+    .thought-summary:hover {
+        color: #58a6ff;
+    }
+    
+    .thought-content {
+        padding: 0.75rem 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 0.8rem;
+        color: #a0a0a0;
+        background: rgba(0, 0, 0, 0.1);
+        white-space: pre-wrap;
+    }
+
+    .chat-input-area {
+        padding: 1.5rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        gap: 1rem;
+    }
+
+    .premium-input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+    .premium-input:focus {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #58a6ff;
+        box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+    }
+
+    .send-btn {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: #58a6ff;
+        border: none;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .send-btn:hover {
+        transform: scale(1.05);
+        background: #79c0ff;
+    }
+
+    /* Processing Bubble */
+    .message.processing {
+        align-self: flex-start;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(88, 166, 255, 0.2);
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #8b949e;
+        font-style: italic;
+        font-size: 0.9rem;
+        border-radius: 12px;
+        border-bottom-left-radius: 2px;
+    }
+
+    .processing-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(88, 166, 255, 0.3);
+        border-top: 2px solid #58a6ff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .tax-agent-container {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+        .glass-panel {
+            height: 600px;
+        }
+    }
+</style>
+
+<div class="tax-agent-container">
+    <!-- Left Panel: Documents & Context -->
+    <div class="glass-panel">
+        <div class="panel-header">
+            <h3 class="panel-title">
+                <i class="fas fa-folder-open" style="color: #ffd700;"></i> 
+                Document Vault
+            </h3>
+        </div>
+        <div class="panel-body">
+            <form id="upload-form" enctype="multipart/form-data">
+                <div class="upload-zone" onclick="document.getElementById('statementFile').click()">
+                    <i class="fas fa-file-invoice-dollar fa-2x mb-2" style="color: #58a6ff;"></i>
+                    <p class="mb-1">Upload Bank Statement</p>
+                    <small class="text-muted">Images (PNG, JPG) or PDF</small>
+                    <input type="file" id="statementFile" name="statementFile" accept=".png,.jpg,.jpeg,.pdf" hidden onchange="handleFileSelect(this)">
+                </div>
+                
+                <div class="upload-zone" onclick="document.getElementById('receiptsFile').click()">
+                    <i class="fas fa-receipt fa-2x mb-2" style="color: #58a6ff;"></i>
+                    <p class="mb-1">Upload Receipts</p>
+                    <small class="text-muted">Images (PNG, JPG) or PDF</small>
+                    <input type="file" id="receiptsFile" name="receiptsFile" accept=".png,.jpg,.jpeg,.pdf" hidden onchange="handleFileSelect(this)">
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill">
+                    <i class="fas fa-cloud-upload-alt me-2"></i> Process Documents
+                </button>
+            </form>
+            
+            <div id="upload-status" class="mt-3"></div>
+            
+            <div class="mt-4">
+                <h6 class="text-uppercase text-muted small fw-bold mb-3">Uploaded Documents</h6>
+                <div id="mini-table-container">
+                    <!-- File list will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Chat Interface -->
+    <div class="glass-panel">
+        <div class="panel-header d-flex justify-content-between align-items-center">
+            <h3 class="panel-title">
+                <i class="fas fa-robot" style="color: #58a6ff;"></i>
+                Tax Compliance Agent
+            </h3>
+            <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 rounded-pill px-3">
+                <span class="spinner-grow spinner-grow-sm me-1" style="width: 6px; height: 6px;"></span>
+                Online
+            </span>
+        </div>
+        
+        <div id="chat-box" class="chat-messages">
+            <!-- Welcome Message -->
+            <div class="message agent">
+                <strong>Agent:</strong><br>
+                Hello. I am your dedicated Tax Compliance Assistant. Please upload your financial documents on the left, and I will help you analyze your tax liability and compliance status.
+            </div>
+        </div>
+
+        <form id="chat-form" class="chat-input-area">
+            <input type="text" class="premium-input" id="chat-input" placeholder="Ask about your tax liability, deductions, or compliance..." autocomplete="off">
+            <button class="send-btn" type="submit">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </form>
+        <!-- Removed separate cognitive trace div -->
+    </div>
+</div>
+
+<script src="/static/js/tax_agent.js"></script>
+<script>
+    // Simple file select handler for visual feedback
+    function handleFileSelect(input) {
+        const zone = input.parentElement;
+        if (input.files.length > 0) {
+            zone.style.borderColor = '#2ea043';
+            zone.style.background = 'rgba(46, 160, 67, 0.1)';
+            const p = zone.querySelector('p');
+            p.textContent = input.files[0].name;
+            p.style.fontWeight = 'bold';
+        }
+    }
+</script>
+{% endblock %}

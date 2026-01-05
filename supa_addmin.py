@@ -16,7 +16,10 @@ supabase: Client = create_client(url, key)
 
 # 3. Define the Admin User Credentials
 ADMIN_EMAIL = "akporurho@proton.me"
-ADMIN_PASSWORD = "Ejiro2828!" 
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+if not ADMIN_PASSWORD:
+    print("Error: ADMIN_PASSWORD not found in .env")
+    exit()
 ADMIN_NAME = "System Administrator"
 
 def create_admin():
