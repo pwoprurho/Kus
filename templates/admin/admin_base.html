@@ -5,16 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin | {% block title %}Kusmus AI{% endblock %}</title>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 0; overflow-x: hidden; }
         
+        /* --- 3D ORBITAL BACKGROUND --- */
+        .orbit-container {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) perspective(1000px);
+            width: 80vh; height: 80vh; 
+            pointer-events: none; z-index: 0; opacity: 0.2; 
+        }
+        .orbit-ring {
+            position: absolute; border: 1px solid rgba(0, 114, 255, 0.4);
+            border-radius: 50%; width: 100%; height: 100%;
+            transform-style: preserve-3d;
+            box-shadow: 0 0 15px rgba(0, 114, 255, 0.1);
+        }
+        
+        .ring-1 { animation: orbit1 20s linear infinite; border-color: rgba(0, 114, 255, 0.6); }
+        .ring-2 { width: 80%; height: 80%; top: 10%; left: 10%; animation: orbit2 30s linear infinite; border-color: rgba(0, 255, 136, 0.4); }
+        .ring-3 { width: 60%; height: 60%; top: 20%; left: 20%; animation: orbit3 25s linear infinite reverse; border-color: rgba(255, 255, 255, 0.3); }
+
+        @keyframes orbit1 { from { transform: rotateX(60deg) rotateZ(0deg); } to { transform: rotateX(60deg) rotateZ(360deg); } }
+        @keyframes orbit2 { from { transform: rotateY(60deg) rotateZ(0deg); } to { transform: rotateY(60deg) rotateZ(360deg); } }
+        @keyframes orbit3 { from { transform: rotateX(45deg) rotateY(45deg) rotateZ(0deg); } to { transform: rotateX(45deg) rotateY(45deg) rotateZ(360deg); } }
+
         /* Header */
-        .admin-header { background-color: #0072ff; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .admin-header { position: relative; z-index: 10; background-color: #0072ff; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
         .admin-header h1 { margin: 0; font-size: 1.5rem; font-family: 'Garamond', serif; }
         .admin-nav a { color: white; text-decoration: none; margin-left: 15px; font-size: 0.9rem; }
         .admin-nav a:hover { text-decoration: underline; }
         
         /* Container */
-        .container { max-width: 1200px; margin: 30px auto; padding: 20px; background-color: #1e1e1e; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .container { position: relative; z-index: 10; max-width: 1200px; margin: 30px auto; padding: 20px; background-color: #1e1e1e; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         
         /* Flash Messages */
         .flash-msg { padding: 15px; margin-bottom: 20px; border-radius: 4px; color: #fff; }
@@ -44,7 +66,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <div class="orbit-container">
+        <div class="orbit-ring ring-1"></div>
+        <div class="orbit-ring ring-2"></div>
+        <div class="orbit-ring ring-3"></div>
+    </div>
 
+    {% block header %}
     <div class="admin-header">
         <h1>Kusmus AI Command Center</h1>
         <div class="admin-nav">
@@ -56,7 +84,9 @@
             {% endif %}
         </div>
     </div>
+    {% endblock %}
 
+    {% block body_content %}
     <div class="container">
         
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -71,6 +101,7 @@
 
         {% block content %}{% endblock %}
     </div>
+    {% endblock %}
 
 </body>
 </html>

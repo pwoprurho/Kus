@@ -131,7 +131,7 @@
                 <li><a href="{{ url_for('public.team') }}">Team</a></li>
                 <li><a href="{{ url_for('public.chairman') }}">Mandate</a></li> 
                 <li><a href="{{ url_for('public.blog') }}">Insights</a></li>
-                <li><a href="{{ url_for('public.sandbox_home') }}" class="nav-cta" style="display: flex;">Try-Our-Demo</a></li>
+                <li><a href="{{ url_for('sandbox.sandbox_view') }}" class="nav-cta" style="display: flex;">Try-Our-Demo</a></li>
                 <li>
                     <a href="{{ url_for('auth.client_access') }}" class="nav-cta" style="display: flex; align-items: center; gap: 8px;">
                         <i class="fas fa-lock" style="font-size: 0.8rem;"></i> Client Portal
@@ -191,14 +191,13 @@
             const chatSendBtn = document.getElementById('chat-send-btn');
             const chatToggleBtn = document.getElementById('chat-toggle-btn');
             
-            // Default to Concierge if accessed directly
-            window.currentDemoId = 'strategic_concierge'; 
+            // Default to Sentinel if accessed directly
+            window.currentDemoId = 'sentinel_monitor'; 
             
             // Local registry of greetings to ensure instant UI response (matches backend)
             const PROTOCOL_GREETINGS = {
-                'downtime_mitigation': "System initialized. Ready for infrastructure log analysis. Please provide logs or describe your current latency patterns.",
-                'customer_retention': "Sentiment Analysis Protocol active. Upload transcripts or feedback to calculate Churn Risk Scores.",
-                'strategic_concierge': "Welcome to the Strategic Suite. Shall we discuss how the Kusmus Method applies to your specific enterprise scale?"
+                'sentinel_monitor': "Sentinel System Online. O-RAN defense perimeter active. Awaiting telemetry logs.",
+                'surge_vla': "VLA Robotics Interface Active. Ready to analyze vision feed for anomalies."
             };
 
             // --- 2. GLOBAL PROTOCOL LAUNCHER ---
@@ -298,7 +297,7 @@
                 chatWindow.classList.toggle('visible');
                 // If opening empty, trigger default
                 if (chatWindow.classList.contains('visible') && chatBody.children.length === 0) {
-                     window.launchProtocol('strategic_concierge');
+                     window.launchProtocol('sentinel_monitor');
                 }
             });
 

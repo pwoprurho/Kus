@@ -1,8 +1,10 @@
-{% extends "base.html" %}
+{% extends "admin/admin_base.html" %}
 
 {% block title %}Command Center{% endblock %}
 
-{% block content %}
+{% block header %}{% endblock %}
+
+{% block body_content %}
 <style>
     /* --- HUD OVERRIDES --- */
     header, footer, #chat-widget-container { display: none !important; }
@@ -130,6 +132,75 @@
         <div class="stat-card">
             <span class="stat-value" style="color: #00ff88;">{{ sandbox_count }}</span>
             <span class="stat-label">Neural Sessions</span>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px;">
+        <!-- Visualization Widget (Replaces Calendar) -->
+        <div class="glass-panel" style="margin-bottom: 0; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <span class="hud-label" style="color: #0072ff; margin-bottom: 0;">Neural Engagement Trends</span>
+                <div style="display: flex; gap: 5px;">
+                    <span style="font-size: 0.6rem; color: #666; padding: 2px 6px; border: 1px solid #333; border-radius: 4px;">24H</span>
+                    <span style="font-size: 0.6rem; color: #fff; padding: 2px 6px; border: 1px solid #0072ff; background: rgba(0,114,255,0.2); border-radius: 4px;">7D</span>
+                </div>
+            </div>
+            
+            <!-- CSS Bar Chart -->
+            <div style="flex-grow: 1; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding-top: 20px; height: 150px;">
+                {% for i in range(12) %}
+                <div style="width: 100%; background: rgba(0,114,255,0.1); border-radius: 4px 4px 0 0; position: relative; height: {{ range(20, 90)|random }}%;">
+                    <div style="position: absolute; bottom: 0; width: 100%; height: 100%; background: linear-gradient(to top, rgba(0,114,255,0.4), transparent);"></div>
+                </div>
+                {% endfor %}
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
+                <span style="font-size: 0.6rem; color: #666;">MON</span>
+                <span style="font-size: 0.6rem; color: #666;">TUE</span>
+                <span style="font-size: 0.6rem; color: #666;">WED</span>
+                <span style="font-size: 0.6rem; color: #666;">THU</span>
+                <span style="font-size: 0.6rem; color: #666;">FRI</span>
+                <span style="font-size: 0.6rem; color: #666;">SAT</span>
+                <span style="font-size: 0.6rem; color: #666;">SUN</span>
+            </div>
+        </div>
+
+        <!-- Analytics Widget -->
+        <div class="glass-panel" style="margin-bottom: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <span class="hud-label" style="color: #0072ff; margin-bottom: 0;">System Analytics</span>
+            </div>
+            <!-- Simple Bars -->
+            <div style="margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#aaa; margin-bottom:5px;">
+                    <span>Server Load</span>
+                    <span>24%</span>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px;">
+                    <div style="background: #0072ff; width: 24%; height: 100%; border-radius: 2px;"></div>
+                </div>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#aaa; margin-bottom:5px;">
+                    <span>Memory Usage</span>
+                    <span>41%</span>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px;">
+                    <div style="background: #00ff88; width: 41%; height: 100%; border-radius: 2px;"></div>
+                </div>
+            </div>
+             <div style="margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#aaa; margin-bottom:5px;">
+                    <span>Database Connections</span>
+                    <span>12/50</span>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px;">
+                    <div style="background: #ffcc00; width: 24%; height: 100%; border-radius: 2px;"></div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                 <a href="{{ url_for('admin.system_analytics') }}" class="btn-action" style="width: 100%; text-align: center;">VIEW FULL REPORT</a>
+            </div>
         </div>
     </div>
 

@@ -65,7 +65,22 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!msg) return;
     
     // Updated UI for User Message
-    chatBox.innerHTML += `<div class="message user"><strong>You:</strong><br>${msg}</div>`;
+    const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+    chatBox.innerHTML += `
+        <div class="message user" style="margin-bottom: 2rem;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                 <div style="display:flex; align-items:center; gap:8px;">
+                      <div class="user-avatar" style="width:24px; height:24px; background: #6c757d; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                         <i class="fas fa-user text-white" style="font-size: 12px;"></i>
+                      </div>
+                      <strong>You</strong>
+                  </div>
+                <span class="text-white-50 small" style="font-size: 0.75rem;">${timeStr}</span>
+            </div>
+            <div style="margin-left: 32px; font-size: 0.95rem;">
+                ${msg}
+            </div>
+        </div>`;
     chatInput.value = '';
     chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -81,57 +96,197 @@ document.addEventListener('DOMContentLoaded', function() {
     chatBox.scrollTop = chatBox.scrollHeight;
 
     try {
-      const res = await fetch('/api/tax/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg })
+      // Collect visible history for context
+      const history = [];
+      document.querySelectorAll('.message').forEach(el => {
+         // rudimentary reconstruction of history
+         if (el.classList.contains('user')) {
+             // Logic to get text content without the You/Time header?
+             // Since we changed structure, el.innerText might include time.
+             // Let's rely on finding the last text node or clean it.
+             // Simplest: Just grab the whole text and strip "You:" and time pattern if needed,
+             // OR store raw content in a data attribute.
+             // For now, let's just use a simpler parsing or just the text that isn't the header.
+             let clone = el.cloneNode(true);
+             let header = clone.querySelector('.d-flex');
+             if(header) header.remove();
+             history.push({role: 'user', content: clone.innerText.trim()});
+         } else if (el.classList.contains('agent')) {
+            let clone = el.cloneNode(true);
+            let header = clone.querySelector('.d-flex');
+            if(header) header.remove();
+            // remove thoughts
+            let details = clone.querySelector('details');
+            if(details) details.remove();
+            let loader = clone.querySelector('.agent-loader');
+            if(loader) loader.remove();
+            
+            history.push({role: 'model', content: clone.innerText.trim()});
+         }
       });
+
+      // Prepare UI for Streaming Response
+      const msgId = 'msg-' + Date.now();
       
-      // Remove processing bubble
+      // Removed: generic processing bubble removal here to keep it until we init stream or replace it.
+      // Better: Replace the "processing" bubble with the Agent message logic directly.
       const processingEl = document.getElementById(processingId);
       if (processingEl) processingEl.remove();
 
-      const data = await res.json();
-      
-      if (res.ok) {
-          // Construct Thought Trace HTML if available
-          let thoughtsHTML = '';
-          if (data.thought_trace && data.thought_trace.length > 0) {
-              const thoughtsText = data.thought_trace.join('\n\n');
-              thoughtsHTML = `
-                  <details class="thought-bubble">
-                      <summary class="thought-summary">
-                          <i class="fas fa-brain"></i>
-                          <span>Thinking Process</span>
-                      </summary>
-                      <div class="thought-content">${thoughtsText}</div>
-                  </details>
-              `;
-          }
-
-          // Updated UI for Agent Message with Thoughts
-          chatBox.innerHTML += `
-              <div class="message agent">
-                  ${thoughtsHTML}
-                  <strong>Agent:</strong><br>${data.response}
+      // NEW: Added back the spinner INSIDE the agent message initially
+      const agentTimeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+      const agentMsgHTML = `
+          <div id="${msgId}" class="message agent" style="display:flex; flex-direction:column;">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                      <div class="agent-avatar" style="width:24px; height:24px; background: linear-gradient(135deg, #FFB75E, #ED8F03); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                         <i class="fas fa-robot text-white" style="font-size: 12px;"></i>
+                      </div>
+                      <strong>Kusmus Tax Agent</strong>
+                  </div>
+                  <span class="text-white-50 small" style="font-size: 0.75rem;">${agentTimeStr}</span>
               </div>
-          `;
-          
-          // Clear the old global trace if it exists
-          if (cognitiveTrace) cognitiveTrace.textContent = '';
+              <div class="agent-loader" style="display:flex; align-items:center; gap:10px; margin-bottom:10px; margin-left: 32px;">
+                  <div class="processing-spinner" style="width:16px; height:16px;"></div>
+                  <span class="text-muted fst-italic small">Initiating Tax Protocol...</span>
+              </div>
+              
+              <details class="thought-bubble" open style="display:none; margin-top:5px; margin-bottom:15px; margin-left: 32px; border-left: 2px solid #58a6ff; padding-left: 12px;">
+                  <summary class="thought-summary text-primary" style="cursor:pointer; font-size:0.85rem; list-style:none; display:flex; align-items:center; gap:8px; outline:none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                      <i class="fas fa-chevron-down toggle-icon" style="font-size:0.8em; transition: transform 0.2s;"></i>
+                      <i class="fas fa-brain fa-pulse status-icon"></i> 
+                      <span class="status-text">Thinking...</span>
+                  </summary>
+                  <div class="thought-content text-white-50 small" style="white-space: pre-wrap; margin-top:8px; font-family: 'Consolas', monospace; max-height:250px; overflow-y:auto; background:rgba(0,0,0,0.3); padding:10px; border-radius:6px; font-size: 0.8em; line-height: 1.4;"></div>
+              </details>
 
-      } else {
-          // Handle server errors (like 503 Overloaded)
-          chatBox.innerHTML += `<div class="message agent text-danger"><strong>System:</strong> ${data.error || 'An error occurred.'}</div>`;
+              <div class="agent-content" style="margin-left: 32px; font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; line-height: 1.6; color: #e6edf3;"></div>
+          </div>
+      `;
+      
+      chatBox.insertAdjacentHTML('beforeend', agentMsgHTML);
+      
+      const msgContainer = document.getElementById(msgId);
+      const loaderDiv = msgContainer.querySelector('.agent-loader');
+      const contentDiv = msgContainer.querySelector('.agent-content');
+      const thoughtBubble = msgContainer.querySelector('.thought-bubble');
+      const thoughtContent = msgContainer.querySelector('.thought-content');
+      const thoughtSummaryText = msgContainer.querySelector('.thought-summary .status-text');
+      const thoughtStatusIcon = msgContainer.querySelector('.thought-summary .status-icon');
+      const toggleIcon = msgContainer.querySelector('.thought-summary .toggle-icon');
+
+      // Add click listener to toggle icon rotation
+      msgContainer.querySelector('summary').addEventListener('click', function() {
+          if (thoughtBubble.open) {
+              toggleIcon.style.transform = 'rotate(-90deg)';
+          } else {
+              toggleIcon.style.transform = 'rotate(0deg)';
+          }
+      });
+
+      // Initiate Stream
+      try {
+        const response = await fetch('/api/tax/chat_stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg, history: history })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Server Error: ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let accumulatedMarkdown = '';
+        let hasReceivedData = false;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            hasReceivedData = true;
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+            
+            // Process SSE lines (data: {...})
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop(); // Keep partial line in buffer
+
+            for (const line of lines) {
+                if (line.trim().startsWith('data: ')) {
+                    const dataStr = line.replace('data: ', '').trim();
+                    if (dataStr === '[DONE]') break;
+                    
+                    try {
+                        const event = JSON.parse(dataStr);
+                        
+                        // Hide loader on first data packet
+                        if (loaderDiv.style.display !== 'none') {
+                            loaderDiv.style.display = 'none';
+                        }
+
+                        if (event.type === 'thought') {
+                            // Reveal thought bubble
+                            if (thoughtBubble.style.display === 'none') {
+                                thoughtBubble.style.display = 'block';
+                            }
+                            // Update text
+                            thoughtContent.innerText += event.content + '\n'; 
+                            thoughtSummaryText.innerText = "Thinking Process...";
+                            // Auto-scroll thought box
+                            thoughtContent.scrollTop = thoughtContent.scrollHeight;
+                            
+                        } else if (event.type === 'content') {
+                            // Once we get content, maybe collapse thoughts or change icon?
+                            if (thoughtStatusIcon.classList.contains('fa-pulse')) {
+                                thoughtStatusIcon.classList.remove('fa-pulse');
+                                thoughtSummaryText.innerText = "Reasoning Complete";
+                                // Optional: Auto-collapse when done?
+                                // thoughtBubble.removeAttribute('open'); 
+                                // toggleIcon.style.transform = 'rotate(-90deg)';
+                            }
+                            
+                            accumulatedMarkdown += event.content;
+                            
+                            // Safe render
+                            if (typeof marked !== 'undefined' && marked.parse) {
+                                contentDiv.innerHTML = marked.parse(accumulatedMarkdown);
+                            } else {
+                                // Fallback if library missing
+                                contentDiv.innerText = accumulatedMarkdown;
+                            }
+                            
+                        } else if (event.type === 'error') {
+                            if (loaderDiv.style.display !== 'none') loaderDiv.style.display = 'none';
+                            contentDiv.innerHTML += `<div class="alert alert-danger mt-2"><strong>Error:</strong> ${event.content}</div>`;
+                        }
+                    } catch (e) {
+                        console.error('JSON Parse Error', e);
+                        contentDiv.innerHTML += `<div class="text-danger small">Parsing error: ${e.message}</div>`;
+                    }
+                }
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
+        if (!hasReceivedData && !accumulatedMarkdown) {
+             if (loaderDiv.style.display !== 'none') loaderDiv.style.display = 'none';
+             contentDiv.innerHTML = '<span class="text-warning">Server sent no data. Please try again.</span>';
+        }
+
+      } catch (fetchErr) {
+          if (loaderDiv) loaderDiv.style.display = 'none';
+          contentDiv.innerHTML = `<span class="text-danger">Network Connection Error: ${fetchErr.message}</span>`;
       }
       
-      chatBox.scrollTop = chatBox.scrollHeight;
     } catch (err) {
-      // Remove processing bubble
+      console.error(err);
+      // Remove processing bubble if still there
       const processingEl = document.getElementById(processingId);
       if (processingEl) processingEl.remove();
-
-      chatBox.innerHTML += '<div class="message agent text-danger">Error contacting agent. Please check your connection.</div>';
+      chatBox.innerHTML += '<div class="message agent text-danger">Connection Failed (Client Logic).</div>';
     }
   });
 });

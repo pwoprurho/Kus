@@ -175,7 +175,8 @@
             <p style="color:#999; margin-bottom:20px;">Choose a live demo to launch the interactive sandbox with a 3D asset.</p>
             <div style="display:flex; gap:12px; flex-wrap:wrap;">
                 {% for key, info in demos.items() %}
-                    <a class="secondary-button" href="{{ url_for('public.sandbox_home') }}?demo={{ key }}">{{ info.name }}</a>
+                    <!-- Updated to point to generic /sandbox route -->
+                    <a class="secondary-button" href="{{ url_for('sandbox.sandbox_view') }}?demo={{ key }}">{{ info.name }}</a>
                 {% endfor %}
             </div>
         </div>
@@ -210,14 +211,12 @@
     const rawDemo = urlParams.get('demo') || 'sentinel'; 
     let backendDemoId = 'sentinel_monitor';
 
-    if(rawDemo === 'concierge') backendDemoId = 'strategic_concierge';
-    if(rawDemo === 'robotics') backendDemoId = 'surge_vla';
+    if(rawDemo === 'robotics' || rawDemo === 'surge_vla') backendDemoId = 'surge_vla';
     
     function initAsset() {
         let geo;
-        if(rawDemo === 'sentinel') geo = new THREE.ConeGeometry(1.5, 3, 4); 
-        else if (rawDemo === 'concierge') geo = new THREE.BoxGeometry(2, 2, 2); 
-        else if (rawDemo === 'robotics') geo = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+        if(rawDemo === 'sentinel' || rawDemo === 'sentinel_monitor') geo = new THREE.ConeGeometry(1.5, 3, 4); 
+        else if (rawDemo === 'robotics' || rawDemo === 'surge_vla') geo = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
         else geo = new THREE.ConeGeometry(1.5, 3, 4);
 
         const mat = new THREE.MeshPhongMaterial({color: 0x0072ff, wireframe: true});

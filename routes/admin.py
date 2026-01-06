@@ -87,6 +87,41 @@ def sandbox_analytics():
 
 
 # =========================================================
+# === SYSTEM ANALYTICS (Server Health) ===
+# =========================================================
+
+@admin_bp.route('/system-analytics')
+@login_required
+@role_required('supa_admin', 'admin')
+def system_analytics():
+    """Detailed view of System/Server Health metrics."""
+    # In a real app, use psutil here. For this demo, we simulate.
+    import random
+    
+    system_stats = {
+        'cpu_load': random.randint(15, 45),
+        'memory_usage': random.randint(30, 60),
+        'disk_usage': 68,
+        'active_connections': random.randint(5, 20),
+        'uptime': '14d 3h 22m',
+        'services': [
+            {'name': 'Gunicorn Worker', 'status': 'Running', 'uptime': '24h'},
+            {'name': 'PostgreSQL (Supabase)', 'status': 'Running', 'uptime': '14d'},
+            {'name': 'Redis Cache', 'status': 'Running', 'uptime': '14d'},
+            {'name': 'Nginx Proxy', 'status': 'Running', 'uptime': '14d'},
+            {'name': 'Celery Task Queue', 'status': 'Idle', 'uptime': '24h'}
+        ],
+        'logs': [
+            {'time': '10:42:01', 'level': 'INFO', 'msg': 'Health check passed'},
+            {'time': '10:40:15', 'level': 'INFO', 'msg': 'Backup completed successfully'},
+            {'time': '10:35:22', 'level': 'WARN', 'msg': 'High latency on route /sandbox'},
+            {'time': '10:30:00', 'level': 'INFO', 'msg': 'Scheduled maintenance task started'}
+        ]
+    }
+    return render_template('admin/system_report.html', stats=system_stats)
+
+
+# =========================================================
 # === SUPA ADMIN INTERFACE (Privilege Management + Zoho Chat)
 # =========================================================
 
@@ -224,7 +259,9 @@ def admin_calendar_events():
                 return jsonify({'status': 'ok', 'updated': True})
             return jsonify({'status': 'not_found'}), 404
 
-        # GET -> render simple template
+        # GET -> render simple template or JSON
+        if request.headers.get('Accept') == 'application/json' or request.args.get('format') == 'json':
+            return jsonify(events)
         return render_template('calendar_events.html', events=events)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -279,6 +316,8 @@ def get_chat_history(client_id):
 @login_required
 def send_admin_message():
     """Handles Admin Text AND File Uploads."""
+    from services.mailer import send_notification_email
+    
     client_id = request.form.get('client_id')
     text = request.form.get('message')
     uploaded_file = request.files.get('file')
@@ -297,6 +336,22 @@ def send_admin_message():
             'client_id': client_id, 'admin_id': current_user.id, 'sender_type': 'admin',
             'encrypted_content': encrypted_content, 'attachment_url': attachment_path, 'attachment_type': attachment_type
         }).execute()
+
+        # Notify Client
+        try:
+            client_res = supabase_admin.table('clients').select('email').eq('id', client_id).single().execute()
+            if client_res.data:
+                client_email = client_res.data['email']
+                send_notification_email(
+                    recipient_email=client_email,
+                    title="New Message from Kusmus Admin",
+                    message="You have received a new secure message regarding your audit.",
+                    action_link="https://kusmus.ai/client/login", # Update with real URL
+                    action_text="View Secure Message"
+                )
+        except Exception as e:
+            print(f"Failed to notify client: {e}")
+
         return jsonify({'status': 'sent'})
     except Exception as e: return jsonify({'error': str(e)}), 500
 

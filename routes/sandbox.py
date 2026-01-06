@@ -1,7 +1,7 @@
 # routes/sandbox.py
 import json
 import os
-from flask import Blueprint, request, jsonify, session, render_template, redirect
+from flask import Blueprint, request, jsonify, session, render_template, redirect, Response, stream_with_context
 from utils import role_required
 # routes/sandbox.py
 from core.engine import KusmusAIEngine
@@ -30,11 +30,19 @@ def sandbox_view():
     # 2. DEMO VALIDATION & RESOLUTION
     short_map = {
         'sentinel': 'sentinel_monitor',
-        'concierge': 'strategic_concierge',
         'robotics': 'surge_vla'
     }
 
     selected_demo = request.args.get('demo', '')
+
+    # If no demo selected, show the selector
+    if not selected_demo:
+        return render_template("select_demo.html", demos=DEMO_REGISTRY)
+
+    # SPECIAL CASE: Tax Agent Demo (Redirects to restricted Tax UI)
+    if 'tax' in selected_demo.lower() or 'compliance' in selected_demo.lower():
+        # Render the client template but with a flag that it's in demo/sandbox mode
+        return render_template('client/tax_agent.html', is_sandbox_demo=True, user=session.get('user', {}))
 
     def resolve_demo_key(raw):
         if not raw:
@@ -53,11 +61,80 @@ def sandbox_view():
     session['active_demo_id'] = backend_id
     session['v_score'] = 100
 
-    return render_template('sandbox.html', demo_key=backend_id)
+    # Retrieve full demo object to pass to template (So template doesn't need to guess names)
+    demo_info = DEMO_REGISTRY.get(backend_id, DEMO_REGISTRY['sentinel_monitor'])
+
+    return render_template('sandbox.html', demo_key=backend_id, demo=demo_info)
+
+
+@sandbox_bp.route("/api/sandbox/chat_stream", methods=["POST"])
+def sandbox_chat_stream():
+    try:
+        data = request.get_json() or {}
+        demo_id = data.get('demo_id') or session.get('active_demo_id', 'sentinel_monitor')
+        user_message = data.get('message', '').strip()
+        context_logs = data.get('context_logs', [])
+
+        persona = DEMO_REGISTRY.get(demo_id, DEMO_REGISTRY['sentinel_monitor'])
+
+        engine = KusmusAIEngine(
+            system_instruction=persona['instruction'],
+            model_name=persona.get('model', 'gemini-2.5-flash-thinking-exp')
+        )
+
+        def generate():
+            full_response_text = ""
+            has_content = False
+            for event in engine.generate_response_stream(user_message, context_logs=context_logs):
+                yield f"data: {json.dumps(event)}\n\n"
+                if event.get('type') == 'content':
+                    full_response_text += event.get('content', '')
+                    has_content = True
+            
+            # Fallback for empty stream (prevents stuck UI)
+            if not has_content:
+                fallback_msg = " [Analysis concluded with no textual output. Check telemetry logs.]"
+                yield f"data: {json.dumps({'type': 'content', 'content': fallback_msg})}\n\n"
+                full_response_text = fallback_msg
+
+            # Post-generation logic to maintain demo state
+            is_mitigated = any(x in full_response_text.upper() for x in ["SUCCESS", "MITIGATED", "NEUTRALIZED"])
+            current_score = session.get('v_score', 100)
+            
+            # Rehydrate logs if needed or just use passed checks
+            new_score = calculate_vanguard_score(current_score, context_logs, is_mitigated)
+            session['v_score'] = new_score
+            threat_level = get_threat_level(new_score, context_logs)
+            posture = get_security_posture(new_score)
+
+            meta_data = {
+                "type": "meta",
+                "v_score": new_score,
+                "threat_level": threat_level,
+                "status": posture,
+                "demo_log": None
+            }
+             
+            if 'log_signature' in persona:
+                 ts = datetime.datetime.utcnow().strftime('%H:%M:%S')
+                 meta_data['demo_log'] = f"[{ts}] {persona['log_signature']}"
+
+            yield f"data: {json.dumps(meta_data)}\n\n"
+            yield "data: [DONE]\n\n"
+
+        return Response(stream_with_context(generate()), mimetype='text/event-stream')
+
+    except Exception as e:
+        print(f"Sandbox Stream Error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 @sandbox_bp.route("/api/sandbox/chat", methods=["POST"])
 def sandbox_chat():
+    thought_trace = []
+    response_text = ""
+    demo_id = "unknown"
+    
     try:
         data = request.get_json()
         # Use session-stored ID if not provided in JSON
@@ -67,24 +144,7 @@ def sandbox_chat():
 
         persona = DEMO_REGISTRY.get(demo_id, DEMO_REGISTRY['sentinel_monitor'])
 
-        # --- RAG for Tax Accountant Persona ---
-        if demo_id == "strategic_concierge":
-            try:
-                from rag_tax_law import search_tax_law
-                rag_chunks = search_tax_law(user_message, supabase_admin, top_k=3)
-                if rag_chunks and isinstance(rag_chunks, list):
-                    law_context = "\n\n--- Relevant Nigeria Tax Law Excerpts ---\n"
-                    for c in rag_chunks:
-                        page = c.get('page_num', '?')
-                        chunk = c.get('chunk_text', '')
-                        law_context += f"[Page {page}] {chunk}\n"
-                    user_message_aug = f"{user_message}\n{law_context}"
-                else:
-                    user_message_aug = user_message
-            except Exception as e:
-                user_message_aug = user_message + f"\n[Tax Law RAG Error: {str(e)}]"
-        else:
-            user_message_aug = user_message
+        user_message_aug = user_message
 
         engine = KusmusAIEngine(
             system_instruction=persona['instruction'],
@@ -199,7 +259,36 @@ def sandbox_chat():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # LOG GENERIC/CRITICAL ERRORS TO FILE
+        error_msg = f"CRITICAL_SYSTEM_FAILURE: {str(e)}"
+        thought_trace.append(error_msg)
+        
+        try:
+            os.makedirs('data', exist_ok=True)
+            timestamp = datetime.datetime.utcnow().isoformat()
+            
+            # 1. Log to Telemetry
+            with open('data/sandbox_telemetry.log', 'a', encoding='utf-8') as f:
+                err_record = {
+                    'timestamp': timestamp,
+                    'demo_id': demo_id,
+                    'error': str(e),
+                    'thought_trace': json.dumps(thought_trace)
+                }
+                f.write(f"{demo_id} [ERROR] {json.dumps(err_record)}\n")
+            
+            # 2. Log to Forensic Memory (log.txt)
+            with open('data/log.txt', 'a', encoding='utf-8') as f:
+                f.write(f"[{timestamp}] [SYSTEM_ERROR] {demo_id}: {str(e)}\n")
+                
+        except Exception:
+            pass
+
+        return jsonify({
+            'response': f"System Error: {str(e)}", 
+            'thought_trace': thought_trace,
+            'error': str(e)
+        }), 500
 
 
 

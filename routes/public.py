@@ -49,31 +49,10 @@ def team():
 def chairman():
     return render_template("chairmans_mandate.html")
 
-@public_bp.route("/sandbox")
-def sandbox_home():
-    raw = request.args.get('demo')
-    # Resolve demo key safely: accept canonical keys or short aliases
-    short_map = {'sentinel': 'sentinel_monitor', 'concierge': 'strategic_concierge', 'robotics': 'surge_vla'}
-    def resolve(raw_demo):
-        if not raw_demo: return None
-        if raw_demo in DEMO_REGISTRY: return raw_demo
-        if raw_demo in short_map: return short_map[raw_demo]
-        safe = ''.join(c for c in raw_demo if c.isalnum() or c == '_')
-        return short_map.get(safe)
 
-    demo_key = resolve(raw)
-    if demo_key:
-        demo_entry = DEMO_REGISTRY.get(demo_key)
-        return render_template("sandbox.html", demo_key=demo_key, demo_entry=demo_entry)
+# Valid routes for core usage
+# Removed duplicate /sandbox handler to allow routes/sandbox.py to handle it authoritative.
 
-    # Otherwise render the demo selector and pass available demos
-    return render_template("select_demo.html", demos=DEMO_REGISTRY)
-
-
-@public_bp.route("/sandbox/view")
-def sandbox_view():
-    """Render the sandbox demo page. Accepts optional ?demo=<name> query param."""
-    return render_template("sandbox.html")
 
 @public_bp.route("/blog")
 def blog():

@@ -1,6 +1,7 @@
 import os
 import json
 import datetime
+import uuid
 from typing import Dict, Any, Optional
 
 # Try to import Google API client libraries; if unavailable we'll fall back to a simulator
@@ -11,6 +12,30 @@ try:
 except Exception:
     GOOGLE_AVAILABLE = False
 
+
+def _persist_event(event_data: Dict[str, Any], status: str, message: str = None) -> Dict[str, Any]:
+    """Helper to persist event to local JSONL file for dashboard visibility."""
+    try:
+        data_dir = os.path.join(os.getcwd(), 'data')
+        os.makedirs(data_dir, exist_ok=True)
+        file_path = os.path.join(data_dir, 'calendar_events.jsonl')
+        
+        record = {
+            'id': str(uuid.uuid4()),
+            'demo_id': 'agent_action',
+            'event_request': event_data,
+            'created_at': datetime.datetime.utcnow().isoformat(),
+            'status': status,
+            'message': message
+        }
+        
+        with open(file_path, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(record) + '\n')
+            
+        return record
+    except Exception as e:
+        print(f"Failed to persist calendar event: {e}")
+        return {}
 
 def create_calendar_event(event: Dict[str, Any], calendar_id: str = 'primary') -> Dict[str, Any]:
     """Create an event in Google Calendar using a service account JSON payload.
@@ -28,6 +53,7 @@ def create_calendar_event(event: Dict[str, Any], calendar_id: str = 'primary') -
     evt = dict(event) if isinstance(event, dict) else {'summary': str(event)}
 
     if not GOOGLE_AVAILABLE:
+        _persist_event(evt, 'SIMULATED', 'google-api-python-client not available')
         return {
             'status': 'SIMULATED',
             'message': 'google-api-python-client not available in environment',
@@ -38,6 +64,7 @@ def create_calendar_event(event: Dict[str, Any], calendar_id: str = 'primary') -
     # Credential getter: either from file path env var or entire JSON in env var
     sa_json = os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON_FILE') or os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON')
     if not sa_json:
+        _persist_event(evt, 'SIMULATED', 'No service account credentials provided')
         return {
             'status': 'SIMULATED',
             'message': 'No service account credentials provided (GOOGLE_SERVICE_ACCOUNT_JSON[_FILE])',
@@ -53,6 +80,7 @@ def create_calendar_event(event: Dict[str, Any], calendar_id: str = 'primary') -
             info = json.loads(sa_json)
             credentials = service_account.Credentials.from_service_account_info(info, scopes=['https://www.googleapis.com/auth/calendar'])
     except Exception as e:
+        _persist_event(evt, 'SIMULATED', f'Credentials parse error: {str(e)}')
         return {
             'status': 'SIMULATED',
             'message': f'Credentials parse error: {str(e)}',
@@ -63,6 +91,8 @@ def create_calendar_event(event: Dict[str, Any], calendar_id: str = 'primary') -
     try:
         service = build('calendar', 'v3', credentials=credentials, cache_discovery=False)
         created = service.events().insert(calendarId=calendar_id, body=evt).execute()
+        _persist_event(evt, 'CREATED', 'Successfully created in Google Calendar')
         return {'status': 'CREATED', 'event': created}
     except Exception as e:
+        _persist_event(evt, 'FAILED', str(e))
         return {'status': 'FAILED', 'error': str(e), 'event_preview': evt}
