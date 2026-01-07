@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Kusmus AI{% endblock %} - Engineering Certainty</title>
     
-    <link rel="icon" type="image/.jpg" href="{{ url_for('static', filename='images/pic01.jpg') }}?v=3">
+    <!-- Favicon Configuration -->
+    <link rel="icon" href="{{ url_for('static', filename='images/pic01.jpg') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/pic01.jpg') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/pic01.jpg') }}">
 
     <!-- Premium Typography: Inter (UI) + JetBrains Mono (Code) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
