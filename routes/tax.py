@@ -168,7 +168,7 @@ def tax_chat():
         # BUT enable Google Search for dynamic lookups
         engine = KusmusAIEngine(
             system_instruction=persona['instruction'],
-            model_name=persona.get('model', 'gemini-2.5-flash'),
+            model_name=persona.get('model', 'gemini-2.0-flash-exp'),
             tools=[], 
             enable_google_search=True 
         )
@@ -236,7 +236,7 @@ def tax_chat_stream():
         # Initialize Engine with Google Search capability
         engine = KusmusAIEngine(
             system_instruction=persona['instruction'],
-            model_name=persona.get('model', 'gemini-2.5-flash'),
+            model_name=persona.get('model', 'gemini-2.0-flash-exp'),
             tools=[],
             enable_google_search=True
         )

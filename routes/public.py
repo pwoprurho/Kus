@@ -49,6 +49,25 @@ def team():
 def chairman():
     return render_template("chairmans_mandate.html")
 
+@public_bp.route("/api/market/trend")
+def market_trend_api():
+    """Public API to fetch global market trend (Live)."""
+    from services.mcp_tools import get_global_market_trend
+    data = get_global_market_trend()
+    return jsonify(data)
+
+@public_bp.route("/api/market/history")
+def market_history_api():
+    """Public API to fetch historical candle data."""
+    ticker = request.args.get('ticker', 'SPY')
+    period = request.args.get('period', '3mo')
+    interval = request.args.get('interval', '1d')
+    from services.mcp_tools import get_ticker_history
+    data = get_ticker_history(ticker, period, interval)
+    return jsonify(data)
+
+
+
 
 # Valid routes for core usage
 # Removed duplicate /sandbox handler to allow routes/sandbox.py to handle it authoritative.
@@ -120,7 +139,7 @@ def chat_ai_assistant():
         # Initialize Engine with the Client Care Persona
         engine = KusmusAIEngine(
             system_instruction=MAIN_ASSISTANT['instruction'],
-            model_name=MAIN_ASSISTANT.get('model', 'gemini-2.0-flash-thinking-exp')
+            model_name=MAIN_ASSISTANT.get('model', 'gemini-2.5-flash-lite')
         )
         
         # Maintain Session-based History

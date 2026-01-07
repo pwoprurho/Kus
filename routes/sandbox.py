@@ -16,8 +16,17 @@ from db import supabase_admin
 sandbox_bp = Blueprint('sandbox', __name__)
 
 
+
+
+@sandbox_bp.route("/investor")
+@role_required('client', 'admin') # Allow both clients and admins
+def investor_dashboard():
+    """Renders the Sovereign Vault (Market Sentinel) interface."""
+    return render_template('investor.html')
+
 @sandbox_bp.route("/sandbox")
 def sandbox_view():
+
     """
     Handles the transition from select_demo to the actual sandbox.
     Includes Phase 4 Mobile Gate and Session Initialization.
@@ -80,7 +89,7 @@ def sandbox_chat_stream():
 
         engine = KusmusAIEngine(
             system_instruction=persona['instruction'],
-            model_name=persona.get('model', 'gemini-2.5-flash-thinking-exp')
+            model_name=persona.get('model', 'gemini-2.5-flash')
         )
 
         def generate():
@@ -187,7 +196,7 @@ def sandbox_chat():
 
         engine = KusmusAIEngine(
             system_instruction=persona['instruction'],
-            model_name=persona.get('model', 'gemini-2.5-flash-thinking-exp')
+            model_name=persona.get('model', 'gemini-2.5-flash')
         )
 
         response_text, thought_trace = engine.generate_response(user_message_aug, context_logs=context_logs)

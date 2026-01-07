@@ -1,6 +1,6 @@
 import os
 from functools import wraps
-from flask import abort, current_app, redirect, url_for
+from flask import abort, current_app, redirect, url_for, session
 from flask_login import current_user
 from supabase import create_client, Client
 from cryptography.fernet import Fernet
@@ -8,20 +8,42 @@ from cryptography.fernet import Fernet
 def role_required(*roles):
     """
     Decorator to restrict access based on user roles (e.g., 'admin', 'editor').
-    If the user is logged in but lacks the role, it returns a 403 Forbidden error.
+    Supports both Flask-Login (Admin) and Session-based (Client) auth.
     """
     def wrapper(fn):
         @wraps(fn)
         def decorated_view(*args, **kwargs):
-            if not current_user.is_authenticated:
-                # If not logged in, redirect to the Admin Login page
-                return redirect(url_for('admin.login'))
+            # 1. Check Flask-Login (Admin/Internal Users)
+            if current_user.is_authenticated:
+                if current_user.role in roles:
+                    return fn(*args, **kwargs)
+                # If logged in but role mismatch, continue to check if they are valid 'client' via session?
+                # Probably not necessary if they are already logged in as Staff.
+                if 'client' in roles and current_user.role != 'client':
+                     # If they are admin, they might be allowed depending on logic, 
+                     # but typically admin role is distinct.
+                     # However, strict checking:
+                     pass
             
-            if current_user.role not in roles:
-                # If logged in but wrong role
-                abort(403) # Forbidden
-                
-            return fn(*args, **kwargs)
+            # 2. Check Session-based Auth (Clients)
+            # Clients use session['client_access'] = True
+            if session.get('client_access') is True:
+                # We consider them to have role 'client'
+                if 'client' in roles:
+                    return fn(*args, **kwargs)
+
+            # If neither passed:
+            if current_user.is_authenticated:
+                 # Logged in as User but wrong role
+                 abort(403)
+            elif session.get('client_access'):
+                 # Logged in as Client but endpoint doesn't allow 'client'
+                 abort(403)
+            else:
+                 # Not logged in at all
+                 return redirect(url_for('auth.client_access'))
+
+            return fn(*args, **kwargs) # Fallback (shouldn't reach here due to aborts)
         return decorated_view
     return wrapper
 

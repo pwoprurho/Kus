@@ -32,3 +32,25 @@ def sign_forensic_trace(thought_trace, user_message):
     serialized = json.dumps(payload, sort_keys=True).encode()
     signature = hashlib.sha256(serialized).hexdigest()
     return signature, payload
+
+def sign_trade_execution(ticket_id, asset, action, quantity, price, conviction_score):
+    """
+    Cryptographically signs a trade execution order, binding the decision to the specific 
+    market conditions and conviction score at the moment of authorization.
+    """
+    trace_data = {
+        "timestamp": datetime.datetime.utcnow().isoformat(),
+        "ticket_id": ticket_id,
+        "asset": asset,
+        "action": action,
+        "quantity": quantity,
+        "price_limit": price,
+        "sovereign_conviction": conviction_score,
+        "authorization_source": "CHAIRMAN_MANUAL_OVERRIDE"
+    }
+    serialized = json.dumps(trace_data, sort_keys=True).encode()
+    # Double-hashing simulates a more complex Merkle proof for the demo
+    primary_hash = hashlib.sha256(serialized).hexdigest()
+    final_signature = hashlib.sha256((primary_hash + "SOVEREIGN_ROOT_KEY").encode()).hexdigest()
+    
+    return final_signature

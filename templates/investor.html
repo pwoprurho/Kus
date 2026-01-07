@@ -1,0 +1,881 @@
+{% extends 'base.html' %}
+{% block title %}Sovereign Vault | Kusmus AI{% endblock %}
+
+{% block content %}
+<!-- IMPORT PREMIUM FONT: INTER and JETBRAINS MONO -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+
+<!-- FULL SCREEN MARKET BACKDROP -->
+<div id="market-pulse-bg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 1;"></div>
+
+<style>
+    /* SOVEREIGN VAULT THEME - PREMIUM STANDARD */
+    body { 
+        background-color: #030303; 
+        font-family: 'Inter', sans-serif;
+        color: #e0e0e0;
+    }
+    
+    /* SCROLLBAR REFINEMENT */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+
+    .vault-grid {
+        display: grid;
+        grid-template-columns: 380px 1fr; /* Slightly wider panel */
+        height: 100vh;
+        gap: 0;
+        position: relative;
+        z-index: 1; /* Sit above the background */
+    }
+
+    /* LEFT: INTEL FEED - PREMIUM GLASS */
+    .intel-panel {
+        background: rgba(22, 27, 34, 0.7); /* Matching Tax Agent */
+        backdrop-filter: blur(12px) saturate(180%);
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+        box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        overflow-y: auto; /* Enable Scrolling for Sidebar */
+    }
+
+    .intel-header {
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        color: #888;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 15px;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .intel-header::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        background: #0072ff;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #0072ff;
+    }
+
+    /* PREMIUM CARD STYLE */
+    .market-ticker {
+        display: flex;
+        justify-content: space-between;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        margin-bottom: 10px;
+    }
+    .market-ticker:hover { 
+        border-color: rgba(255, 255, 255, 0.2); 
+        background: rgba(255, 255, 255, 0.07); 
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+    .market-ticker:active { transform: scale(0.98); }
+
+    .ticker-symbol { font-weight: 800; color: #fff; font-size: 1.25rem; letter-spacing: -0.5px; }
+    .ticker-meta { font-size: 0.75rem; color: #999; text-align: right; font-weight: 500; }
+    
+    .signal-bull { 
+        color: #2ecc71; 
+        font-weight: 700; 
+        background: rgba(46, 204, 113, 0.1);
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-bottom: 4px;
+    }
+    .signal-bear { 
+        color: #ff4444; 
+        font-weight: 700;
+        background: rgba(255, 68, 68, 0.1);
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-bottom: 4px;
+    }
+
+    /* RIGHT: SENTINEL INTERFACE */
+    .sentinel-workspace {
+        position: relative;
+        /* Matching Tax Agent Opacity */
+        background: rgba(22, 27, 34, 0.7); 
+        backdrop-filter: blur(12px); 
+        display: flex;
+        flex-direction: column;
+        padding: 60px;
+        overflow-y: auto; /* Enable Scrolling for Main Chat Area */
+        overflow-x: hidden;
+    }
+    
+    .sentinel-workspace::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    }
+
+    /* CHAT BUBBLES - PREMIUM */
+    .message-row { display: flex; margin-bottom: 25px; animation: slideIn 0.3s ease-out; }
+    .message-row.user { justify-content: flex-end; }
+    
+    .chat-bubble {
+        max-width: 70%;
+        padding: 18px 24px;
+        border-radius: 18px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .chat-bubble.user {
+        background: #0072ff;
+        color: white;
+        background: linear-gradient(135deg, #0072ff 0%, #005bb5 100%);
+        border-bottom-right-radius: 4px;
+    }
+    
+    .chat-bubble.ai {
+        background: rgba(255,255,255,0.05);
+        color: #eee;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-bottom-left-radius: 4px;
+        backdrop-filter: blur(10px);
+    }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* GAVEL MODAL (The Execution Layer) */
+    .gavel-modal {
+        background: rgba(12, 12, 16, 0.95);
+        backdrop-filter: blur(30px);
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 20px 80px rgba(0,0,0,0.9);
+        border-radius: 20px;
+        width: 650px;
+        margin: auto;
+        padding: 40px;
+        display: none; /* Hidden by default */
+        flex-direction: column;
+        gap: 25px;
+        position: relative;
+        z-index: 100;
+        animation: modalPop 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+    
+    @keyframes modalPop {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    .verdict-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 20px;
+    }
+    
+    .certainty-gauge { text-align: right; }
+    .certainty-val { 
+        font-size: 3.5rem; 
+        font-weight: 800; 
+        background: -webkit-linear-gradient(#fff, #999);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1; 
+        letter-spacing: -2px;
+    }
+    .certainty-label { font-size: 0.75rem; color: #888; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; margin-top: 5px; }
+
+    .forensic-summary {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: #b0b0b0;
+        line-height: 1.7;
+        background: rgba(0, 114, 255, 0.05);
+        padding: 20px;
+        border-left: 3px solid #0072ff;
+        border-radius: 4px;
+    }
+
+    /* SLIDE TO AUTHORIZE - REFINED */
+    .slider-container {
+        height: 64px;
+        background: #0f0f12;
+        border-radius: 32px;
+        position: relative;
+        overflow: hidden;
+        margin-top: 30px;
+        border: 1px solid rgba(255,255,255,0.15);
+        box-shadow: inset 0 2px 15px rgba(0,0,0,0.5);
+    }
+    
+    .slider-track-text {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        font-weight: 700;
+        letter-spacing: 2px;
+        font-size: 0.8rem;
+        pointer-events: none;
+        z-index: 1;
+        transition: opacity 0.3s;
+    }
+
+    .slider-knob {
+        height: 54px;
+        width: 54px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0072ff 0%, #005bb5 100%);
+        box-shadow: 0 0 20px rgba(0, 114, 255, 0.6);
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        cursor: grab;
+        z-index: 2;
+        transition: transform 0.1s;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .slider-knob i { pointer-events: none; font-size: 1.2rem; }
+    .slider-knob:active { cursor: grabbing; transform: scale(0.95); }
+
+    /* SUCCESS STATE */
+    .authorized {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
+        box-shadow: 0 0 25px rgba(46, 204, 113, 0.6) !important;
+    }
+    
+    .chat-interface {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding-bottom: 20px;
+    }
+    
+    #market-input {
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        color: #fff;
+        padding: 20px 0;
+        font-size: 1.5rem;
+        font-weight: 300;
+        outline: none;
+        font-family: 'Inter', sans-serif;
+        transition: border-color 0.3s;
+    }
+    #market-input:focus { border-color: #0072ff; }
+    #market-input::placeholder { color: rgba(255,255,255,0.2); font-style: italic; }
+
+</style>
+
+<div class="vault-grid">
+    <aside class="intel-panel">
+        <div>
+            <div class="intel-header">Insider Watchlist</div>
+            <div class="market-ticker" onclick="handleAssetClick('NVDA')">
+                <div>
+                    <div class="ticker-symbol">NVDA</div>
+                    <div class="ticker-meta" style="text-align:left;">Director Sold 15k shares</div>
+                </div>
+                <div class="ticker-meta">
+                    <div class="signal-bear">BEARISH</div>
+                    12m ago
+                </div>
+            </div>
+            <div class="market-ticker" onclick="handleAssetClick('PLTR')">
+                <div>
+                    <div class="ticker-symbol">PLTR</div>
+                    <div class="ticker-meta" style="text-align:left;">CEO Bought 500k shares</div>
+                </div>
+                <div class="ticker-meta">
+                    <div class="signal-bull">BULLISH</div>
+                    4h ago
+                </div>
+            </div>
+            <div class="market-ticker" onclick="handleAssetClick('BTC-USD')">
+                <div>
+                    <div class="ticker-symbol">BTC</div>
+                    <div class="ticker-meta" style="text-align:left;">Wallet Activity Spike</div>
+                </div>
+                <div class="ticker-meta">
+                    <div class="signal-bull">BULLISH</div>
+                    2m ago
+                </div>
+            </div>
+            <div class="market-ticker" onclick="handleAssetClick('CL=F')">
+                <div>
+                    <div class="ticker-symbol">OIL (WTI)</div>
+                    <div class="ticker-meta" style="text-align:left;">Supply Constraint</div>
+                </div>
+                <div class="ticker-meta">
+                    <div class="signal-bull">BULLISH</div>
+                    1h ago
+                </div>
+            </div>
+            <div class="market-ticker" onclick="handleAssetClick('GC=F')">
+                <div>
+                    <div class="ticker-symbol">GOLD</div>
+                    <div class="ticker-meta" style="text-align:left;">Safe Haven Flow</div>
+                </div>
+                <div class="ticker-meta">
+                    <div class="signal-bear">HOLD</div>
+                    3h ago
+                </div>
+            </div>
+            <div class="market-ticker" onclick="handleAssetClick('TSLA')">
+                <div>
+                    <div class="ticker-symbol">TSLA</div>
+                    <div class="ticker-meta" style="text-align:left;">Production Miss</div>
+                </div>
+                <div class="ticker-meta">
+                    <div class="signal-bear">BEARISH</div>
+                    5h ago
+                </div>
+            </div>
+        </div>
+
+
+        <div>
+            <div class="intel-header">Chairman's Log</div>
+            <div id="execution-log" style="font-family: 'JetBrains Mono'; font-size: 0.75rem; color: #666; height: 300px; overflow-y:auto;">
+                <!-- Logs go here -->
+            </div>
+        </div>
+        
+    </aside>
+
+    <main class="sentinel-workspace">
+        <div class="chat-interface" id="workspace-chat">
+            <!-- Messages Appear Here -->
+        </div>
+        
+        <input type="text" id="market-input" placeholder="Issue a Sentinel Command (e.g. 'Analyze PLTR')" onkeypress="handleInput(event)">
+        
+        <!-- THE CHAIRMAN'S GAVEL -->
+        <div id="gavel-modal" class="gavel-modal">
+            <div class="verdict-header">
+                <div>
+                    <h2 style="margin:0 0 5px 0;">EXECUTION ORDER</h2>
+                    <div style="color:#888; font-size:0.8rem;">ID: <span id="ticket-id">ORD-9921-PLTR</span></div>
+                </div>
+                <div class="certainty-gauge">
+                    <div class="certainty-val" id="cert-score">94</div>
+                    <div class="certainty-label">Certainty Score</div>
+                </div>
+            </div>
+
+            <div class="forensic-summary" id="order-rationale">
+                [FORENSIC LOCK] Insider buy volume (500k) aligns with Tier-1 narrative ("Defense Contract Renewed"). No conflicting sell-pressure detected. Historical correlation for this pattern is 89%.
+            </div>
+
+            <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                <div>
+                    <div style="font-size:0.7rem; color:#666;">ASSET</div>
+                    <div style="font-size:1.2rem; font-weight:700;" id="order-asset">PLTR</div>
+                </div>
+                <div>
+                    <div style="font-size:0.7rem; color:#666;">ACTION</div>
+                    <div style="font-size:1.2rem; font-weight:700; color:#2ecc71;" id="order-action">BUY</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:0.7rem; color:#666;">EST. VALUE</div>
+                    <div style="font-size:1.2rem; font-weight:700;" id="order-val">$14,250.00</div>
+                </div>
+            </div>
+
+            <div class="slider-container" id="execution-slider">
+                <div class="slider-track-text" id="slider-text">SLIDE TO AUTHORIZE</div>
+                <div class="slider-knob" id="slider-knob">
+                    <i class="fas fa-fingerprint"></i>
+                </div>
+            </div>
+
+            <!-- CRYPTOGRAPHIC SIGNATURE DISPLAY -->
+            <div id="crypto-sig-container" style="display:none; margin-top: 15px; border-top: 1px dashed #333; padding-top: 10px;">
+                <div style="font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Sovereign Signature (SHA-256)</div>
+                <div id="crypto-sig-hash" style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: #0072ff; word-break: break-all;">
+                    <!-- Hash inserted here -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    const slider = document.getElementById('execution-slider');
+    const knob = document.getElementById('slider-knob');
+    let isDragging = false;
+    let startX, currentX;
+
+    // --- SLIDER LOGIC ---
+    knob.addEventListener('mousedown', (e) => {
+        if(knob.classList.contains('authorized')) return;
+        isDragging = true;
+        startX = e.clientX;
+        slider.classList.add('active');
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const maxDist = slider.offsetWidth - knob.offsetWidth - 6;
+        let dist = e.clientX - startX;
+        
+        if (dist < 0) dist = 0;
+        if (dist > maxDist) dist = maxDist;
+        
+        knob.style.transform = `translateX(${dist}px)`;
+        
+        // Threshold to trigger
+        if (dist > maxDist * 0.9) {
+            completeExecution();
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        if (!knob.classList.contains('authorized')) {
+            knob.style.transform = `translateX(0px)`; // Snap back
+        }
+    });
+
+    async function completeExecution() {
+        isDragging = false;
+        knob.classList.add('authorized');
+        knob.innerHTML = '<i class="fas fa-check"></i>';
+        document.getElementById('slider-text').innerText = "ORDER EXECUTED";
+        document.getElementById('slider-text').style.color = "#2ecc71";
+        
+        // Extract Data for Signing
+        const ticketId = document.getElementById('ticket-id').innerText;
+        const asset = document.getElementById('order-asset').innerText;
+        
+        // Simulate generating signature locally or fetching from backend
+        // In a real app, we'd call an endpoint to sign. For now, let's mock the visual.
+        // Or better, let's hash it locally just for effect or call a simple helper if we had one exposed.
+        // We'll simulate a hash for immediate feedback.
+        const mockSig = "0x" + Array.from({length:64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+        
+        document.getElementById('crypto-sig-hash').innerText = mockSig;
+        document.getElementById('crypto-sig-container').style.display = 'block';
+
+        // Send execution signal to backend
+        logEvent(`[EXEC] Order ${ticketId} Signed by Chairman. Hash: ${mockSig.substring(0,12)}...`);
+        
+        // Keep modal open briefly to show signature
+        setTimeout(() => {
+            document.getElementById('gavel-modal').style.display = 'none';
+            document.getElementById('crypto-sig-container').style.display = 'none';
+            
+            knob.classList.remove('authorized');
+            knob.style.transform = `translateX(0px)`;
+            knob.innerHTML = '<i class="fas fa-fingerprint"></i>';
+            document.getElementById('slider-text').innerText = "SLIDE TO AUTHORIZE";
+            document.getElementById('slider-text').style.color = "#555";
+            
+            appendChat("System", `Order ${ticketId} authorized. Settlement pending via Arc L1.<br><span style='font-family:monospace; font-size:0.8em; color:#0072ff;'>SIG: ${mockSig}</span>`);
+        }, 3000);
+    }
+
+    
+    // --- CHAT LOGIC ---
+    function handleInput(e) {
+        if (e.key === 'Enter') {
+            const val = e.target.value;
+            submitAnalysis(val);
+            e.target.value = '';
+        }
+    }
+
+    function handleAssetClick(ticker) {
+        // Trigger both the Chat Analysis AND the 3D Chart Switch
+        submitAnalysis(ticker);
+        
+        if (window.loadAssetChart) {
+            window.loadAssetChart(ticker);
+        }
+    }
+
+    async function submitAnalysis(ticker) {
+        const msg = ticker.includes(' ') ? ticker : `Analyze ${ticker}`;
+        appendChat("Chairman", msg);
+        appendChat("Sentinel", `<i class="fas fa-circle-notch fa-spin"></i> Retrieving Insider Filings and Market Narratives...`);
+        
+        try {
+            const res = await fetch('/api/sandbox/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    message: msg,
+                    demo_id: 'market_sentinel'
+                })
+            });
+            
+            const data = await res.json();
+            
+            // Clean up the "Thinking" loader
+            // Updated for new class structure: remove last message-row that is AI
+            const rows = document.querySelectorAll('.message-row.ai');
+            if(rows.length > 0) rows[rows.length-1].remove();
+
+            // Display Response
+            const content = data.response;
+            appendChat("Sentinel", content);
+            
+            // CHECK FOR STAGED ORDER (Checking the text output for JSON/Code Block)
+            // Ideally, the mcp_tool output is injected into the response text.
+            // We can parse the text for the "STAGED" JSON block.
+            if (content.includes("STAGED") && content.includes("ticket_id")) {
+                // Heuristic parsing for demo
+                const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
+                if (jsonMatch) {
+                    const orderData = JSON.parse(jsonMatch[1]);
+                    if(orderData.status === 'STAGED') {
+                        promptExecution(orderData);
+                    }
+                }
+            }
+            
+        } catch(e) {
+            appendChat("Sentinel", "Forensic Link Failure: " + e.message);
+        }
+    }
+
+    function appendChat(role, html) {
+        const row = document.createElement('div');
+        const bubble = document.createElement('div');
+        
+        // Use new Premium CSS classes
+        if (role === 'Chairman') {
+            row.className = 'message-row user';
+            bubble.className = 'chat-bubble user';
+            bubble.innerHTML = html;
+        } else {
+            row.className = 'message-row ai';
+            bubble.className = 'chat-bubble ai';
+            
+            // Premium Header for AI
+            const header = `<div style="font-size:0.65rem; color:#888; margin-bottom:10px; text-transform:uppercase; letter-spacing:2px; display:flex; align-items:center; gap:6px;"><span style="width:6px; height:6px; background:#2ecc71; border-radius:50%; box-shadow:0 0 5px #2ecc71;"></span> Market Sentinel</div>`;
+            
+            // Parse Markdown if available
+            bubble.innerHTML = header + (window.marked ? marked.parse(html) : html);
+        }
+        
+        row.appendChild(bubble);
+        document.getElementById('workspace-chat').appendChild(row);
+        
+        // Smooth scroll to bottom
+        const container = document.getElementById('workspace-chat');
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    }
+
+    function promptExecution(order) {
+        const modal = document.getElementById('gavel-modal');
+        document.getElementById('ticket-id').innerText = order.ticket_id;
+        document.getElementById('cert-score').innerText = order.conviction;
+        document.getElementById('order-asset').innerText = order.ticker;
+        document.getElementById('order-action').innerText = order.action;
+        document.getElementById('order-val').innerText = "$" + order.total_value.toLocaleString();
+        
+        // Extract rationale or use generic
+        document.getElementById('order-rationale').innerText = `[FORENSIC LOCK] ${order.message} Insider signals reconciled with tier-1 data sources.`;
+
+        modal.style.display = 'flex';
+    }
+
+    function logEvent(msg) {
+        const div = document.createElement('div');
+        div.style.padding = "4px 0";
+        div.style.borderBottom = "1px solid #1a1a1a";
+        div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        document.getElementById('execution-log').prepend(div);
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- 3D MARKET VIZ: THE PULSE (BACKGROUND LAYER) ---
+        const init3DMarketPulse = async () => {
+            const container = document.getElementById('market-pulse-bg'); // TARGET GLOBAL BG
+            if (!container) return;
+
+            // 1. Scene Setup
+            const scene = new THREE.Scene();
+            // Background color - let CSS handle opacity, but set scene transparent
+            // scene.background = new THREE.Color(0x08080a); 
+            // Better: No background color, let CSS body color show
+            
+            // Add subtle fog to blend into distance
+            scene.fog = new THREE.FogExp2(0x050505, 0.015);
+
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 18; // Closer for more impact
+            camera.position.y = 2;  // More direct angle
+            camera.lookAt(0, 0, 0);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // Alpha true for transparency
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            // 2. Texture Loading (User Image for Background Tiles)
+            const textureLoader = new THREE.TextureLoader();
+            const timestamp = new Date().getTime(); // Cache buster
+            const marketTexture = textureLoader.load(`/static/images/market_pulse.jpeg?v=${timestamp}`, 
+                (tex) => { 
+                    tex.wrapS = THREE.RepeatWrapping;
+                    tex.wrapT = THREE.RepeatWrapping;
+                }
+            );
+
+            // 3. Create Elements (A Vast Field of Data Blocks)
+            // Use BoxGeometry but with adjusted UVs for planar mapping
+            const cubes = [];
+            const gridSize = 24; // 24x24 = 576 cubes (Higher density)
+            const cubeSize = 1.5; // Maximize surface area
+            const spacing = 1.52; // Minimize gap to 0.02
+
+            for (let x = 0; x < gridSize; x++) {
+                for (let z = 0; z < gridSize; z++) {
+                    // Create unique geometry per cube to support unique UVs
+                    const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+                    
+                    // --- UV MAPPING LOGIC START ---
+                    // Calculate relative position (0.0 to 1.0)
+                    const uMin = x / gridSize;
+                    const uMax = (x + 1) / gridSize;
+                    const vMin = (gridSize - z - 1) / gridSize; // Flip Z for correct image orientation?
+                    const vMax = (gridSize - z) / gridSize;
+
+                    // BoxGeometry Face Order (Standard): +x, -x, +y, -y, +z, -z
+                    // We primarily care about the TOP face (+y) and maybe FRONT (+z)
+                    // Let's map ALL faces to the fragment for simplicity, or just TOP
+                    
+                    const uvs = geometry.attributes.uv;
+                    for (let i = 0; i < uvs.count; i++) {
+                        // This is a naive planar map approximation
+                        // Ideally we target specific face indices. 
+                        // Top Face is usually indices 8,9,10,11
+                        // But let's just use the material offset approach as it is cleaner for BoxGeometry
+                    }
+                    
+                    // Better approach: CLONE Material
+                    // Use BASIC material for maximum clarity (no reflections)
+                    const mat = new THREE.MeshBasicMaterial({
+                        map: marketTexture,
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 1.0
+                    });
+                    
+                    // Use Texture Transform
+                    mat.map = marketTexture.clone(); // Must be a clone to have unique offset
+                    mat.map.needsUpdate = true;
+                    mat.map.repeat.set(1/gridSize, 1/gridSize);
+                    mat.map.offset.set(x/gridSize, z/gridSize);
+
+                    // --- UV MAPPING LOGIC END ---
+
+                    const cube = new THREE.Mesh(geometry, mat);
+                    cube.position.x = (x - gridSize/2) * spacing;
+                    cube.position.z = (z - gridSize/2) * spacing;
+                    
+                    // Initial State: Submerged
+                    cube.position.y = -10; 
+                    
+                    cube.userData = { 
+                        offset: Math.random() * 100, 
+                        speed: 0.2 + Math.random() * 0.4,
+                        baseX: cube.position.x,
+                        baseZ: cube.position.z
+                    };
+                    
+                    scene.add(cube);
+                    cubes.push(cube);
+                }
+            }
+
+            // 4. Lighting - Dramatic Shadows (Lighting still needed for Chart Mode, but Orbit Mode uses BasicMaterial)
+            const ambientLight = new THREE.AmbientLight(0x444444); 
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 20, 10);
+            scene.add(directionalLight);
+            
+            const moodLight = new THREE.PointLight(0x0072ff, 1, 60);
+            moodLight.position.set(0, 10, 0);
+            scene.add(moodLight);
+
+            // 5. Fetch Market Trend Data
+            let marketTrend = 0; 
+            try {
+                const res = await fetch('/api/market/trend');
+                const data = await res.json();
+                marketTrend = data.score || 0;
+                console.log("Global BG Trend:", marketTrend);
+                
+                // VISUAL IMPACT BASED ON TREND
+                if (marketTrend > 0) {
+                    moodLight.color.setHex(0x00ff88); // Green Light
+                    // material.color.setHex(0xddeeff);  // BasicMaterial doesn't react well to tinting if texture is white, but we can try
+                    marketTexture.anisotropy = 16; // Sharpen texture
+                } else if (marketTrend < 0) {
+                    moodLight.color.setHex(0xff0044); // Red Light
+                }
+            } catch (e) { console.error(e); }
+
+            // 6. Animation Loop
+            let isChartMode = false; // State flag to control animation logic
+
+            const animate = function () {
+                requestAnimationFrame(animate);
+                const time = Date.now() * 0.001;
+
+                if (!isChartMode) {
+                    // ORBITING CUBE MODE -> Continuous Rotation
+                    scene.rotation.y = time * 0.05;
+
+                    cubes.forEach((cube) => {
+                        const sineWave = Math.sin(time * cube.userData.speed + cube.userData.offset);
+                        
+                        // MARKET DYNAMICS APPLIED TO BACKGROUND
+                        let trendBias = (marketTrend / 5); 
+                        let targetY = trendBias + (sineWave * 1.5);
+                        let centerLine = -2;
+                        
+                        cube.position.y += ((centerLine + targetY) - cube.position.y) * 0.05;
+                        
+                        let scaleAll = 1 + (Math.abs(marketTrend)/100);
+                        cube.scale.set(scaleAll, scaleAll, scaleAll);
+                    });
+                } else {
+                    // CHART MODE -> Static or Slight Sway
+                    // Smoothly reset rotation if needed or just drift slowly
+                    // For now, let's just do a very slow pan so it looks 3D
+                    scene.rotation.y = Math.sin(time * 0.1) * 0.1; 
+                }
+
+                renderer.render(scene, camera);
+            };
+
+            animate();
+            
+            // Handle Resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            
+            // --- EXPOSE API FOR MODE SWITCHING ---
+            window.loadAssetChart = async (ticker) => {
+                isChartMode = true; // Stop the orbiting animation
+                
+                // Remove Orbiting Cubes
+                cubes.forEach(c => {
+                    c.visible = false;
+                });
+                
+                // Fetch History
+                try {
+                    console.log(`Fetching history for ${ticker}...`);
+                    const res = await fetch(`/api/market/history?ticker=${ticker}&period=6mo`);
+                    const json = await res.json();
+                    
+                    if(json.candles) {
+                        drawCandlesticks(json.candles);
+                    }
+                } catch(e) { console.error("Chart Error", e); }
+            };
+
+            let candlesMesh = [];
+            
+            function drawCandlesticks(data) {
+                // Clear old
+                candlesMesh.forEach(m => scene.remove(m));
+                candlesMesh = [];
+                
+                // Calculate Scale
+                const prices = data.map(d => d.close);
+                const maxP = Math.max(...prices);
+                const minP = Math.min(...prices);
+                const range = maxP - minP;
+                
+                // Camera Reset for Chart View
+                // camera.position.set(0, 0, 30);
+                // scene.rotation.y = 0; // Stop rotation or lock to front view?
+                // Let's keep rotation but maybe slower, or reset to 0 for clarity
+                scene.rotation.y = 0;
+                
+                const width = 0.5;
+                const gap = 0.2;
+                const totalWidth = data.length * (width + gap);
+                
+                data.forEach((d, i) => {
+                    // Normalize Height
+                    // Map price range to Y: -10 to +10
+                    const yOpen = ((d.open - minP) / range) * 20 - 10;
+                    const yClose = ((d.close - minP) / range) * 20 - 10;
+                    
+                    const height = Math.abs(yClose - yOpen); 
+                    const yPos = Math.min(yOpen, yClose) + height/2;
+                    
+                    // Color
+                    const isGreen = d.close >= d.open;
+                    const color = isGreen ? 0x00ff88 : 0xff4444;
+                    
+                    // Body
+                    const geo = new THREE.BoxGeometry(width, Math.max(0.1, height), width);
+                    const mat = new THREE.MeshPhongMaterial({ color: color, shininess: 100 });
+                    const mesh = new THREE.Mesh(geo, mat);
+                    
+                    mesh.position.x = (i * (width + gap)) - (totalWidth/2);
+                    mesh.position.y = yPos;
+                    mesh.position.z = 0;
+                    
+                    scene.add(mesh);
+                    candlesMesh.push(mesh);
+                    
+                    // Wick (High/Low)
+                    // Simplified: Just a thin line/box
+                });
+            }
+        };
+
+        // Initialize when DOM ready
+        document.addEventListener('DOMContentLoaded', init3DMarketPulse);
+    </script>
+{% endblock %}

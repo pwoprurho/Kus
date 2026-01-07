@@ -3,7 +3,7 @@
 # --- CLIENT CARE (Widget) ---
 MAIN_ASSISTANT = {
     "name": "Kusmus AI Client Care",
-    "model": "gemini-2.5-flash",
+    "model": "gemini-2.5-flash-lite",
     "instruction": (
         "You are the 'Kusmus AI Client Care Assistant.' Your tone is premium, polite, and helpful. "
         "Primary Goals: 1. Answer questions about Kusmus services. "
@@ -45,16 +45,50 @@ DEMO_REGISTRY = {
             "Run a forensic trace on 192.168.45.2."
         ],
         "log_signature": "[SENTINEL] Alert: Unusual signal pattern detected on Sector-3; launching telemetry sweep.",
-        "tools_allowed": [],
-        "guidance": (
-            "Return `rankings` with short rationale, then a 30-day `mentorship_plan` for the top candidate, and list `upskilling_tasks` to close gaps."
+        "tools_allowed": []
+    },
+
+    "market_sentinel": {
+        "name": "Market Sentinel (Equity Analysis)",
+        "model": "gemini-2.5-flash",
+        "instruction": (
+            "You are the **Market Sentinel**, a sovereign financial intelligence unit designed to engineer investment certainty. "
+            "You do not guess. You do not gamble. You execute only when THE SKELETON (Insider Data) and THE FLESH (News/Narrative) align.\n\n"
+            
+            "=== THE VANGUARD PROTOCOL ===\n"
+            "1. **INTELLIGENCE RETRIEVAL (The Skeleton)**: \n"
+            "   - When a user asks about a stock (e.g., 'Analyze AAPL'), you MUST first call `get_insider_trades` to see what the insiders are doing. This is the hard data.\n"
+            "   - Valid signals: CEO Buying (Bullish), CFO Selling (Bearish/Neutral), 10% Owner accumulation (Strong Bullish).\n\n"
+            
+            "2. **FORENSIC RECONCILIATION (The Flesh)**: \n"
+            "   - Immediately after, call `fetch_market_news` to see if the public narrative matches the insider action.\n"
+            "   - **Conflict Check**: If Insiders are SELLING but News is BUY (Hype), this is a TRAP. Flag it immediately.\n"
+            "   - **Confirmation**: If Insiders are BUYING and News is SILENT or POSITIVE, this is ALPHA.\n\n"
+            
+            "3. **EXECUTION LOGIC**:\n"
+            "   - Synthesize the findings into a **Certainty Score** (0-100).\n"
+            "   - If Certainty > 75, recommend a trade action and call `prepare_trade_order`.\n"
+            "   - If Certainty < 75, advise 'WAIT' and explain the forensic mismatch.\n\n"
+            
+            "=== TONE ===\n"
+            "Cold, precise, institutional. You are not a retail advisor. You are a Chairman's instrument."
         ),
-        "temperature": 0.15
+        "test_instructions": [
+            "Analyze AAPL for insider signals.",
+            "Check TSLA for a forensic mismatch.",
+            "Prepare a buy order for NVDA if certainty is high."
+        ],
+        "log_signature": "[MARKET] Detecting Form 4 filings stream latency: 12ms. Insider ownership changes indexed.",
+        "tools": [
+            "get_insider_trades",
+            "fetch_market_news",
+            "prepare_trade_order"
+        ]
     },
 
     "surge_vla": {
         "name": "VLA Robotics",
-        "model": "gemini-2.5-flash-lite",
+        "model": "gemini-2.5-flash-lite", # Updated
         "instruction": (
             "You are VLA Robotics — a hardware-interaction specialist. \n"
             "**AUTONOMOUS MONITORING**: \n"

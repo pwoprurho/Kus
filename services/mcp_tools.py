@@ -9,6 +9,14 @@ import random
 import time
 from typing import Any, Dict
 from typing import Union
+
+try:
+    import yfinance as yf
+    import pandas as pd
+    YFINANCE_AVAILABLE = True
+except ImportError:
+    YFINANCE_AVAILABLE = False
+
 try:
     # import calendar helper if present
     from services.calendar_tool import create_calendar_event
@@ -225,8 +233,306 @@ def perform_self_heal(target_system: str) -> Dict[str, Any]:
     }
 
 
+
+def get_insider_trades(ticker: str) -> Dict[str, Any]:
+    """
+    Simulates fetching recent SEC Form 4 (Insider Trade) and 13D (Beneficial Ownership) filings.
+    Tries LIVE data from yfinance first.
+    """
+    ticker = ticker.upper()
+    
+    # --- LIVE DATA PATH ---
+    if YFINANCE_AVAILABLE:
+        try:
+            t = yf.Ticker(ticker)
+            # Try getting insider transactions
+            insider = t.insider_transactions
+            if insider is not None and not insider.empty:
+                recent_trades = []
+                # Take top 8 recent
+                for i in range(min(8, len(insider))):
+                    row = insider.iloc[i]
+                    # Helper to get value safely
+                    def get_val(r, keys, default):
+                        for k in keys:
+                            if k in r and pd.notna(r[k]): return r[k]
+                        return default
+                    
+                    person = get_val(row, ['Reporter', 'Name', 'Insider'], 'Unknown')
+                    date_val = get_val(row, ['Start Date', 'Date'], 'Unknown')
+                    shares = get_val(row, ['Shares', 'Quantity'], 0)
+                    value = get_val(row, ['Value'], 0)
+                    text = get_val(row, ['Text', 'Transaction'], '') # e.g. "Sale at price..."
+                    
+                    recent_trades.append({
+                        "filing_type": "SEC Form 4 (Live)",
+                        "reporting_person": str(person),
+                        "transaction_date": str(date_val),
+                        "description": str(text),
+                        "shares": int(shares) if isinstance(shares, (int, float)) else 0,
+                        "value": float(value) if isinstance(value, (int, float)) else 0.0,
+                    })
+
+                return {
+                    "ticker": ticker,
+                    "source": "LIVE (yfinance/SEC)",
+                    "signal": "ANALYSIS_REQUIRED",
+                    "recent_filings": recent_trades,
+                    "analysis": f"Retrieved {len(recent_trades)} live insider records."
+                }
+        except Exception as e:
+            print(f"Warning: Live insider fetch failed for {ticker}: {e}")
+
+    # --- MOCK FALLBACK ---
+    impacts = ["POSITIVE", "NEUTRAL", "NEGATIVE"]
+    roles = ["CEO", "CFO", "Director", "10% Owner"]
+    
+    # Deterministic simulation for demo constancy
+    random.seed(ticker)
+    
+    trades = []
+    # Generate 1-3 recent trades
+    for _ in range(random.randint(1, 3)):
+        action_type = random.choice(["BUY", "SELL", "OPTION_EXERCISE"])
+        shares = random.randint(1000, 500000)
+        price = round(random.uniform(50.0, 500.0), 2)
+        role = random.choice(roles)
+        date_offset = random.randint(0, 5)
+        trade_date = (datetime.datetime.utcnow() - datetime.timedelta(days=date_offset)).strftime("%Y-%m-%d")
+        
+        trades.append({
+            "filing_type": "Form 4" if "Owner" not in role else "Schedule 13D",
+            "reporting_person": f"John Doe ({role})",
+            "transaction_date": trade_date,
+            "transaction_code": "P" if action_type == "BUY" else "S",
+            "type": action_type,
+            "shares": shares,
+            "price_per_share": price,
+            "value": round(shares * price, 2),
+            "owner_ownership_after": random.randint(100000, 1000000)
+        })
+    
+    # Calculate a simple signal based on net buying/selling
+    net_shares = sum([t['shares'] if t['type'] == 'BUY' else -t['shares'] for t in trades])
+    signal = "BULLISH" if net_shares > 0 else "BEARISH"
+    if abs(net_shares) < 10000: signal = "NEUTRAL"
+
+    return {
+        "ticker": ticker,
+        "source": "SEC EDGAR Stream (Simulated)",
+        "signal": signal,
+        "recent_filings": trades,
+        "analysis": f"Detected {len(trades)} recent insider transactions. Net flow is {signal}."
+    }
+
+
+def fetch_market_news(ticker: str) -> Dict[str, Any]:
+    """
+    Retrieves live market news via yfinance (if available), else simulates.
+    """
+    ticker = ticker.upper()
+
+    # --- LIVE DATA PATH ---
+    if YFINANCE_AVAILABLE:
+        try:
+            t = yf.Ticker(ticker)
+            raw_news = t.news
+            if raw_news:
+                articles = []
+                for item in raw_news[:5]:
+                    # yfinance news fields: 'title', 'publisher', 'link', 'providerPublishTime'
+                    ts = item.get('providerPublishTime', int(time.time()))
+                    pub_date = datetime.datetime.utcfromtimestamp(ts).isoformat()
+                    
+                    articles.append({
+                        "source": item.get('publisher', 'Unknown'),
+                        "tier": 1, 
+                        "text": item.get('title', ''),
+                        "link": item.get('link', ''),
+                        "sentiment": 0.0, # Agent will infer sentiment
+                        "published_at": pub_date
+                    })
+
+                return {
+                    "ticker": ticker,
+                    "timestamp": datetime.datetime.utcnow().isoformat(),
+                    "articles": articles,
+                    "unusual_volume": False,
+                    "data_source": "LIVE (yfinance)"
+                }
+        except Exception as e:
+            print(f"Warning: Live news fetch failed for {ticker}: {e}")
+
+    # --- MOCK FALLBACK ---
+    random.seed(ticker + "news")
+    
+    headlines = [
+        {"source": "Bloomberg Terminal", "tier": 1, "text": f"{ticker} in advanced talks for strategic acquisition, sources say.", "sentiment": 0.8},
+        {"source": "Reuters", "tier": 1, "text": f"Regulatory approval likely for {ticker}'s new product line.", "sentiment": 0.6},
+        {"source": "Seeking Alpha", "tier": 2, "text": f"Why {ticker} might be overvalued at these levels.", "sentiment": -0.4},
+        {"source": "Twitter/X", "tier": 3, "text": f"${ticker} to the moon! 🚀 #stocks", "sentiment": 0.9},
+        {"source": "Industry Dive", "tier": 2, "text": f"Supply chain constraints could hit {ticker} Q4 margins.", "sentiment": -0.5}
+    ]
+    
+    # Pick a random subset
+    selected_news = random.sample(headlines, 3)
+    
+    return {
+        "ticker": ticker,
+        "timestamp": datetime.datetime.utcnow().isoformat(),
+        "articles": selected_news,
+        "unusual_volume": random.choice([True, False]),
+        "data_source": "SIMULATED (Backup)"
+    }
+
+
+def get_global_market_trend() -> Dict[str, Any]:
+    """
+    Determines if the overall market (S&P 500) is Bullish (Up) or Bearish (Down) today.
+    Returns a score from -100 (Deep Bear) to +100 (Strong Bull).
+    """
+    # Default State
+    trend_score = 10 
+    sp500_change = 0.0
+
+    if YFINANCE_AVAILABLE:
+        try:
+            # Check S&P 500 (SPY) and Nasdaq (QQQ)
+            tickers = yf.Tickers("SPY QQQ")
+            spy_hist = tickers.tickers["SPY"].history(period="2d")
+            
+            if len(spy_hist) >= 1:
+                # Calculate daily change percent
+                close_price = spy_hist['Close'].iloc[-1]
+                open_price = spy_hist['Open'].iloc[-1]
+                # Or comparison with previous close if available
+                if len(spy_hist) >= 2:
+                    prev_close = spy_hist['Close'].iloc[-2]
+                    change_pct = ((close_price - prev_close) / prev_close) * 100
+                    sp500_change = change_pct
+                else:
+                    change_pct = ((close_price - open_price) / open_price) * 100
+                    sp500_change = change_pct
+
+                # Scale -2% to +2% range to -100 to 100 score
+                trend_score = int(max(min(change_pct * 50, 100), -100))
+        except Exception as e:
+            print(f"Market Trend Error: {e}")
+            pass
+            
+    return {
+        "score": trend_score,
+        "sp500_change": round(sp500_change, 2),
+        "status": "BULLISH" if trend_score > 0 else "BEARISH",
+        "timestamp": datetime.datetime.utcnow().isoformat()
+    }
+
+def get_ticker_history(ticker: str, period: str = "3mo", interval: str = "1d") -> Dict[str, Any]:
+    """Fetch historical OHLC data for a ticker using yfinance."""
+    if not YFINANCE_AVAILABLE:
+        # Mock Data Generator for when offline
+        mock_candles = []
+        base_price = 150.0
+        for i in range(30):
+            change = random.uniform(-5, 5)
+            open_p = base_price + change
+            close_p = open_p + random.uniform(-2, 2)
+            high_p = max(open_p, close_p) + random.uniform(0, 2)
+            low_p = min(open_p, close_p) - random.uniform(0, 2)
+            base_price = close_p
+            mock_candles.append({
+                "date": (datetime.datetime.now() - datetime.timedelta(days=30-i)).strftime("%Y-%m-%d"),
+                "open": round(open_p, 2),
+                "high": round(high_p, 2),
+                "low": round(low_p, 2),
+                "close": round(close_p, 2),
+                "volume": int(random.uniform(1000000, 5000000))
+            })
+        return {"ticker": ticker, "candles": mock_candles}
+
+    try:
+        t = yf.Ticker(ticker)
+        # Fetch history
+        hist = t.history(period=period, interval=interval)
+        
+        if hist.empty:
+            raise ValueError(f"No data found for {ticker}")
+
+        # Reset index to get Date as column
+        hist.reset_index(inplace=True)
+        
+        candles = []
+        for _, row in hist.iterrows():
+            # Format date which might be Timestamp
+            date_str = row['Date'].strftime("%Y-%m-%d")
+            candles.append({
+                "date": date_str,
+                "open": round(row['Open'], 2),
+                "high": round(row['High'], 2),
+                "low": round(row['Low'], 2),
+                "close": round(row['Close'], 2),
+                "volume": int(row['Volume'])
+            })
+            
+        return {"ticker": ticker, "candles": candles}
+        
+    except Exception as e:
+        print(f"Error fetching history for {ticker}: {e}")
+        # Retrying once with a shorter period if the first attempt failed (sometimes futures fail on long lookbacks)
+        if period == "6mo":
+            try:
+                print(f"Retrying {ticker} with period='1mo'...")
+                hist = t.history(period="1mo", interval=interval)
+                if not hist.empty:
+                    hist.reset_index(inplace=True)
+                    candles = []
+                    for _, row in hist.iterrows():
+                        date_str = row['Date'].strftime("%Y-%m-%d")
+                        candles.append({
+                            "date": date_str,
+                            "open": round(row['Open'], 2),
+                            "high": round(row['High'], 2),
+                            "low": round(row['Low'], 2),
+                            "close": round(row['Close'], 2),
+                            "volume": int(row['Volume'])
+                        })
+                    return {"ticker": ticker, "candles": candles}
+            except:
+                pass
+                
+        return {"error": str(e), "message": "Live data unavailable. Check ticker symbol."}
+
+
+def prepare_trade_order(ticker: str, action: str, quantity: int, conviction_score: int) -> Dict[str, Any]:
+    """
+    Staging function for Human-in-the-Loop execution. Does not execute, but locks the price.
+    """
+    if conviction_score < 70:
+        return {
+            "status": "REJECTED",
+            "reason": f"Conviction Score ({conviction_score}) is below the Sovereign threshold (70). Execution denied."
+        }
+        
+    estimated_price = round(random.uniform(100, 200), 2)
+    return {
+        "status": "STAGED",
+        "ticket_id": f"ORD-{random.randint(1000,9999)}-{ticker}",
+        "action": action.upper(),
+        "ticker": ticker.upper(),
+        "quantity": quantity,
+        "limit_price": estimated_price,
+        "total_value": round(estimated_price * quantity, 2),
+        "conviction": conviction_score,
+        "expiry": "5 minutes",
+        "message": "Order staged in Execution Vault. Waiting for Chairman's signature."
+    }
+
+
 # Public registry of tools available for controlled invocation in the sandbox
 MCP_TOOLKIT = {
+    "get_insider_trades": get_insider_trades,
+    "fetch_market_news": fetch_market_news,
+    "prepare_trade_order": prepare_trade_order,
     "get_server_health": get_server_health,
     "get_oran_metrics": get_oran_metrics,
     "run_napalm_audit": run_napalm_audit,

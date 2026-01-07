@@ -412,7 +412,7 @@
     </div>
 </div>
 
-<script src="/static/js/tax_agent.js"></script>
+<script src="{{ url_for('static', filename='js/tax_agent.js') }}"></script>
 <script>
     {% if is_sandbox_demo %}
     document.addEventListener('DOMContentLoaded', () => {

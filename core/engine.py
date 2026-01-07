@@ -8,8 +8,8 @@ from services.mcp_tools import MCP_TOOLKIT
 from core.key_manager import key_manager
 
 class KusmusAIEngine:
-    def __init__(self, system_instruction, model_name="gemini-2.5-flash", tools=None, enable_google_search=False):
-        # Use the provided model name, defaulting to gemini-2.5-flash
+    def __init__(self, system_instruction, model_name="gemini-2.0-flash-exp", tools=None, enable_google_search=False):
+        # Use the provided model name, defaulting to gemini-2.0-flash-exp
         self.model_id = model_name
         self.system_instruction = system_instruction
         # If tools are explicitly provided (even empty list), use them.
