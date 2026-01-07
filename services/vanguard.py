@@ -17,9 +17,12 @@ def calculate_log_stability(context_logs: list) -> int:
 def calculate_vanguard_score(current_score: int = 100, context_logs: list = None, is_mitigated: bool = False) -> int:
     """
     SELF-HEALING LOGIC ADDED:
-    1. Active Healing: +5 points if 'is_mitigated' is True.
+    1. Active Healing: Sets score to 100 instantly if 'is_mitigated' is True.
     2. Passive Healing: +5 points if last 5 logs are clean (stability).
     """
+    if is_mitigated:
+        return 100
+
     score = current_score
     
     # --- 1. PENALTY PHASE ---
@@ -31,10 +34,6 @@ def calculate_vanguard_score(current_score: int = 100, context_logs: list = None
             if "CRITICAL" in log: penalty += 15
             elif "WARNING" in log: penalty += 5
         score -= penalty
-
-    # --- 2. ACTIVE HEALING (Mitigation Bonus) ---
-    if is_mitigated:
-        score += 5
 
     # --- 3. PASSIVE HEALING (Stability Check) ---
     # If the last 5 logs have NO critical issues, regenerate integrity
@@ -72,11 +71,14 @@ def get_threat_level(score: int = 100, context_logs: list = None) -> str:
         return 'medium'
     return 'low'
 
-def get_latency_metrics(context_logs: list) -> str:
+def get_latency_metrics(context_logs: list, is_mitigated: bool = False) -> str:
     """
     Generates a dynamic latency score based on system stress.
     High Threat = High Latency.
     """
+    if is_mitigated:
+        return f"{random.randint(8, 24)}ms"
+        
     if not context_logs:
         return "12ms"
     

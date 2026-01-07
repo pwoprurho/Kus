@@ -13,9 +13,10 @@
         display: grid;
         grid-template-columns: 350px 1fr;
         gap: 2rem;
-        height: calc(100vh - 100px); /* Adjust based on header/footer */
-        padding: 2rem;
-        max-width: 1600px;
+        /* Increased height and adjusted for fixed header */
+        height: 100vh;
+        padding: 90px 2rem 2rem 2rem; /* Top padding clears the 70px header + gap */
+        max-width: 1800px; /* Wider for better chat experience */
         margin: 0 auto;
     }
 
@@ -233,9 +234,10 @@
         .tax-agent-container {
             grid-template-columns: 1fr;
             height: auto;
+            padding-top: 80px; /* Adjust for mobile header */
         }
         .glass-panel {
-            height: 600px;
+            height: 80vh; /* Taller on mobile */
         }
     }
 

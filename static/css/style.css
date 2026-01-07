@@ -1,29 +1,62 @@
-/* ===== KUSMUS AI CORE STYLES (v4 - Final Video & Orbit) ===== */
+/* ===== KUSMUS AI PREMIUM UI (v5 - Design System) ===== */
 
-/* 1. Reset & Typography */
+/* 1. Design Tokens & Systems */
+:root {
+    /* Colors - Brand */
+    --primary: #0072ff;
+    --primary-dim: rgba(0, 114, 255, 0.1);
+    --primary-glow: rgba(0, 114, 255, 0.4);
+    --accent: #ffe600;
+    --accent-dim: rgba(255, 230, 0, 0.1);
+
+    /* Colors - Surface */
+    --bg-dark: #050505;
+    --bg-card: rgba(20, 20, 25, 0.7);
+    --surface-border: rgba(255, 255, 255, 0.08);
+
+    /* Glassmorphism */
+    --glass-bg: rgba(10, 10, 12, 0.65);
+    --glass-blur: blur(20px);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+    /* Typography */
+    --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+}
+
+/* 2. Reset & Base Typography */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    background-color: #000000;
-    color: #e6edf3;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-dark);
+    color: #e0e6ed;
+    font-family: var(--font-body);
     line-height: 1.6;
     overflow-x: hidden;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Garamond', 'Georgia', serif;
+    font-family: var(--font-heading);
     color: #ffffff;
-    font-weight: 700;
-    letter-spacing: -0.5px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
 }
 
-a { text-decoration: none; color: inherit; transition: all 0.3s ease; }
+a { 
+    text-decoration: none; 
+    color: inherit; 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+}
 
-/* 2. ENHANCED 3D Global Orbit System */
+/* 3. ENHANCED 3D Global Orbit System (PRESERVED) */
 #global-orbit-container {
     position: fixed;
     top: 50%;
@@ -34,7 +67,7 @@ a { text-decoration: none; color: inherit; transition: all 0.3s ease; }
     height: 800px;
     z-index: -1;
     pointer-events: none;
-    opacity: 0.65; 
+    opacity: 0.5; /* Slightly adjusted for better content readability */
 }
 
 .planet-core {
@@ -43,7 +76,7 @@ a { text-decoration: none; color: inherit; transition: all 0.3s ease; }
     width: 65px; height: 65px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #58a6ff, #0072ff); 
-    box-shadow: 0 0 50px 15px rgba(0, 114, 255, 0.5); 
+    box-shadow: 0 0 50px 15px rgba(0, 114, 255, 0.4); 
     transform: translate(-50%, -50%);
 }
 
@@ -96,164 +129,229 @@ a { text-decoration: none; color: inherit; transition: all 0.3s ease; }
     to { transform: translate(-50%, -50%) rotateX(45deg) rotateY(15deg) rotateZ(360deg); }
 }
 
-/* 3. Navigation */
-.header-blue {
-    background-color: #0072ff;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 15px 5%;
-    position: fixed; top: 0; left: 0; width: 100%;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+/* 4. Glass Component System */
+
+/* Premium Glass Cards */
+.glass-panel, .card, .solution-card, .team-card, .form-card, .blog-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 16px;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.glass-panel:hover, .card:hover, .solution-card:hover, .team-card:hover, .form-card:hover, .blog-card:hover {
+    transform: translateY(-4px) scale(1.005);
+    border-color: rgba(0, 114, 255, 0.4);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 114, 255, 0.1);
+}
+
+/* Premium Buttons */
+.btn, .cta-button, .submit-button, .nav-cta {
+    background: var(--primary);
+    color: white !important;
+    padding: 12px 28px;
+    border-radius: 8px; /* Slightly more rounded */
+    font-weight: 600;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 15px var(--primary-glow);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.btn:hover, .cta-button:hover, .submit-button:hover, .nav-cta:hover {
+    background: #0060df;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px var(--primary-glow);
+    border-color: rgba(255,255,255,0.3);
+}
+
+/* Secondary Button (Outline) */
+.btn-secondary, .secondary-button {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #e0e0e0;
+    padding: 10px 24px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+.btn-secondary:hover, .secondary-button:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(0, 114, 255, 0.05);
+}
+
+/* Inputs & Forms */
+input, textarea, select {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+    padding: 14px 16px !important;
+    font-family: var(--font-body) !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s ease !important;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--primary) !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 114, 255, 0.2) !important;
+}
+
+/* 5. Navigation & Layout (Zoho-Style Premium) */
+.header-blue {
+    background: #000000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 4%; /* More horizontal spacing */
+    position: fixed; top: 0; left: 0; width: 100%;
+    z-index: 1000;
+    height: 70px; /* Specific height constraint */
+}
+
+/* LOGO FIX - Strictly Defined */
 .logo-container {
     display: flex;
     align-items: center;
     gap: 12px;
-    text-decoration: none;
+    height: 100%;
 }
-
 .nav-logo-img {
-    height: 40px;
+    height: 36px; /* FIXED HEIGHT - Prevents 'too large' issue */
     width: auto;
-    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+    display: block;
 }
 
 .logo-text {
-    font-size: 1.5rem;
+    font-size: 1.25rem; /* Slightly smaller, more refined */
     color: white;
-    font-weight: 800;
+    font-weight: 700;
     font-family: 'Inter', sans-serif;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
-.logo-container:hover .logo-text { color: #ffe600; }
 
-nav ul { display: flex; list-style: none; align-items: center; }
-nav ul li { margin-left: 25px; }
-nav a { color: rgba(255,255,255,0.9); font-size: 0.95rem; font-weight: 500; }
-nav a:hover { color: #ffe600; }
-.nav-secondary a { font-size: 0.85rem; opacity: 0.8; border-bottom: 1px dotted rgba(255,255,255,0.5); }
+/* MENU FIX - Right Aligned, Clean Links */
+nav ul { 
+    display: flex; 
+    list-style: none; 
+    align-items: center; 
+    height: 100%;
+    margin: 0;
+    gap: 32px; /* Use gap instead of margin for better control */
+}
+nav ul li { margin-left: 0; } /* Reset margin */
+
+nav a {
+    color: #cbd5e1; /* Slate-300 - better than simple gray */
+    font-family: var(--font-body);
+    font-size: 15px; /* Precise size */
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-transform: none;
+    letter-spacing: -0.01em;
+}
+nav a:hover { 
+    color: #ffffff; 
+}
+
+/* Dedicated CTA Styling within Menu */
 .nav-cta {
-    background-color: #000000; color: #0072ff !important;
-    padding: 8px 20px; border-radius: 4px; font-weight: 700;
-    border: 1px solid #000000;
+    background-color: var(--primary); 
+    color: #fff !important;
+    padding: 10px 20px; /* Slightly larger touch target */
+    border-radius: 6px; 
+    font-weight: 600;
+    font-size: 14px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Very subtle depth */
+    letter-spacing: 0;
 }
-.nav-cta:hover { background-color: #222; color: #fff !important; border-color: #fff; }
+.nav-cta:hover { 
+    background-color: #0060df; 
+    color: #fff !important; 
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 114, 255, 0.25);
+}
 
+/* Nav Toggle (Hidden on Desktop) */
 .nav-toggle {
     display: none;
     background: none;
-    border: 2px solid #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 4px;
     padding: 8px 10px;
     color: #fff;
     font-size: 1.2rem;
     cursor: pointer;
     z-index: 1001;
-    transition: all 0.3s ease;
-}
-.nav-toggle:hover { color: #ffe600; border-color: #ffe600; box-shadow: 0 0 10px rgba(255, 230, 0, 0.6); }
-
-/* 4. Utility Classes */
-.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-main { padding-top: 100px; flex: 1; }
-footer { text-align: center; padding: 40px 0; border-top: 1px solid #222; color: #666; font-size: 0.9rem; margin-top: auto; }
-
-/* ==========================================================================
-   5. CHAT WIDGET (REVISED & FIXED)
-   ========================================================================== */
-
-/* The Desktop Container */
-#chat-widget-container {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 9999;
-    /* Removed width constraints to prevent parent clipping */
 }
 
-/* The Toggle Button - RESTORED TO 60px */
+/* 6. Utility & Typography Helpers */
+.container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+.text-gradient {
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.text-primary { color: var(--primary) !important; }
+
+/* 7. Chat Widget (Refined) */
+#chat-widget-container { bottom: 30px; right: 30px; z-index: 9999; }
+
 .chat-toggle {
-    width: 60px; 
-    height: 60px; 
-    border-radius: 50%;
-    background: #0072ff; 
-    color: white; 
-    border: none;
-    font-size: 24px; 
-    cursor: pointer;
-    box-shadow: 0 5px 15px rgba(0,114,255,0.4);
-    transition: transform 0.2s;
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    position: relative;
-    z-index: 10002;
+    background: linear-gradient(135deg, var(--primary) 0%, #0056b3 100%);
+    box-shadow: 0 10px 25px var(--primary-glow);
+    border: 1px solid rgba(255,255,255,0.1);
 }
-.chat-toggle:hover { transform: scale(1.1); }
-
-/* The Chat Window */
 .chat-window {
-    position: absolute; 
-    bottom: 80px; 
-    right: 0;
-    width: 350px; 
-    height: 500px;
-    background: #111; 
-    border: 1px solid #333;
-    border-radius: 12px; 
-    overflow: hidden;
-    /* Flex layout for proper scrolling */
-    display: none; 
-    flex-direction: column;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-    z-index: 10001;
+    background: rgba(12, 12, 16, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
 }
-.chat-window.active, .chat-window.open { display: flex; }
-
-/* Internal Chat Layout */
-.chat-header { 
-    flex-shrink: 0;
-    background: #0072ff; 
-    padding: 15px; 
-    color: white; 
-    font-weight: bold; 
+.chat-header {
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 16px 20px;
+}
+.chat-input {
+    background: rgba(0,0,0,0.2);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding: 16px;
 }
 
-.chat-body { 
-    flex-grow: 1; 
-    padding: 15px; 
-    overflow-y: auto; 
-    font-size: 0.9rem; 
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-} 
+/* 8. Sections Refined */
+.hero-section { padding: 180px 0 120px; }
+.hero-section h1 { font-size: 4rem; line-height: 1.1; margin-bottom: 24px; }
+.hero-section .subtitle { font-size: 1.35rem; color: #8899a6; max-width: 800px; margin: 0 auto 48px; }
 
-.chat-input { 
-    flex-shrink: 0;
-    padding: 15px; 
-    background: #000; 
-    border-top: 1px solid #333; 
-    display: flex; 
+main { padding-top: 80px; }
+
+/* Footer */
+footer {
+    background: #020202;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    color: #666;
+    padding: 60px 0;
 }
-.chat-input input { 
-    flex: 1; 
-    background: #222; 
-    border: none; 
-    color: white; 
-    padding: 10px; 
-    border-radius: 4px; 
-    margin-right: 10px; 
-}
-.chat-input button { 
-    background: #0072ff; 
-    border: none; 
-    color: white; 
-    padding: 0 15px; 
-    border-radius: 4px; 
-    cursor: pointer; 
-}
+
+/* Old utility removals/replacements handled by class mapping below */
+/* .nav-cta overrides above */
+/* .form-control overrides via input tag selector above */
+
+/* ... Continuing with existing specific section styles ... */
 
 /* Messages */
 .msg { 
@@ -275,31 +373,42 @@ footer { text-align: center; padding: 40px 0; border-top: 1px solid #222; color:
 }
 .hero-content { max-width: 900px; margin: 0 auto; position: relative; z-index: 20; }
 .hero-section h1 {
-    font-size: 3.5rem;
+    font-size: 4.5rem; /* Larger, more authoritative */
+    font-weight: 700;
     color: #ffffff;
-    margin-bottom: 20px;
-    text-shadow: 0 0 20px rgba(0,0,0,0.8);
+    margin-bottom: 24px;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    text-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 .hero-section .subtitle {
-    font-size: 1.5rem;
-    color: #cccccc;
-    margin-bottom: 40px;
-    font-weight: 300;
+    font-size: 1.25rem; /* 20px - clean lead size */
+    line-height: 1.6;
+    color: #94a3b8; /* Slate-400 for sophistication */
+    margin-bottom: 48px;
+    font-weight: 400;
+    max-width: 650px;
+    margin-left: auto;
+    margin-right: auto;
 }
 .cta-button {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
     background-color: #0072ff;
     color: white !important;
-    padding: 15px 40px;
-    font-size: 1.1rem;
+    padding: 16px 36px;
+    font-size: 1.125rem; /* 18px */
     font-weight: 600;
-    border-radius: 5px;
-    box-shadow: 0 0 20px rgba(0, 114, 255, 0.4);
-    transition: all 0.3s ease;
+    border-radius: 8px; /* Matches system */
+    box-shadow: 0 4px 20px rgba(0, 114, 255, 0.4);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    letter-spacing: -0.01em;
 }
 .cta-button:hover {
-    background-color: #005bb5;
-    transform: translateY(-3px);
+    background-color: #0060df;
+    transform: translateY(-2px);
     box-shadow: 0 0 30px rgba(0, 114, 255, 0.6);
 }
 

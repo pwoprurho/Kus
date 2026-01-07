@@ -7,7 +7,11 @@
     
     <link rel="icon" type="image/.jpg" href="{{ url_for('static', filename='images/pic01.jpg') }}?v=3">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Garamond:wght@700&display=swap" rel="stylesheet">
+    <!-- Premium Typography: Inter (UI) + JetBrains Mono (Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
@@ -131,7 +135,9 @@
                 <li><a href="{{ url_for('public.team') }}">Team</a></li>
                 <li><a href="{{ url_for('public.chairman') }}">Mandate</a></li> 
                 <li><a href="{{ url_for('public.blog') }}">Insights</a></li>
-                <li><a href="{{ url_for('sandbox.sandbox_view') }}" class="nav-cta" style="display: flex;">Try-Our-Demo</a></li>
+                <li><a href="{{ url_for('sandbox.sandbox_view') }}" class="nav-cta" style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-flask"></i> Try-Our-Demo
+                </a></li>
                 <li>
                     <a href="{{ url_for('auth.client_access') }}" class="nav-cta" style="display: flex; align-items: center; gap: 8px;">
                         <i class="fas fa-lock" style="font-size: 0.8rem;"></i> Client Portal

@@ -150,7 +150,8 @@ class KusmusAIEngine:
             config_thinking = None
             if is_thinking_candidate:
                 args_copy = gen_config_args.copy()
-                args_copy["thinking_config"] = types.ThinkingConfig(include_thoughts=True, thinking_budget=1024)
+                # Increased budget to allow for complete chain-of-thought before tool invocation
+                args_copy["thinking_config"] = types.ThinkingConfig(include_thoughts=True, thinking_budget=4096)
                 config_thinking = types.GenerateContentConfig(**args_copy)
 
             config_standard = types.GenerateContentConfig(**gen_config_args)

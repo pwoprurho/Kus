@@ -3,49 +3,116 @@
 
 {% block content %}
 <style>
-.supa-container{padding:30px;color:#e8eefb}
-.user-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#0b0b0b;border:1px solid #1b1b1b;margin-bottom:8px;border-radius:6px}
-.role-badge{background:#111;padding:6px 10px;border-radius:4px;border:1px solid #222}
-.btn{background:#0072ff;color:white;padding:8px 12px;border-radius:4px;text-decoration:none;border:none;cursor:pointer}
-.btn.danger{background:#ff4444}
-.chat-panel{margin-top:20px;background:#070707;padding:16px;border-radius:8px;border:1px solid #222}
-.chat-input{width:100%;padding:10px;border-radius:6px;border:1px solid #333;background:#0b0b0b;color:#fff}
+/* Local overrides for glass UI in Supa Admin */
+.supa-container { padding: 40px; }
+
+.glass-header-panel {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.user-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.user-row:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(0, 114, 255, 0.3);
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(0, 114, 255, 0.1);
+    color: #3b82f6;
+    border: 1px solid rgba(0, 114, 255, 0.2);
+}
+
+.action-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+select {
+    background: #000;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.chat-panel {
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: 12px;
+    padding: 30px;
+    margin-top: 40px;
+}
 </style>
 
 <div class="supa-container">
-  <h2>Supa Admin — Privilege Management</h2>
-  <p style="color:#9aa">Promote or demote user roles. Use caution — changes are immediate.</p>
+  
+  <div class="glass-header-panel">
+      <h2 style="margin-bottom: 10px; color: #fff;">Supa Admin Access Control</h2>
+      <p style="color: #94a3b8; font-size: 0.95rem;">Manage platform privileges and user roles. All changes are logged and effective immediately.</p>
+  </div>
 
   <div id="users-list">
     {% for u in users %}
       <div class="user-row" data-user-id="{{ u.id }}">
         <div>
-          <div style="font-weight:700">{{ u.full_name or '—' }}</div>
-          <div style="font-size:0.85rem;color:#9aa">{{ u.email or '—' }}</div>
+          <div style="font-weight: 600; font-size: 1.1rem; color: #f1f5f9;">{{ u.full_name or 'Unknown User' }}</div>
+          <div style="font-size: 0.9rem; color: #64748b; margin-top: 4px;">{{ u.email or '—' }} <span style="margin: 0 8px; color: #334155;">|</span> <span style="color: #475569;">ID: {{ u.id }}</span></div>
         </div>
-        <div style="display:flex;gap:12px;align-items:center">
-          <div class="role-badge" id="role-{{ u.id }}">{{ u.role }}</div>
-          <select id="select-{{ u.id }}">
-            <option value="viewer">viewer</option>
-            <option value="editor">editor</option>
-            <option value="admin">admin</option>
-            <option value="supa_admin">supa_admin</option>
+        
+        <div class="action-group">
+          <span class="role-badge" id="role-{{ u.id }}">{{ u.role }}</span>
+          
+          <select id="select-{{ u.id }}" style="width: 140px;">
+            <option value="viewer" {% if u.role == 'viewer' %}selected{% endif %}>Viewer</option>
+            <option value="editor" {% if u.role == 'editor' %}selected{% endif %}>Editor</option>
+            <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+            <option value="supa_admin" {% if u.role == 'supa_admin' %}selected{% endif %}>Supa Admin</option>
           </select>
-          <button class="btn" onclick="updateRole('{{ u.id }}')">Update Role</button>
+          
+          <button class="btn" onclick="updateRole('{{ u.id }}')" style="padding: 8px 16px; font-size: 0.85rem;">Update</button>
         </div>
       </div>
     {% endfor %}
   </div>
 
   <div class="chat-panel">
-    <h3>Zoho Quick Message</h3>
-    <p style="color:#9aa">Send a verification / quick message to a user via Zoho SMTP.</p>
-    <input id="zoho-email" class="chat-input" placeholder="recipient@example.com">
-    <input id="zoho-link" class="chat-input" placeholder="optional verification link" style="margin-top:8px">
-    <div style="margin-top:8px;text-align:right">
-      <button class="btn" onclick="sendZoho()">Send via Zoho</button>
+    <h3 style="margin-bottom: 10px; color: #fff;">Zoho Direct Comms</h3>
+    <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.9rem;">Dispatch manual verification or secure links via Zoho SMTP relay.</p>
+    
+    <div style="display: grid; gap: 15px; max-width: 600px;">
+        <input id="zoho-email" class="chat-input" placeholder="Recipient Email (e.g. user@enterprise.com)">
+        <input id="zoho-link" class="chat-input" placeholder="Secure Verification Link (Optional)">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+            <div id="zoho-status" style="font-size: 0.9rem; color: #64748b;">Ready to transmit.</div>
+            <button class="btn" onclick="sendZoho()">Transmit via Zoho</button>
+        </div>
     </div>
-    <div id="zoho-status" style="margin-top:10px;color:#9aa"></div>
   </div>
 </div>
 

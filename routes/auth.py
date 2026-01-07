@@ -1,14 +1,42 @@
 
 import os
 import secrets
+import random
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from supabase import create_client
 from db import supabase_admin
 from models import User, ClientUser 
+from services.mailer import send_recovery_otp
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+
+# === RECOVERY OTP ENDPOINT ===
+@auth_bp.route('/send-recovery', methods=['POST'])
+def send_recovery():
+    email = request.json.get('email')
+    if not email: return jsonify({'error': 'Email required'}), 400
+    
+    try:
+        # Check if client exists
+        client_res = supabase_admin.table('clients').select('id').eq('email', email).execute()
+        if client_res.data and len(client_res.data) > 0:
+            # Generate 6-digit OTP
+            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            session['recovery_otp'] = otp
+            session['recovery_email'] = email
+            
+            # Send Email
+            from services.mailer import send_recovery_otp
+            send_recovery_otp(email, otp)
+            
+            return jsonify({'success': True, 'message': 'Recovery code sent'})
+        else:
+            return jsonify({'error': 'Email not authorized in system'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 # === CLIENT TOKEN HANDSHAKE ROUTE ===
 @auth_bp.route('/client-token', methods=['POST'])
@@ -67,11 +95,21 @@ def client_access():
             if client_res.data and len(client_res.data) > 0:
                 client_data = client_res.data[0]
                 
-                # Case 1: RECOVERY (Entered Key)
-                if auth_input == client_data['recovery_key']:
+                # Check for Valid Session OTP (OR Master Key)
+                session_otp = session.get('recovery_otp')
+                is_valid_otp = session_otp and auth_input == session_otp and session.get('recovery_email') == email
+                
+                # Case 1: RECOVERY (OTP or Key)
+                if is_valid_otp or auth_input == client_data['recovery_key']:
                      session['temp_client_email'] = email
-                     session['temp_client_key'] = auth_input
-                     flash("Recovery Protocol Initiated. Please reset your credentials.", "info")
+                     session['temp_client_key'] = auth_input # Generic truthy verification token
+                     
+                     if is_valid_otp:
+                         session.pop('recovery_otp', None) # Consume OTP
+                         flash("Identity Verified. Proceed to Credential Reset.", "info")
+                     else:
+                         flash("Master Key Accepted. Proceed to Credential Reset.", "info")
+                         
                      return redirect(url_for('auth.client_setup')) 
 
                 # Case 2: LOGIN (Entered Password)

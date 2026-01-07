@@ -68,6 +68,28 @@ def send_verification_email(recipient_email, verification_link):
     """
     return send_email(recipient_email, subject, html_content)
 
+def send_recovery_otp(recipient_email, otp_code):
+    """
+    Sends a 6-digit recovery OTP via Zoho SMTP.
+    """
+    subject = "SECURE: Your Recovery Access Code"
+    html_content = f"""
+    <html>
+      <body style="font-family: 'Courier New', monospace; background-color: #111; padding: 20px; color: #ddd;">
+        <div style="max-width: 500px; margin: 0 auto; background: #000; border: 1px solid #333; padding: 30px; border-top: 4px solid #00ff88;">
+          <h2 style="color: #fff; margin-top: 0;">IDENTITY VERIFICATION</h2>
+          <p>A recovery protocol was initiated for this account.</p>
+          <p>Use the following secure token to complete authentication:</p>
+          <div style="background: #222; color: #00ff88; font-size: 32px; font-weight: bold; text-align: center; padding: 20px; margin: 20px 0; letter-spacing: 5px; border: 1px dashed #00ff88;">
+            {otp_code}
+          </div>
+          <p style="font-size: 12px; color: #666;">If you did not request this code, ignore this message. The code expires in 10 minutes.</p>
+          <p style="font-size: 12px; color: #666;">Kusmus AI Security</p>
+        </div>
+      </body>
+    </html>
+    """
+    return send_async_email(recipient_email, subject, html_content)
 def send_notification_email(recipient_email, title, message, action_link=None, action_text="View Details"):
     """
     Sends a generic notification email.

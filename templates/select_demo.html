@@ -63,7 +63,7 @@
         flex-shrink: 0;
     }
     .stat-label { font-size: 0.65rem; color: #0072ff; letter-spacing: 1px; font-weight: bold; margin-bottom: 5px; }
-    .stat-value { font-size: 1.8rem; font-weight: 700; color: #fff; font-family: 'Garamond', serif; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; color: #fff; font-family: 'Inter', sans-serif; letter-spacing: -0.02em; }
     .stat-status { font-size: 0.8rem; color: #00ff88; letter-spacing: 1px; font-weight: 600; margin-top: 5px; }
 
     .mode-select {
@@ -76,7 +76,7 @@
     .trace-terminal {
         flex-grow: 1; margin-top: 20px;
         background: rgba(0,0,0,0.5); border: 1px solid #222;
-        padding: 15px; font-family: 'Courier New', monospace; 
+        padding: 15px; font-family: 'JetBrains Mono', monospace; 
         overflow-y: auto; font-size: 0.7rem; color: #00ff88;
         display: flex; flex-direction: column; gap: 8px;
         min-height: 0; 
@@ -104,7 +104,7 @@
     .system-alert-bubble {
         align-self: center; width: 90%; background: rgba(255, 0, 0, 0.1);
         border: 1px solid #ff4444; color: #ff4444; padding: 12px;
-        font-family: 'Courier New', monospace; font-size: 0.8rem;
+        font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
         text-align: left; border-radius: 4px; margin: 10px 0;
         transition: all 0.5s ease;
     }
@@ -130,7 +130,7 @@
 
     /* --- SIDEBAR RIGHT (LOGS) --- */
     .sidebar-right { 
-        padding: 20px; font-family: 'Courier New', monospace; 
+        padding: 20px; font-family: 'JetBrains Mono', monospace; 
         font-size: 0.65rem; color: #666; height: 100%; overflow: hidden;
     }
     #activity-log { 
@@ -142,6 +142,118 @@
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .red-alert-active { border: 1px solid red; box-shadow: inset 0 0 50px rgba(255,0,0,0.2); }
+
+    /* --- DEMO SELECTION GRID --- */
+    .demo-grid-container {
+        padding: 40px;
+        height: 100%;
+        overflow-y: auto;
+    }
+    
+    .demo-page-header {
+        margin-bottom: 40px;
+    }
+    .demo-page-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 8px;
+        font-family: 'Inter', sans-serif;
+        letter-spacing: -0.02em;
+    }
+    .demo-page-header p {
+        color: #94a3b8;
+        font-size: 0.95rem;
+        max-width: 600px;
+    }
+
+    .demo-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+    }
+
+    .demo-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.08); /* Subtle border for elegance */
+        border-radius: 12px;
+        padding: 24px;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 220px;
+        text-decoration: none; /* Reset link styles */
+        position: relative;
+        overflow: hidden;
+    }
+
+    .demo-card:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: #0072ff;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Gentle glow effect on hover */
+    .demo-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 2px;
+        background: linear-gradient(90deg, transparent, #0072ff, transparent);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .demo-card:hover::before { opacity: 1; }
+
+    .card-icon {
+        font-size: 1.5rem;
+        color: #0072ff;
+        margin-bottom: 16px;
+        background: rgba(0, 114, 255, 0.1);
+        width: 48px; height: 48px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 8px;
+    }
+
+    .card-content h3 {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.1rem;
+        color: #fff;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .card-content p {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+
+    .card-action {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #0072ff;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+    }
+    .demo-card:hover .card-action { opacity: 1; gap: 12px; } /* Arrow slide effect */
+
+    .demo-status-badge {
+        position: absolute;
+        top: 24px; right: 24px;
+        font-size: 0.7rem;
+        color: #00ff88;
+        background: rgba(0, 255, 136, 0.1);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+    }
 </style>
 
 <div id="canvas-container"><canvas id="three-canvas"></canvas></div>
@@ -170,17 +282,48 @@
     </aside>
 
     <main class="main-terminal">
-        <div style="padding:40px; color:#ddd;">
-            <h2 style="color:#fff; margin-bottom:10px;">Select a Demo</h2>
-            <p style="color:#999; margin-bottom:20px;">Choose a live demo to launch the interactive sandbox with a 3D asset.</p>
-            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <div class="demo-grid-container">
+            <div class="demo-page-header">
+                <h2>Select Environment</h2>
+                <p>Initialize a secure sandbox instance to test Kusmus AI capabilities in real-time response scenarios.</p>
+            </div>
+            
+            <div class="demo-cards-grid">
                 {% for key, info in demos.items() %}
-                    <!-- Updated to point to generic /sandbox route -->
-                    <a class="secondary-button" href="{{ url_for('sandbox.sandbox_view') }}?demo={{ key }}">{{ info.name }}</a>
+                <a href="{{ url_for('sandbox.sandbox_view') }}?demo={{ key }}" class="demo-card">
+                    <span class="demo-status-badge">ONLINE</span>
+                    <div class="card-icon">
+                        {% if 'sentinel' in key %}
+                            <i class="fas fa-shield-alt"></i>
+                        {% elif 'tax' in key or 'compliance' in key %}
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        {% elif 'robotics' in key or 'vla' in key %}
+                            <i class="fas fa-robot"></i>
+                        {% else %}
+                            <i class="fas fa-cube"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-content">
+                        <h3>{{ info.name }}</h3>
+                        <p>
+                            {% if info.instruction %}
+                                {{ info.instruction[:90] }}...
+                            {% else %}
+                                Interactive autonomous agent environment.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="card-action">
+                        Launch Sandbox <i class="fas fa-arrow-right"></i>
+                    </div>
+                </a>
                 {% endfor %}
             </div>
         </div>
-        <div class="input-wrapper">
+
+        <div class="input-wrapper" style="display: none;"> <!-- Hidden on selection screen -->
             <input type="text" id="sandbox-input" placeholder="Type command..." autocomplete="off">
             <button onclick="sendDirective()"><i class="fas fa-paper-plane"></i></button>
         </div>

@@ -4,66 +4,103 @@
 
 {% block content %}
     <header class="page-header container fade-in">
-        <h2>The Value Proposition</h2>
-        <p>We don't sell technology; we eliminate risk and guarantee a return on your investment through two bespoke AI agents.</p>
+        <h2 class="text-gradient" style="font-size: 3.5rem; margin-bottom: 24px;">The Value Proposition</h2>
+        <p style="font-size: 1.25rem; color: #94a3b8; max-width: 800px; margin: 0 auto;">We don't just sell technology; we engineer certainty. Our bespoke AI agents eliminate operational risk, secure physical assets, and guarantee regulatory compliance.</p>
     </header>
 
     <section class="container solution-section">
         
+        <!-- SOLUTION 1: SENTINEL (O-RAN Defense) -->
         <div class="solution-card fade-in">
             <div class="card-content">
-                <h3>The Downtime Mitigation Agent</h3>
+                <h3>Sentinel: O-RAN Defense</h3>
                 <p class="body-text">
                     The multi-million Naira cost of system downtime is no longer an operational risk—it's a management failure. 
-                    Our AI Log Monitoring Agent proactively detects and prevents critical system failures hours before they occur.
+                    <strong>Sentinel</strong> is our Tier-1 Reliability & Security Engineer that proactively detects signal integrity issues and remediates threats autonomously.
                 </p>
                 <ul class="key-benefits">
-                    <li>Guaranteed system uptime compliance (99.9%).</li>
-                    <li>Proactive failure prediction via deep-learning anomaly detection.</li>
-                    <li>Direct translation to predictable, non-disrupted revenue streams.</li>
+                    <li><strong>Proactive Remediation:</strong> Detects and isolates threats before they impact uptime.</li>
+                    <li><strong>Forensic Telemetry:</strong> Maintains a rolling buffer of 20 live logs for instant root-cause analysis.</li>
+                    <li><strong>Autonomous targeting:</strong> Infers threat targets from log anomalies without human intervention.</li>
                 </ul>
+                <a href="{{ url_for('sandbox.sandbox_view') }}?demo=sentinel_monitor" class="cta-button" style="margin-top: 20px; font-size: 0.9rem; padding: 10px 20px;">Launch Sentinel Demo &rarr;</a>
             </div>
             <div class="card-visual">
-                <i class="fas fa-server"></i>
-                </div>
+                <i class="fas fa-shield-alt" style="color: #0072ff;"></i>
+            </div>
         </div>
 
         <div class="roi-metrics fade-in">
             <div class="metric-box">
-                <span class="metric-number">40%</span>
-                <span class="metric-label">Reduction in OpEx</span>
+                <span class="metric-number">99.9%</span>
+                <span class="metric-label">Uptime Guarantee</span>
             </div>
             <div class="metric-box">
                 <span class="metric-number">24/7</span>
-                <span class="metric-label">Autonomous Monitoring</span>
+                <span class="metric-label">Autonomous Defense</span>
             </div>
             <div class="metric-box">
                 <span class="metric-number">Zero</span>
-                <span class="metric-label">Unplanned Outages</span>
+                <span class="metric-label">Critical Failures</span>
             </div>
         </div>
 
+        <!-- SOLUTION 2: TAX COMPLIANCE (Regulatory Certainty) -->
         <div class="solution-card reverse fade-in">
             <div class="card-content">
-                <h3>The Customer Retention Engine</h3>
+                <h3>Tax Compliance Agent</h3>
                 <p class="body-text">
-                    Customer churn is lethal to growth. Our Multi-Lingual Call Agent analyzes voice, sentiment, and context 
-                    across Nigeria's diverse linguistic landscape to predict and prevent churn before it happens.
+                    Regulatory ambiguity is a liability. Our <strong>Tax Law RAG Agent</strong> is trained on the entire Nigeria Tax Act 2025, providing instant, legally accurate liability calculations and filing assistance.
                 </p>
                 <ul class="key-benefits">
-                    <li>99.9% accuracy in multi-lingual sentiment analysis.</li>
-                    <li>Predictive modeling identifies "At-Risk" high-value clients.</li>
-                    <li>Automated retention workflows triggered instantly.</li>
+                    <li><strong>Precision Calculation:</strong> Computes CITA, VAT, and PIT liabilities with 100% statutory accuracy.</li>
+                    <li><strong>Document Analysis:</strong> Parses uploaded bank statements and receipts to extract taxable income.</li>
+                    <li><strong>Legal Citation:</strong> Every standardized advice is backed by specific citations from the 2025 Tax Act.</li>
                 </ul>
+                <a href="{{ url_for('sandbox.sandbox_view') }}?demo=tax_compliance_agent" class="cta-button" style="margin-top: 20px; font-size: 0.9rem; padding: 10px 20px;">Consult Tax Agent &rarr;</a>
             </div>
             <div class="card-visual">
-                <i class="fas fa-headset"></i>
+                <i class="fas fa-file-invoice-dollar" style="color: #ffe600;"></i>
             </div>
         </div>
 
-        <div style="text-align: center; margin-top: 60px;">
-            <h3 style="margin-bottom: 20px;">Ready to secure your infrastructure?</h3>
-            <a href="{{ url_for('public.home') }}#audit-form" class="cta-button">Initiate Phase 1 Audit</a>
+        <!-- SOLUTION 3: VLA ROBOTICS (Physical Security) -->
+        <div class="solution-card fade-in">
+            <div class="card-content">
+                <h3>VLA Robotics: Physical Defense</h3>
+                <p class="body-text">
+                    Cybersecurity stops at the screen; we go further. The <strong>VLA Robotics Agent</strong> interfaces directly with hardware vision systems to detect physical tampering, unauthorized access, and hardware anomalies in real-time.
+                </p>
+                <ul class="key-benefits">
+                    <li><strong>Visual Anomaly Detection:</strong> Identifies physical tampering or unauthorized personnel near sensitive racks.</li>
+                    <li><strong>Hardware Diagnostics:</strong> Analyzes motor failures and mechanical stress on robotic arms.</li>
+                    <li><strong>Remote Inspection:</strong> Autonomous dispatch of visual inspection drones to alert coordinates.</li>
+                </ul>
+                <a href="{{ url_for('sandbox.sandbox_view') }}?demo=surge_vla" class="cta-button" style="margin-top: 20px; font-size: 0.9rem; padding: 10px 20px;">Deploy VLA Unit &rarr;</a>
+            </div>
+            <div class="card-visual">
+                <i class="fas fa-robot" style="color: #ff4444;"></i>
+            </div>
+        </div>
+
+        <div class="roi-metrics fade-in" style="margin-top: 50px;">
+             <div class="metric-box">
+                <span class="metric-number">100%</span>
+                <span class="metric-label">Audit Trail</span>
+            </div>
+            <div class="metric-box">
+                <span class="metric-number">&lt; 1s</span>
+                <span class="metric-label">Response Time</span>
+            </div>
+            <div class="metric-box">
+                <span class="metric-number">Full</span>
+                <span class="metric-label">Regulatory Compliance</span>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 80px; margin-bottom: 40px;">
+            <h3 style="margin-bottom: 24px; color: #fff; font-size: 1.8rem;">Ready to ENGINEER CERTAINTY?</h3>
+            <a href="{{ url_for('public.audit_request') }}" class="cta-button" style="padding: 16px 40px; font-size: 1.1rem;">Request Strategic Audit &rarr;</a>
         </div>
 
     </section>

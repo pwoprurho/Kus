@@ -60,11 +60,40 @@ def blog():
     if supabase_admin:
         try:
             # Fetching published blog posts from Supabase
-            response = supabase_admin.table('posts').select("*").eq('published', True).execute()
+            # Updated to match Admin schema: table 'blog_posts' and status='Published'
+            response = supabase_admin.table('blog_posts').select("*").eq('status', 'Published').order('published_at', desc=True).execute()
             posts = response.data
         except Exception as e:
             print(f"Blog Fetch Error: {e}")
+            # Fallback for older schema if migration isn't complete (optional, but good for safety)
+            try:
+                response = supabase_admin.table('posts').select("*").eq('published', True).execute()
+                if response.data: posts.extend(response.data)
+            except: pass
+
     return render_template("blog.html", posts=posts)
+
+@public_bp.route("/blog/<string:post_id>")
+def blog_post(post_id):
+    post = None
+    if supabase_admin:
+        try:
+            # Fetch single post from correct table
+            response = supabase_admin.table('blog_posts').select("*").eq('id', post_id).limit(1).execute()
+            if response.data:
+                post = response.data[0]
+            else:
+                 # Fallback check
+                response = supabase_admin.table('posts').select("*").eq('id', post_id).limit(1).execute()
+                if response.data: post = response.data[0]
+
+        except Exception as e:
+            print(f"Blog Post Fetch Error: {e}")
+            
+    if not post:
+        return render_template("404.html"), 404
+        
+    return render_template("blog_post.html", post=post)
 
 # --- FIX: Added missing route to resolve BuildError in index.html ---
 @public_bp.route("/request-audit")
