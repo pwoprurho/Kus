@@ -9,7 +9,7 @@ from core.security import sign_forensic_trace
 from services.personas import DEMO_REGISTRY
 from services.vanguard import calculate_vanguard_score, get_security_posture, get_latency_metrics
 from services.vanguard import get_threat_level
-from services.mcp_tools import MCP_TOOLKIT
+from services.mcp_tools import MCP_TOOLKIT, get_ticker_news, get_ticker_history, get_ticker_insider_trades
 import datetime
 from db import supabase_admin
 
@@ -22,8 +22,24 @@ sandbox_bp = Blueprint('sandbox', __name__)
 @role_required('client', 'admin') # Allow both clients and admins
 def investor_dashboard():
     """Renders the Sovereign Vault (Market Sentinel) interface."""
-    return render_template('investor.html')
+    return render_template('client/investor.html')
+@sandbox_bp.route("/api/news/<ticker>")
+def api_ticker_news(ticker):
+    """API endpoint to get live news for a ticker."""
+    try:
+        news = get_ticker_news(ticker)
+        return jsonify({"ticker": ticker, "news": news})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
+@sandbox_bp.route("/api/insider/<ticker>")
+def api_ticker_insider(ticker):
+    """API endpoint to get live insider trades for a ticker."""
+    try:
+        data = get_ticker_insider_trades(ticker)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 @sandbox_bp.route("/sandbox")
 def sandbox_view():
 
@@ -53,6 +69,11 @@ def sandbox_view():
     if 'tax' in selected_demo.lower() or 'compliance' in selected_demo.lower():
         # Render the client template but with a flag that it's in demo/sandbox mode
         return render_template('client/tax_agent.html', is_sandbox_demo=True, user=session.get('user', {}))
+
+    # SPECIAL CASE: Market Sentinel / Investor Demo
+    if 'market' in selected_demo.lower() or 'investor' in selected_demo.lower() or 'sentinel_equity' in selected_demo.lower():
+        # Render the investor template in Sandbox/Demo mode
+        return render_template('client/investor.html', is_sandbox_demo=True)
 
     def resolve_demo_key(raw):
         if not raw:

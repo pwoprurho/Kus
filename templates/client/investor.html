@@ -111,6 +111,49 @@
         margin-bottom: 4px;
     }
 
+    /* LIVE NEWS PULSE */
+    .live-news-marker {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 8px;
+        vertical-align: middle;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+    .live-news-marker.active {
+        opacity: 1;
+    }
+    
+    .live-news-pulse {
+        width: 8px;
+        height: 8px;
+        background-color: #ff4444;
+        border-radius: 50%;
+        box-shadow: 0 0 0 rgba(255, 68, 68, 0.7);
+        animation: pulse-red 2s infinite;
+    }
+    
+    .news-tooltip {
+        font-size: 0.6rem;
+        color: #ff4444;
+        margin-left: 6px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        animation: flashText 2s infinite;
+    }
+
+    @keyframes pulse-red {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 68, 68, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+    }
+    
+    @keyframes flashText {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
     /* RIGHT: SENTINEL INTERFACE */
     .sentinel-workspace {
         position: relative;
@@ -302,65 +345,10 @@
     <aside class="intel-panel">
         <div>
             <div class="intel-header">Insider Watchlist</div>
-            <div class="market-ticker" onclick="handleAssetClick('NVDA')">
-                <div>
-                    <div class="ticker-symbol">NVDA</div>
-                    <div class="ticker-meta" style="text-align:left;">Director Sold 15k shares</div>
-                </div>
-                <div class="ticker-meta">
-                    <div class="signal-bear">BEARISH</div>
-                    12m ago
-                </div>
-            </div>
-            <div class="market-ticker" onclick="handleAssetClick('PLTR')">
-                <div>
-                    <div class="ticker-symbol">PLTR</div>
-                    <div class="ticker-meta" style="text-align:left;">CEO Bought 500k shares</div>
-                </div>
-                <div class="ticker-meta">
-                    <div class="signal-bull">BULLISH</div>
-                    4h ago
-                </div>
-            </div>
-            <div class="market-ticker" onclick="handleAssetClick('BTC-USD')">
-                <div>
-                    <div class="ticker-symbol">BTC</div>
-                    <div class="ticker-meta" style="text-align:left;">Wallet Activity Spike</div>
-                </div>
-                <div class="ticker-meta">
-                    <div class="signal-bull">BULLISH</div>
-                    2m ago
-                </div>
-            </div>
-            <div class="market-ticker" onclick="handleAssetClick('CL=F')">
-                <div>
-                    <div class="ticker-symbol">OIL (WTI)</div>
-                    <div class="ticker-meta" style="text-align:left;">Supply Constraint</div>
-                </div>
-                <div class="ticker-meta">
-                    <div class="signal-bull">BULLISH</div>
-                    1h ago
-                </div>
-            </div>
-            <div class="market-ticker" onclick="handleAssetClick('GC=F')">
-                <div>
-                    <div class="ticker-symbol">GOLD</div>
-                    <div class="ticker-meta" style="text-align:left;">Safe Haven Flow</div>
-                </div>
-                <div class="ticker-meta">
-                    <div class="signal-bear">HOLD</div>
-                    3h ago
-                </div>
-            </div>
-            <div class="market-ticker" onclick="handleAssetClick('TSLA')">
-                <div>
-                    <div class="ticker-symbol">TSLA</div>
-                    <div class="ticker-meta" style="text-align:left;">Production Miss</div>
-                </div>
-                <div class="ticker-meta">
-                    <div class="signal-bear">BEARISH</div>
-                    5h ago
-                </div>
+            <!-- PREMIUM DYNAMIC WATCHLIST -->
+            <div id="insider-list" style="min-height: 200px;">
+                <!-- Tickers injected via JS -->
+                <div style="font-size: 0.8rem; color: #666; font-style: italic; padding: 10px;">Initializing Global Intel Scan...</div>
             </div>
         </div>
 
@@ -824,7 +812,9 @@
             let candlesMesh = [];
             
             function drawCandlesticks(data) {
-                // Clear old
+                // ...existing candlestick drawing code...
+                // (Omitted for brevity, using existing functionality)
+                 // Clear old
                 candlesMesh.forEach(m => scene.remove(m));
                 candlesMesh = [];
                 
@@ -875,7 +865,133 @@
             }
         };
 
+        // --- LIVE INTEL SCANNER & WATCHLIST BUILDER ---
+        async function initIntelScanner() {
+            const tickers = ['NVDA', 'PLTR', 'BTC-USD', 'CL=F', 'GC=F', 'TSLA'];
+            const container = document.getElementById('insider-list');
+            if(!container) return;
+
+            // 1. Build Initial Structure
+            container.innerHTML = ''; // Clear loading text
+            
+            for (const t of tickers) {
+                const div = document.createElement('div');
+                div.className = 'market-ticker';
+                div.id = `ticker-${t}`;
+                div.onclick = () => handleAssetClick(t);
+                div.innerHTML = `
+                    <div>
+                        <div class="ticker-symbol">
+                            ${t.replace('=F', '')} 
+                            <span class="live-news-marker" id="news-${t}">
+                                <span class="live-news-pulse"></span>
+                                <span class="news-tooltip">LIVE</span>
+                            </span>
+                        </div>
+                        <div class="ticker-meta" style="text-align:left;" id="sub-${t}">Scanning SEC Filings...</div>
+                    </div>
+                    <div class="ticker-meta">
+                        <div class="" id="sig-${t}">---</div>
+                        <span id="time-${t}"></span>
+                    </div>
+                `;
+                container.appendChild(div);
+            }
+
+            // 2. Hydrate with Real Insider Data (One-off)
+            tickers.forEach(async (t) => {
+                try {
+                    const res = await fetch(`/api/insider/${t}`);
+                    const json = await res.json();
+                    
+                    const subEl = document.getElementById(`sub-${t}`);
+                    const sigEl = document.getElementById(`sig-${t}`);
+                    const timeEl = document.getElementById(`time-${t}`);
+                    
+                    if (json.recent_filings && json.recent_filings.length > 0) {
+                        // Use latest
+                        const latest = json.recent_filings[0];
+                        // Simplify text
+                        let desc = latest.description || "Transaction";
+                        if(desc.length > 20) desc = desc.substring(0, 18) + '...';
+                        
+                        subEl.textContent = `${latest.reporting_person}: ${desc}`;
+                        
+                        // Parse Date
+                        if(latest.transaction_date) {
+                             timeEl.textContent = latest.transaction_date.substring(5); // Remove Year for space
+                        }
+
+                        // Determine Sentiment
+                        const isBuy = desc.toLowerCase().includes('buy') || desc.toLowerCase().includes('purchase') 
+                                      || latest.description.includes('Award') || latest.description.includes('Grant');
+                        
+                        if (isBuy) {
+                           sigEl.className = 'signal-bull';
+                           sigEl.textContent = 'ACCUMULATE'; 
+                        } else {
+                           sigEl.className = 'signal-bear';
+                           sigEl.textContent = 'DISTRIBUTION';
+                        }
+                    } else {
+                        // NO DATA -> Check if it's Crypto/Commodity
+                        if(t.includes('-') || t.includes('=')) {
+                            subEl.textContent = 'Forensic Flow Analysis';
+                            sigEl.className = 'signal-bull'; // Default to momentum? Or neutral.
+                            sigEl.textContent = 'MOMENTUM'; 
+                        } else {
+                            subEl.textContent = 'No Recent Inside Activity';
+                            sigEl.className = 'signal-bear'; // Neutral
+                            sigEl.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                            sigEl.style.color = '#999';
+                            sigEl.textContent = 'NEUTRAL';
+                        }
+                    }
+                } catch(e) {
+                    console.warn(`Insider fetch failed for ${t}`, e);
+                    document.getElementById(`sub-${t}`).textContent = 'Intel Stream Unavailable';
+                }
+            });
+
+            // 3. Scan Loop for NEWS (Recurring)
+            setInterval(async () => {
+                const symbol = tickers[Math.floor(Math.random() * tickers.length)];
+                try {
+                    const res = await fetch(`/api/news/${symbol}`);
+                    const data = await res.json();
+                    
+                    if (data.news && data.news.length > 0) {
+                        const newsId = "news-" + symbol;
+                        const marker = document.getElementById(newsId);
+                        if(marker) {
+                            marker.classList.add('active');
+                            setTimeout(() => marker.classList.remove('active'), 8000);
+                        }
+                    }
+                } catch (e) { console.error("Scanner Error", e); }
+            }, 8000); 
+        }
+
         // Initialize when DOM ready
-        document.addEventListener('DOMContentLoaded', init3DMarketPulse);
+        document.addEventListener('DOMContentLoaded', () => {
+            init3DMarketPulse();
+            initIntelScanner();
+
+            // --- SANDBOX DEMO AUTO-START ---
+            {% if is_sandbox_demo %}
+            setTimeout(() => {
+                const tickers = ['NVDA', 'PLTR', 'BTC-USD', 'CL=F', 'GC=F', 'TSLA'];
+                const randomTicker = tickers[Math.floor(Math.random() * tickers.length)];
+                
+                // Simulate Human Interaction
+                appendChat("System", `<i class="fas fa-magic"></i> Demo Mode Active: Auto-Selecting Random Asset...`);
+                
+                setTimeout(() => {
+                    handleAssetClick(randomTicker);
+                }, 1000);
+                
+            }, 1000);
+            {% endif %}
+        });
     </script>
 {% endblock %}

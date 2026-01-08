@@ -414,52 +414,56 @@
 
 <script src="{{ url_for('static', filename='js/tax_agent.js') }}"></script>
 <script>
-    {% if is_sandbox_demo %}
     document.addEventListener('DOMContentLoaded', () => {
-        // Restrict Upload Functionality for Sandbox Users
-        const zones = document.querySelectorAll('.upload-zone');
-        zones.forEach(zone => {
-            // Override inline onclick
-            zone.removeAttribute('onclick');
-            zone.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const proceed = confirm("File Analysis is a Client Feature.\n\nWould you like to Request an Audit or Log In to access the full product?");
-                if(proceed) {
-                    window.location.href = "{{ url_for('public.audit_request') }}";
-                }
+        const isSandbox = "{{ is_sandbox_demo }}" === "True";
+        
+        if (isSandbox) {
+            // Restrict Upload Functionality for Sandbox Users
+            const zones = document.querySelectorAll('.upload-zone');
+            zones.forEach(zone => {
+                // Override inline onclick
+                zone.removeAttribute('onclick');
+                zone.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const proceed = confirm("File Analysis is a Client Feature.\n\nWould you like to Request an Audit or Log In to access the full product?");
+                    if(proceed) {
+                        window.location.href = "{{ url_for('public.audit_request') }}";
+                    }
+                });
+                
+                // Visual indicators
+                zone.style.opacity = '0.7';
+                zone.style.cursor = 'not-allowed';
+                const p = zone.querySelector('p');
+                if(p) p.innerHTML += ' <i class="fas fa-lock small"></i>';
             });
             
-            // Visual indicators
-            zone.style.opacity = '0.7';
-            zone.style.cursor = 'not-allowed';
-            const p = zone.querySelector('p');
-            if(p) p.innerHTML += ' <i class="fas fa-lock small"></i>';
-        });
-        
-        // Disable Submit Button
-        const btn = document.querySelector('#upload-form button[type="submit"]');
-        if(btn) {
-             btn.disabled = true;
-             btn.classList.replace('btn-primary', 'btn-secondary');
-             btn.innerHTML = '<i class="fas fa-lock me-2"></i> Processing Locked (Demo Mode)';
+            // Disable Submit Button
+            const btn = document.querySelector('#upload-form button[type="submit"]');
+            if(btn) {
+                 btn.disabled = true;
+                 btn.classList.replace('btn-primary', 'btn-secondary');
+                 btn.innerHTML = '<i class="fas fa-lock me-2"></i> Processing Locked (Demo Mode)';
+            }
+            
+            // Add Demo Banner
+            const container = document.querySelector('.tax-agent-container');
+            if (container) {
+                const banner = document.createElement('div');
+                banner.style.gridColumn = "1 / -1";
+                banner.style.padding = "10px";
+                banner.style.background = "rgba(255, 170, 0, 0.1)";
+                banner.style.border = "1px solid #ffaa00";
+                banner.style.color = "#ffaa00";
+                banner.style.borderRadius = "8px";
+                banner.style.textAlign = "center";
+                banner.style.marginBottom = "10px";
+                banner.innerHTML = "<strong>DEMO MODE:</strong> You are viewing the Tax Compliance Agent interface. Document upload is disabled.";
+                container.insertBefore(banner, container.firstChild);
+            }
         }
-        
-        // Add Demo Banner
-        const container = document.querySelector('.tax-agent-container');
-        const banner = document.createElement('div');
-        banner.style.gridColumn = "1 / -1";
-        banner.style.padding = "10px";
-        banner.style.background = "rgba(255, 170, 0, 0.1)";
-        banner.style.border = "1px solid #ffaa00";
-        banner.style.color = "#ffaa00";
-        banner.style.borderRadius = "8px";
-        banner.style.textAlign = "center";
-        banner.style.marginBottom = "10px";
-        banner.innerHTML = "<strong>DEMO MODE:</strong> You are viewing the Tax Compliance Agent interface. Document upload is disabled.";
-        container.insertBefore(banner, container.firstChild);
     });
-    {% endif %}
 
     // Simple file select handler for visual feedback
     function handleFileSelect(input) {

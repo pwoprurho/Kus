@@ -234,7 +234,7 @@ def perform_self_heal(target_system: str) -> Dict[str, Any]:
 
 
 
-def get_insider_trades(ticker: str) -> Dict[str, Any]:
+def get_ticker_insider_trades(ticker: str) -> Dict[str, Any]:
     """
     Simulates fetching recent SEC Form 4 (Insider Trade) and 13D (Beneficial Ownership) filings.
     Tries LIVE data from yfinance first.
@@ -283,46 +283,15 @@ def get_insider_trades(ticker: str) -> Dict[str, Any]:
         except Exception as e:
             print(f"Warning: Live insider fetch failed for {ticker}: {e}")
 
-    # --- MOCK FALLBACK ---
-    impacts = ["POSITIVE", "NEUTRAL", "NEGATIVE"]
-    roles = ["CEO", "CFO", "Director", "10% Owner"]
-    
-    # Deterministic simulation for demo constancy
-    random.seed(ticker)
-    
-    trades = []
-    # Generate 1-3 recent trades
-    for _ in range(random.randint(1, 3)):
-        action_type = random.choice(["BUY", "SELL", "OPTION_EXERCISE"])
-        shares = random.randint(1000, 500000)
-        price = round(random.uniform(50.0, 500.0), 2)
-        role = random.choice(roles)
-        date_offset = random.randint(0, 5)
-        trade_date = (datetime.datetime.utcnow() - datetime.timedelta(days=date_offset)).strftime("%Y-%m-%d")
-        
-        trades.append({
-            "filing_type": "Form 4" if "Owner" not in role else "Schedule 13D",
-            "reporting_person": f"John Doe ({role})",
-            "transaction_date": trade_date,
-            "transaction_code": "P" if action_type == "BUY" else "S",
-            "type": action_type,
-            "shares": shares,
-            "price_per_share": price,
-            "value": round(shares * price, 2),
-            "owner_ownership_after": random.randint(100000, 1000000)
-        })
-    
-    # Calculate a simple signal based on net buying/selling
-    net_shares = sum([t['shares'] if t['type'] == 'BUY' else -t['shares'] for t in trades])
-    signal = "BULLISH" if net_shares > 0 else "BEARISH"
-    if abs(net_shares) < 10000: signal = "NEUTRAL"
-
+    # --- NO MOCK FALLBACK --- 
+    # User requested no simulation. If live data fails, return empty.
+    print(f"No live insider data found for {ticker}")
     return {
         "ticker": ticker,
-        "source": "SEC EDGAR Stream (Simulated)",
-        "signal": signal,
-        "recent_filings": trades,
-        "analysis": f"Detected {len(trades)} recent insider transactions. Net flow is {signal}."
+        "source": "LIVE_ONLY",
+        "signal": "NO_DATA",
+        "recent_filings": [],
+        "analysis": "No live insider filings available."
     }
 
 
@@ -427,6 +396,28 @@ def get_global_market_trend() -> Dict[str, Any]:
         "timestamp": datetime.datetime.utcnow().isoformat()
     }
 
+def get_ticker_news(ticker: str) -> list[Dict[str, Any]]:
+    """Fetch the latest news for a ticker using yfinance."""
+    if not YFINANCE_AVAILABLE:
+        return []
+    try:
+        t = yf.Ticker(ticker)
+        news = t.news
+        results = []
+        if news:
+            for n in news:
+                results.append({
+                    "title": n.get("title", "No Title"),
+                    "publisher": n.get("publisher", "Unknown"),
+                    "link": n.get("link", "#"),
+                    "providerPublishTime": n.get("providerPublishTime", 0),
+                    "type": n.get("type", "STORY")
+                })
+        return results
+    except Exception as e:
+        print(f"News fetch error for {ticker}: {e}")
+        return []
+
 def get_ticker_history(ticker: str, period: str = "3mo", interval: str = "1d") -> Dict[str, Any]:
     """Fetch historical OHLC data for a ticker using yfinance."""
     if not YFINANCE_AVAILABLE:
@@ -530,7 +521,7 @@ def prepare_trade_order(ticker: str, action: str, quantity: int, conviction_scor
 
 # Public registry of tools available for controlled invocation in the sandbox
 MCP_TOOLKIT = {
-    "get_insider_trades": get_insider_trades,
+    "get_insider_trades": get_ticker_insider_trades,
     "fetch_market_news": fetch_market_news,
     "prepare_trade_order": prepare_trade_order,
     "get_server_health": get_server_health,
