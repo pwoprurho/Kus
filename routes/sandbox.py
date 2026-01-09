@@ -10,6 +10,9 @@ from services.personas import DEMO_REGISTRY
 from services.vanguard import calculate_vanguard_score, get_security_posture, get_latency_metrics
 from services.vanguard import get_threat_level
 from services.mcp_tools import MCP_TOOLKIT, get_ticker_news, get_ticker_history, get_ticker_insider_trades
+from services.krag_bot.ai_analysis import AIAnalyzer
+import pandas as pd
+import numpy as np
 import datetime
 from db import supabase_admin
 
@@ -40,6 +43,73 @@ def api_ticker_insider(ticker):
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+def calculate_rsi_manual(prices, period=14):
+    """Calculate RSI without pandas_ta."""
+    delta = prices.diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+    rs = gain / loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+@sandbox_bp.route("/api/sentinel/analyze/<ticker>")
+def api_sentinel_analyze(ticker):
+    """
+    Integrates Krag_bot AI Analysis into the Sandbox.
+    Fetches live data, calculates basic indicators, and asks Gemini.
+    """
+    try:
+        # 1. Fetch History
+        hist_data = get_ticker_history(ticker, period="1mo", interval="1h")
+        if "candles" not in hist_data or not hist_data["candles"]:
+             return jsonify({"error": "No market data found", "decision": "NEUTRAL"}), 404
+             
+        df = pd.DataFrame(hist_data["candles"])
+        # Ensure numeric
+        df['close'] = pd.to_numeric(df['close'])
+        
+        # 2. Calculate Indicators (Manual RSI)
+        df['RSI_14'] = calculate_rsi_manual(df['close'], 14)
+        
+        # Get last valid signals
+        if df.empty:
+             return jsonify({"error": "Empty Dataframe"}), 404
+             
+        last_row = df.iloc[-1]
+        rsi_val = last_row['RSI_14'] if pd.notna(last_row['RSI_14']) else 50
+        
+        # Construct Signals Dict for AI
+        signals = {
+            "RSI": float(rsi_val),
+            "Trend": "UP" if rsi_val > 50 else "DOWN",
+            "Volatility": "NORMAL" # Placeholder
+        }
+        
+        # 3. Call Krag_Bot AI
+        # Note: We rely on correct Gemini version support in AIAnalyzer
+        analyzer = AIAnalyzer(model_name="gemini-2.5-flash-lite") 
+        if not analyzer.model:
+            # Fallback for demo if key is invalid
+            pass 
+            
+        result = analyzer.analyze_market(ticker, df, signals)
+        
+        # 4. Return Formatted Result
+        return jsonify({
+            "ticker": ticker,
+            "decision": result.get('decision', 'HOLD'),
+            "confidence": result.get('confidence', 0),
+            "reasoning": result.get('reasoning', 'Analysis complete.'),
+            "signals": signals,
+            "timestamp": datetime.datetime.utcnow().isoformat()
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 @sandbox_bp.route("/sandbox")
 def sandbox_view():
 
@@ -110,7 +180,7 @@ def sandbox_chat_stream():
 
         engine = KusmusAIEngine(
             system_instruction=persona['instruction'],
-            model_name=persona.get('model', 'gemini-2.5-flash')
+            model_name=persona.get('model', 'gemini-2.5-flash-lite')
         )
 
         def generate():
@@ -217,7 +287,7 @@ def sandbox_chat():
 
         engine = KusmusAIEngine(
             system_instruction=persona['instruction'],
-            model_name=persona.get('model', 'gemini-2.5-flash')
+            model_name=persona.get('model', 'gemini-2.5-flash-lite')
         )
 
         response_text, thought_trace = engine.generate_response(user_message_aug, context_logs=context_logs)

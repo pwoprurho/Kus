@@ -260,6 +260,14 @@ def get_ticker_insider_trades(ticker: str) -> Dict[str, Any]:
                     
                     person = get_val(row, ['Reporter', 'Name', 'Insider'], 'Unknown')
                     date_val = get_val(row, ['Start Date', 'Date'], 'Unknown')
+                    
+                    # Format date cleanly (YYYY-MM-DD)
+                    date_str = str(date_val)
+                    if hasattr(date_val, 'strftime'):
+                        date_str = date_val.strftime('%Y-%m-%d')
+                    elif ' ' in date_str:
+                        date_str = date_str.split(' ')[0]
+
                     shares = get_val(row, ['Shares', 'Quantity'], 0)
                     value = get_val(row, ['Value'], 0)
                     text = get_val(row, ['Text', 'Transaction'], '') # e.g. "Sale at price..."
@@ -267,7 +275,7 @@ def get_ticker_insider_trades(ticker: str) -> Dict[str, Any]:
                     recent_trades.append({
                         "filing_type": "SEC Form 4 (Live)",
                         "reporting_person": str(person),
-                        "transaction_date": str(date_val),
+                        "transaction_date": date_str,
                         "description": str(text),
                         "shares": int(shares) if isinstance(shares, (int, float)) else 0,
                         "value": float(value) if isinstance(value, (int, float)) else 0.0,
@@ -452,10 +460,24 @@ def get_ticker_history(ticker: str, period: str = "3mo", interval: str = "1d") -
         # Reset index to get Date as column
         hist.reset_index(inplace=True)
         
+        # Handle 'Date' (Daily) vs 'Datetime' (Intraday) column naming
+        date_col = 'Date'
+        if 'Datetime' in hist.columns:
+            date_col = 'Datetime'
+        elif 'Date' not in hist.columns:
+            # Fallback if neither found (unlikely with yfinance)
+            date_col = hist.columns[0] 
+
         candles = []
         for _, row in hist.iterrows():
             # Format date which might be Timestamp
-            date_str = row['Date'].strftime("%Y-%m-%d")
+            dt_obj = row[date_col]
+            # Use ISO-like format for intraday to preserve time
+            if date_col == 'Datetime':
+                date_str = dt_obj.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                date_str = dt_obj.strftime("%Y-%m-%d")
+                
             candles.append({
                 "date": date_str,
                 "open": round(row['Open'], 2),

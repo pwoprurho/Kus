@@ -11,29 +11,51 @@
 <!-- FULL SCREEN MARKET BACKDROP -->
 <div id="market-pulse-bg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 1;"></div>
 
+<!-- DEMO MODE DISCLAIMER BANNER -->
+<div class="demo-banner">
+    <i class="fas fa-exclamation-triangle"></i> DEMO ENVIRONMENT: Direct access to Deriv/Brokerage accounts is simulated. Execution is virtual only.
+</div>
+
 <style>
+    /* DEMO BANNER STYLING - Adjusted to flow WITH navbar */
+    .demo-banner {
+        position: fixed; 
+        top: 70px; /* Pushed BELOW the 70px Navbar */
+        left: 0; 
+        width: 100%; 
+        background: rgba(255, 68, 68, 0.9); 
+        color: white; 
+        text-align: center; 
+        padding: 8px 10px; 
+        z-index: 999; 
+        font-weight: 600; 
+        letter-spacing: 0.5px; 
+        font-size: 0.8rem; 
+        backdrop-filter: blur(5px);
+        transform: translateY(0);
+        animation: slideDown 0.5s ease-out;
+    }
+
     /* SOVEREIGN VAULT THEME - PREMIUM STANDARD */
     body { 
         background-color: #030303; 
         font-family: 'Inter', sans-serif;
         color: #e0e0e0;
+        margin-top: 40px; /* Not needed for body, handled by element positioning */
     }
-    
-    /* SCROLLBAR REFINEMENT */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 
+    /* Adjust Vault Grid to account for banner + navbar */
     .vault-grid {
         display: grid;
-        grid-template-columns: 380px 1fr; /* Slightly wider panel */
-        height: 100vh;
+        grid-template-columns: 380px 1fr;
+        height: calc(100vh - 105px); /* 70 Navbar + 35 Banner */
         gap: 0;
         position: relative;
-        z-index: 1; /* Sit above the background */
+        z-index: 1; 
+        margin-top: 105px; /* Push content down */
     }
 
+    button, input { font-family: 'Inter', sans-serif; }
     /* LEFT: INTEL FEED - PREMIUM GLASS */
     .intel-panel {
         background: rgba(22, 27, 34, 0.7); /* Matching Tax Agent */
@@ -344,7 +366,12 @@
 <div class="vault-grid">
     <aside class="intel-panel">
         <div>
-            <div class="intel-header">Insider Watchlist</div>
+            <div class="intel-header">
+                Insider Watchlist
+                <a href="{{ url_for('public.client_settings') }}" style="margin-left:auto; color:#666; font-size:1.2rem;" title="Configure Krag Bot">
+                    <i class="fas fa-cog"></i>
+                </a>
+            </div>
             <!-- PREMIUM DYNAMIC WATCHLIST -->
             <div id="insider-list" style="min-height: 200px;">
                 <!-- Tickers injected via JS -->
@@ -421,6 +448,9 @@
 </div>
 
 <script>
+    // DEFINE DEMO STATE GLOBALLY
+    const IS_DEMO_LOCKED = {{ 'true' if is_sandbox_demo else 'false' }};
+    
     const slider = document.getElementById('execution-slider');
     const knob = document.getElementById('slider-knob');
     let isDragging = false;
@@ -516,46 +546,99 @@
     }
 
     async function submitAnalysis(ticker) {
-        const msg = ticker.includes(' ') ? ticker : `Analyze ${ticker}`;
+        // Distinguish between pure ticker click vs chat query
+        const isTicker = !ticker.includes(' ') && ticker.length < 10;
+        
+        const msg = isTicker ? `Analyze ${ticker}` : ticker;
         appendChat("Chairman", msg);
-        appendChat("Sentinel", `<i class="fas fa-circle-notch fa-spin"></i> Retrieving Insider Filings and Market Narratives...`);
+        
+        let loadingMsg = `<i class="fas fa-circle-notch fa-spin"></i> Retrieving Insider Filings and Market Narratives...`;
+        if (isTicker) {
+            loadingMsg = `<i class="fas fa-satellite-dish fa-spin"></i> Re-tasking Krag_Bot Satellite for ${ticker} Analysis...`;
+        }
+        
+        appendChat("Sentinel", loadingMsg);
         
         try {
-            const res = await fetch('/api/sandbox/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    message: msg,
-                    demo_id: 'market_sentinel'
-                })
-            });
-            
-            const data = await res.json();
-            
-            // Clean up the "Thinking" loader
-            // Updated for new class structure: remove last message-row that is AI
-            const rows = document.querySelectorAll('.message-row.ai');
-            if(rows.length > 0) rows[rows.length-1].remove();
+            if (isTicker) {
+                // NEW: Use the Specialized Krag_Bot Endpoint
+                // We assume the input is a valid ticker symbol
+                const res = await fetch(`/api/sentinel/analyze/${ticker}`);
+                if (!res.ok) throw new Error("Satellite Link Unstable (Check Ticker or API)");
+                
+                const data = await res.json();
+                
+                // Clean up the "Thinking" loader
+                const rows = document.querySelectorAll('.message-row.ai');
+                if(rows.length > 0) rows[rows.length-1].remove();
+                
+                // Format the Krag_Bot structured response into MARKDOWN
+                const emoji = data.decision === 'BUY' ? '🟢' : (data.decision === 'SELL' ? '🔴' : '🟡');
+                const markdownContent = `### ${emoji} ${data.decision} \`${data.confidence}% CONFIDENCE\`
+**RSI:** ${data.signals.RSI ? data.signals.RSI.toFixed(2) : 'N/A'} | **Trend:** ${data.signals.Trend || 'N/A'}
 
-            // Display Response
-            const content = data.response;
-            appendChat("Sentinel", content);
-            
-            // CHECK FOR STAGED ORDER (Checking the text output for JSON/Code Block)
-            // Ideally, the mcp_tool output is injected into the response text.
-            // We can parse the text for the "STAGED" JSON block.
-            if (content.includes("STAGED") && content.includes("ticket_id")) {
-                // Heuristic parsing for demo
-                const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
-                if (jsonMatch) {
-                    const orderData = JSON.parse(jsonMatch[1]);
-                    if(orderData.status === 'STAGED') {
-                        promptExecution(orderData);
+${data.reasoning}`;
+                
+                appendChat("Sentinel", markdownContent);
+                
+                // Trigger Execution Prompt if high confidence
+                if (data.decision !== 'HOLD' && data.confidence > 60) {
+                     // Create a pseudo-order for the Gavel Modal
+                    const orderData = {
+                        ticket_id: 'KB-' + Date.now().toString().slice(-6),
+                        conviction: data.confidence,
+                        ticker: data.ticker,
+                        action: data.decision,
+                        total_value: 25000, // Simulation default
+                        message: "Krag_Bot AI Signal Confirmation"
+                    };
+                    promptExecution(orderData);
+                }
+
+            } else {
+                // FALLBACK: Generic Chat
+                const res = await fetch('/api/sandbox/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        message: msg,
+                        demo_id: 'market_sentinel'
+                    })
+                });
+                
+                const data = await res.json();
+                
+                // Clean up the "Thinking" loader
+                const rows = document.querySelectorAll('.message-row.ai');
+                if(rows.length > 0) rows[rows.length-1].remove();
+
+                // Display Response
+                const content = data.response;
+                appendChat("Sentinel", content);
+                
+                // CHECK FOR STAGED ORDER (Checking the text output for JSON/Code Block)
+                // Ideally, the mcp_tool output is injected into the response text.
+                // We can parse the text for the "STAGED" JSON block.
+                if (content.includes("STAGED") && content.includes("ticket_id")) {
+                    // Heuristic parsing for demo
+                    const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
+                    if (jsonMatch) {
+                        const orderData = JSON.parse(jsonMatch[1]);
+                        if(orderData.status === 'STAGED') {
+                            promptExecution(orderData);
+                        }
                     }
                 }
             }
             
         } catch(e) {
+            // Remove Loader if exists
+            const rows = document.querySelectorAll('.message-row.ai');
+            if(rows.length > 0) {
+                const last = rows[rows.length-1];
+                if(last.innerHTML.includes('fa-spin')) last.remove();
+            }
+            
             appendChat("Sentinel", "Forensic Link Failure: " + e.message);
         }
     }
@@ -876,9 +959,23 @@
             
             for (const t of tickers) {
                 const div = document.createElement('div');
-                div.className = 'market-ticker';
+                div.className = IS_DEMO_LOCKED ? 'market-ticker demo-locked' : 'market-ticker';
                 div.id = `ticker-${t}`;
-                div.onclick = () => handleAssetClick(t);
+                
+                // DISABLE CLICKING IN DEMO MODE
+                if (!IS_DEMO_LOCKED) {
+                    div.onclick = () => handleAssetClick(t);
+                } else {
+                    div.onclick = () => {
+                         // Optional: Flash the demo banner warning
+                         const banner = document.querySelector('.demo-banner'); // If class added
+                         // Or just simple alert/toast
+                         alert("DEMO MODE: Automated Flight Path Active. Manual selection disabled.");
+                    };
+                    div.style.cursor = 'not-allowed';
+                    div.style.opacity = '0.7';
+                }
+
                 div.innerHTML = `
                     <div>
                         <div class="ticker-symbol">

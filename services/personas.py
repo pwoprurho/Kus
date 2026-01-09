@@ -50,7 +50,7 @@ DEMO_REGISTRY = {
 
     "market_sentinel": {
         "name": "Market Sentinel (Equity Analysis)",
-        "model": "gemini-2.5-flash",
+        "model": "gemini-2.5-flash-lite",
         "instruction": (
             "You are the **Market Sentinel**, a sovereign financial intelligence unit designed to engineer investment certainty. "
             "You do not guess. You do not gamble. You execute only when THE SKELETON (Insider Data) and THE FLESH (News/Narrative) align.\n\n"

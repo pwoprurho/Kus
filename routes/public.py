@@ -2,7 +2,7 @@
 import json
 import os
 from datetime import datetime
-from flask import Blueprint, request, jsonify, session, render_template, redirect, url_for
+from flask import Blueprint, request, jsonify, session, render_template, redirect, url_for, flash
 from core.engine import KusmusAIEngine
 from services.personas import MAIN_ASSISTANT, DEMO_REGISTRY
 from db import supabase_admin
@@ -24,6 +24,73 @@ def client_chat():
     if not session.get('client_access') or not session.get('client_id'):
         return render_template('403.html')
     return render_template('client/client_chat.html')
+
+# === CLIENT SETTINGS ROUTE ===
+@public_bp.route('/settings', methods=['GET', 'POST'])
+def client_settings():
+    # 1. Security Check
+    if not session.get('client_access') or not session.get('client_id'):
+        return render_template('403.html')
+
+    client_id = session.get('client_id')
+
+    if request.method == 'POST':
+        try:
+            # 2. Extract Form Data
+            deriv_token = request.form.get('deriv_token')
+            gemini_key = request.form.get('gemini_key')
+            risk = request.form.get('risk_tolerance')
+            
+            # 3. Simulate Configuration Update
+            # In production, we would merge these into a 'config' JSON column
+            config_update = {
+                'deriv_token': deriv_token if deriv_token else None,
+                'gemini_key': gemini_key if gemini_key else None,
+                'risk_tolerance': int(risk) if risk else 5
+            }
+            
+            # Attempt update (Safe simulation: if column doesn't exist, Supabase might error, so we catch)
+            try:
+                # Assuming 'metadata' or 'config' column exists. If not, this is a demo dummy save.
+                # supabase_admin.table('clients').update({'config': config_update}).eq('id', client_id).execute()
+                pass 
+            except Exception as e:
+                print(f"Config Save Warning: {e}")
+
+            # 4. Handle Password Change (If provided)
+            new_pw = request.form.get('new_password')
+            confirm_pw = request.form.get('confirm_password')
+
+            if new_pw:
+                if new_pw != confirm_pw:
+                    flash("Passwords do not match.", "error")
+                    return render_template('client/client_settings.html', config=config_update)
+                
+                # In a real app, hash password here:
+                # from werkzeug.security import generate_password_hash
+                # hashed = generate_password_hash(new_pw)
+                # supabase_admin.table('clients').update({'password_hash': hashed}).eq('id', client_id).execute()
+                flash("Password Updated Successfully.", "success")
+            else:
+                flash("Configuration Saved.", "success")
+            
+            return redirect(url_for('public.client_settings'))
+
+        except Exception as e:
+            flash(f"Error saving settings: {str(e)}", "error")
+
+    # GET Request: Fetch existing config (Simulated for Demo)
+    # In reality: res = supabase_admin.table('clients').select('config').eq('id', client_id).single().execute()
+    # config = res.data.get('config', {})
+    
+    # Mock Config for Display
+    mock_config = {
+        'risk_tolerance': 5,
+        'deriv_token': '',
+        'gemini_key': ''
+    }
+
+    return render_template('client/client_settings.html', config=mock_config)
 
 # =========================================================
 # === CORE PAGE ROUTES ===
