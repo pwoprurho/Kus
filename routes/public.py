@@ -1,4 +1,3 @@
-
 import json
 import os
 from datetime import datetime
@@ -230,3 +229,40 @@ def chat_ai_assistant():
 def reset_chat():
     session.pop('chat_history', None)
     return jsonify({'status': 'cleared'})
+
+# === CLIENT CRYPTO WALLET ROUTE ===
+@public_bp.route('/crypto-wallet', methods=['GET', 'POST'])
+def crypto_wallet_action():
+    # Only allow access if client session is valid
+    if not session.get('client_access') or not session.get('client_id'):
+        return render_template('403.html')
+    user_id = session.get('client_id')
+    from core.wallet import Wallet
+    from core.gateways import BTCGateway, USSDGateway
+    # Load wallet info
+    wallet = Wallet(user_id)
+    btc_address = wallet.btc_address
+    eth_address = wallet.eth_address
+    btc_balance = BTCGateway.get_balance(btc_address)
+    result = None
+    # Load transaction history (mock for now)
+    transactions = []
+    if os.path.exists(f"tx_{user_id}.json"):
+        with open(f"tx_{user_id}.json", "r") as f:
+            transactions = json.load(f)
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'send_btc':
+            to_address = request.form.get('to_address')
+            amount_btc = float(request.form.get('amount_btc'))
+            result = BTCGateway.send_btc(wallet.btc_private_key, to_address, amount_btc)
+            transactions.append({"type": "Send BTC", "amount": amount_btc, "currency": "BTC", "status": result["status"], "timestamp": str(datetime.now())})
+        elif action == 'ussd_pay':
+            phone_number = request.form.get('phone_number')
+            amount = float(request.form.get('amount'))
+            result = USSDGateway.send_payment(phone_number, amount)
+            transactions.append({"type": "USSD Pay", "amount": amount, "currency": "Fiat", "status": result["status"], "timestamp": str(datetime.now())})
+        # Save transaction history
+        with open(f"tx_{user_id}.json", "w") as f:
+            json.dump(transactions, f)
+    return render_template('client/crypto_wallet_dashboard.html', btc_address=btc_address, eth_address=eth_address, btc_balance=btc_balance, result=result, transactions=transactions)
