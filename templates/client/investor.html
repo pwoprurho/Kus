@@ -12,9 +12,11 @@
 <div id="market-pulse-bg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 1;"></div>
 
 <!-- DEMO MODE DISCLAIMER BANNER -->
+{% if is_sandbox_demo %}
 <div class="demo-banner">
     <i class="fas fa-exclamation-triangle"></i> DEMO ENVIRONMENT: Direct access to Deriv/Brokerage accounts is simulated. Execution is virtual only.
 </div>
+{% endif %}
 
 <style>
     /* DEMO BANNER STYLING - Adjusted to flow WITH navbar */
@@ -48,11 +50,16 @@
     .vault-grid {
         display: grid;
         grid-template-columns: 380px 1fr;
+        {% if is_sandbox_demo %}
         height: calc(100vh - 105px); /* 70 Navbar + 35 Banner */
+        margin-top: 105px; /* Push content down */
+        {% else %}
+        height: calc(100vh - 70px); /* 70 Navbar + 0 Banner */
+        margin-top: 70px; /* Push content down */
+        {% endif %}
         gap: 0;
         position: relative;
         z-index: 1; 
-        margin-top: 105px; /* Push content down */
     }
 
     button, input { font-family: 'Inter', sans-serif; }
