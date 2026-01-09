@@ -9,12 +9,13 @@ import sys
 from datetime import datetime, timedelta
 
 # Import modules for LIVE trading
-import modules.trade_execution as trade_execution # Use real MT5 for live trading
-import modules.notifications as notifications
-import modules.database as database
-import modules.data_provider as data_provider
-import modules.indicators as indicators
-import modules.strategy as strategy
+# Adjusted imports to work without 'modules' package prefix
+import trade_execution as trade_execution 
+import notifications as notifications
+import database as database
+import data_provider as data_provider
+import indicators as indicators
+import strategy as strategy
 
 # --- Global Variables for Graceful Shutdown ---
 shutdown_requested = False

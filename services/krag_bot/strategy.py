@@ -7,13 +7,13 @@ import re
 from datetime import datetime, timedelta
 
 # Import necessary modules
-import modules.indicators as indicators
-import modules.trade_execution as trade_execution
-import modules.database as database
-import modules.notifications as notifications # For alerts related to strategy decisions
-from modules.ai_analysis import AIAnalyzer
-from modules.news_oracle import NewsOracle
-from modules.compliance_agent import ComplianceAgent
+import indicators as indicators
+import trade_execution as trade_execution
+import database as database
+import notifications as notifications # For alerts related to strategy decisions
+from ai_analysis import AIAnalyzer
+from news_oracle import NewsOracle
+from compliance_agent import ComplianceAgent
 
 # Configure logging for this module
 logger = logging.getLogger(__name__)
