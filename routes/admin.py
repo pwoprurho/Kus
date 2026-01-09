@@ -495,3 +495,23 @@ def crypto_wallet_action():
             amount = float(request.form.get('amount'))
             result = USSDGateway.send_payment(phone_number, amount)
     return render_template('admin/crypto_wallet.html', result=result)
+
+@admin_bp.route('/account-action', methods=['POST'])
+@login_required
+@role_required('supa_admin', 'admin')
+def account_action():
+    user_id = request.form.get('user_id')
+    action = request.form.get('action')
+    result = None
+    from core.wallet import Wallet
+    if action == 'view_wallet':
+        wallet = Wallet(user_id)
+        result = {'btc_address': wallet.btc_address, 'eth_address': wallet.eth_address}
+    elif action == 'reset_wallet':
+        wallet = Wallet(user_id)
+        wallet.create_wallets()
+        result = {'status': 'reset', 'btc_address': wallet.btc_address, 'eth_address': wallet.eth_address}
+    elif action == 'disable_account':
+        # Implement account disable logic (mock)
+        result = {'status': 'disabled', 'user_id': user_id}
+    return render_template('admin/live_chat.html', account_result=result)

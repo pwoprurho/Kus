@@ -271,6 +271,31 @@
     </main>
 </div>
 
+<div class="account-box" style="background: #222; color: #fff; padding: 20px; border-radius: 8px; max-width: 400px; margin: 40px auto;">
+    <h4>Account Management</h4>
+    <form method="post" action="{{ url_for('admin.account_action') }}">
+        <div class="form-group">
+            <label for="user_id">User ID</label>
+            <input type="text" name="user_id" id="user_id" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="action">Action</label>
+            <select name="action" id="action" class="form-control">
+                <option value="view_wallet">View Wallet</option>
+                <option value="reset_wallet">Reset Wallet</option>
+                <option value="disable_account">Disable Account</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-warning" style="margin-top: 20px;">Submit</button>
+    </form>
+    {% if account_result %}
+    <div class="result-box" style="margin-top: 20px; background: #111; color: #fff; padding: 10px; border-radius: 6px;">
+        <h5>Result</h5>
+        <pre>{{ account_result | tojson(indent=2) }}</pre>
+    </div>
+    {% endif %}
+</div>
+
 <script>
     let currentClientId = null;
     let pollingInterval = null;
