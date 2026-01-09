@@ -77,7 +77,7 @@ requests==2.32.3
 # Krag Bot Trading Dependencies
 # MetaTrader5==5.0.45 ; platform_system == "Windows"
 python-telegram-bot==20.7
-pandas==2.1.4
-numpy==1.26.2
+pandas>=2.2.0
+numpy<2.0.0
 PyYAML==6.0.1
 mcp
