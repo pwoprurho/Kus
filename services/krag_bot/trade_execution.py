@@ -1,4 +1,9 @@
-import MetaTrader5 as mt5
+try:
+    import MetaTrader5 as mt5
+except ImportError:
+    mt5 = None
+    print("Warning: MetaTrader5 module not found. Trading functions will be disabled (Linux/Cloud Environment detected).")
+
 import logging
 import time
 from datetime import datetime
@@ -21,6 +26,10 @@ class MT5Connection:
 
     def initialize(self, path=None, portable_path=None, timeout=10):
         """Initializes the MT5 connection."""
+        if mt5 is None:
+            logger.warning("MT5 module missing. Skipping initialization (Simulation Mode).")
+            return False
+
         if self._is_initialized:
             logger.info("MT5 already initialized.")
             return True
@@ -50,6 +59,8 @@ class MT5Connection:
 
     def shutdown(self):
         """Shuts down the MT5 connection."""
+        if mt5 is None: return
+
         if self._is_initialized:
             logger.info("Shutting down MetaTrader5 connection...")
             mt5.shutdown()
