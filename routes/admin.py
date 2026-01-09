@@ -468,3 +468,30 @@ def generate_content():
         return jsonify({'error': f"Failed to generate content after retries: {str(last_exc)}"}), 500
 
     except Exception as e: return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/crypto-wallet', methods=['GET', 'POST'])
+@login_required
+@role_required('supa_admin', 'admin')
+def crypto_wallet_action():
+    result = None
+    if request.method == 'POST':
+        user_id = request.form.get('user_id')
+        action = request.form.get('action')
+        if action == 'balance':
+            from core.wallet import Wallet
+            from core.gateways import BTCGateway
+            wallet = Wallet(user_id)
+            result = {'btc_address': wallet.btc_address, 'balance': BTCGateway.get_balance(wallet.btc_address)}
+        elif action == 'send_btc':
+            from core.wallet import Wallet
+            from core.gateways import BTCGateway
+            wallet = Wallet(user_id)
+            to_address = request.form.get('to_address')
+            amount_btc = float(request.form.get('amount_btc'))
+            result = BTCGateway.send_btc(wallet.btc_private_key, to_address, amount_btc)
+        elif action == 'ussd_pay':
+            from core.gateways import USSDGateway
+            phone_number = request.form.get('phone_number')
+            amount = float(request.form.get('amount'))
+            result = USSDGateway.send_payment(phone_number, amount)
+    return render_template('admin/crypto_wallet.html', result=result)
