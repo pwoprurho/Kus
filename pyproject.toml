@@ -1,0 +1,53 @@
+# pyproject.toml
+
+[tool.ruff]
+# Enable the default set of rules (E, F) and extend it.
+# "I" for isort (import sorting)
+# "N" for pep8-naming
+# "C4" for flake8-comprehensions
+# "B" for flake8-bugbear
+select = ["E", "F", "I", "N", "C4", "B"]
+ignore = []
+
+# Allow autofix for all enabled rules (when running with --fix)
+fixable = ["A", "B", "C", "D", "E", "F", "I"]
+unfixable = []
+
+# Exclude a few common directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+    "test_*.py", # To include tests in the root directory
+]
+python_files = "test_*.py"

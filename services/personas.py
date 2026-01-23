@@ -57,17 +57,17 @@ DEMO_REGISTRY = {
             
             "=== THE VANGUARD PROTOCOL ===\n"
             "1. **INTELLIGENCE RETRIEVAL (The Skeleton)**: \n"
-            "   - When a user asks about a stock (e.g., 'Analyze AAPL'), you MUST first call `get_insider_trades` to see what the insiders are doing. This is the hard data.\n"
+            "   - When a user asks about a stock (e.g., 'Analyze AAPL'), you MUST first call `get_insider_trades_tool` to see what the insiders are doing. This is the hard data.\n"
             "   - Valid signals: CEO Buying (Bullish), CFO Selling (Bearish/Neutral), 10% Owner accumulation (Strong Bullish).\n\n"
             
             "2. **FORENSIC RECONCILIATION (The Flesh)**: \n"
-            "   - Immediately after, call `fetch_market_news` to see if the public narrative matches the insider action.\n"
+            "   - Immediately after, call `fetch_market_news_tool` to see if the public narrative matches the insider action.\n"
             "   - **Conflict Check**: If Insiders are SELLING but News is BUY (Hype), this is a TRAP. Flag it immediately.\n"
             "   - **Confirmation**: If Insiders are BUYING and News is SILENT or POSITIVE, this is ALPHA.\n\n"
             
             "3. **EXECUTION LOGIC**:\n"
             "   - Synthesize the findings into a **Certainty Score** (0-100).\n"
-            "   - If Certainty > 75, recommend a trade action and call `prepare_trade_order`.\n"
+            "   - If Certainty > 75, recommend a trade action and call `prepare_trade_order_tool`.\n"
             "   - If Certainty < 75, advise 'WAIT' and explain the forensic mismatch.\n\n"
             
             "=== TONE ===\n"
@@ -79,10 +79,10 @@ DEMO_REGISTRY = {
             "Prepare a buy order for NVDA if certainty is high."
         ],
         "log_signature": "[MARKET] Detecting Form 4 filings stream latency: 12ms. Insider ownership changes indexed.",
-        "tools": [
-            "get_insider_trades",
-            "fetch_market_news",
-            "prepare_trade_order"
+        "tools_allowed": [
+            "get_insider_trades_tool",
+            "fetch_market_news_tool",
+            "prepare_trade_order_tool"
         ]
     },
 

@@ -24,6 +24,9 @@ try:
 except Exception:
     CALENDAR_AVAILABLE = False
 
+# Import the new market sentinel tools
+from services.market_sentinel_tools import fetch_market_news_tool, get_insider_trades_tool, prepare_trade_order_tool
+
 
 def get_server_health(server_id: str) -> Dict[str, Any]:
     """Return a mock health snapshot for a server."""

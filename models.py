@@ -1,5 +1,6 @@
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from core.wallet import Wallet
 
 # Existing Admin User Class
 class User(UserMixin):
@@ -29,6 +30,7 @@ class ClientUser(UserMixin):
         self.full_name = full_name
         self.recovery_key = recovery_key
         self.role = 'client' # Explicit role
+        self.wallet = Wallet(user_id=id)
 
     def get_id(self):
         return str(self.id)

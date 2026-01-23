@@ -1,48 +1,140 @@
-{% extends 'admin_base.html' %}
+{% extends 'admin/admin_base.html' %}
 {% block title %}Crypto Wallet Admin{% endblock %}
 {% block content %}
-<div class="container" style="max-width: 700px; margin: 40px auto;">
-    <h2 class="text-gradient" style="margin-bottom: 24px;">Client Crypto Wallets</h2>
-    <form method="post" action="{{ url_for('admin.crypto_wallet_action') }}" class="wallet-form">
-        <div class="form-group">
-            <label for="user_id">Client User ID</label>
-            <input type="text" name="user_id" id="user_id" class="form-control" required>
+<div class="container" style="max-width: 900px; margin: 40px auto;">
+    <h2 class="text-gradient" style="margin-bottom: 24px;">Crypto Wallet Admin</h2>
+    <div class="row">
+        <div class="col-md-7">
+            <div class="wallet-admin-box" style="background: #222; color: #fff; padding: 20px; border-radius: 8px; min-height: 400px;">
+                <h4>Wallet Actions</h4>
+                <form id="walletForm" class="wallet-form">
+                    <div class="form-group">
+                        <label for="user_id">Client User ID</label>
+                        <input type="text" name="user_id" id="user_id" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="coin_type">Coin Type</label>
+                        <select name="coin_type" id="coin_type" class="form-control">
+                            <option value="btc">BTC</option>
+                            <option value="eth">ETH</option>
+                            <option value="bnb">BNB</option>
+                            <option value="ussd">USSD</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="action">Action</label>
+                        <select name="action" id="action" class="form-control">
+                            <option value="balance">Check Balance</option>
+                            <option value="send">Send</option>
+                            <option value="receive">Receive</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="btc_fields" style="display:none;">
+                        <label for="to_address_btc">Recipient BTC Address</label>
+                        <input type="text" name="to_address_btc" id="to_address_btc" class="form-control">
+                        <label for="amount_btc">Amount (BTC)</label>
+                        <input type="number" step="0.00000001" name="amount_btc" id="amount_btc" class="form-control">
+                    </div>
+                    <div class="form-group" id="eth_fields" style="display:none;">
+                        <label for="to_address_eth">Recipient ETH Address</label>
+                        <input type="text" name="to_address_eth" id="to_address_eth" class="form-control">
+                        <label for="amount_eth">Amount (ETH)</label>
+                        <input type="number" step="0.00000001" name="amount_eth" id="amount_eth" class="form-control">
+                    </div>
+                    <div class="form-group" id="bnb_fields" style="display:none;">
+                        <label for="to_address_bnb">Recipient BNB Address</label>
+                        <input type="text" name="to_address_bnb" id="to_address_bnb" class="form-control">
+                        <label for="amount_bnb">Amount (BNB)</label>
+                        <input type="number" step="0.00000001" name="amount_bnb" id="amount_bnb" class="form-control">
+                    </div>
+                    <div class="form-group" id="ussd_fields" style="display:none;">
+                        <label for="phone_number">Recipient Phone Number</label>
+                        <input type="text" name="phone_number" id="phone_number" class="form-control">
+                        <label for="amount_ussd">Amount (Fiat)</label>
+                        <input type="number" step="0.01" name="amount_ussd" id="amount_ussd" class="form-control">
+                    </div>
+                    <div class="form-group" id="receive_fields" style="display:none;">
+                        <label>Receive Address</label>
+                        <input type="text" id="receive_address" class="form-control" readonly>
+                        <button type="button" class="btn btn-secondary" id="copyReceiveAddress" style="margin-top: 8px;">Copy Address</button>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Submit</button>
+                </form>
+                <div id="resultBox" class="result-box" style="display:none; margin-top: 30px; background: #111; color: #fff; padding: 20px; border-radius: 8px;"></div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="action">Action</label>
-            <select name="action" id="action" class="form-control">
-                <option value="balance">Check BTC Balance</option>
-                <option value="send_btc">Send BTC</option>
-                <option value="ussd_pay">Send USSD Payment</option>
-            </select>
+        <div class="col-md-5">
+            <div class="wallet-info-box" id="walletInfoBox" style="background: #222; color: #fff; padding: 20px; border-radius: 8px;">
+                <h4>Wallet Info</h4>
+                <p><strong>BTC Address:</strong> <span id="btcAddress">N/A</span></p>
+                <p><strong>ETH Address:</strong> <span id="ethAddress">N/A</span></p>
+                <p><strong>BNB Address:</strong> <span id="bnbAddress">N/A</span></p>
+                <p><strong>BTC Balance:</strong> <span id="btcBalance">N/A</span></p>
+                <p><strong>ETH Balance:</strong> <span id="ethBalance">N/A</span></p>
+                <p><strong>BNB Balance:</strong> <span id="bnbBalance">N/A</span></p>
+            </div>
         </div>
-        <div class="form-group" id="btc_fields" style="display:none;">
-            <label for="to_address">Recipient BTC Address</label>
-            <input type="text" name="to_address" id="to_address" class="form-control">
-            <label for="amount_btc">Amount (BTC)</label>
-            <input type="number" step="0.00000001" name="amount_btc" id="amount_btc" class="form-control">
-        </div>
-        <div class="form-group" id="ussd_fields" style="display:none;">
-            <label for="phone_number">Recipient Phone Number</label>
-            <input type="text" name="phone_number" id="phone_number" class="form-control">
-            <label for="amount">Amount (Fiat)</label>
-            <input type="number" step="0.01" name="amount" id="amount" class="form-control">
-        </div>
-        <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Submit</button>
-    </form>
-    {% if result %}
-    <div class="result-box" style="margin-top: 30px; background: #222; color: #fff; padding: 20px; border-radius: 8px;">
-        <h4>Result</h4>
-        <pre>{{ result | tojson(indent=2) }}</pre>
     </div>
-    {% endif %}
 </div>
 <script>
-    document.getElementById('action').addEventListener('change', function() {
-        var btcFields = document.getElementById('btc_fields');
-        var ussdFields = document.getElementById('ussd_fields');
-        btcFields.style.display = this.value === 'send_btc' ? 'block' : 'none';
-        ussdFields.style.display = this.value === 'ussd_pay' ? 'block' : 'none';
+    function updateFields() {
+        var coin = document.getElementById('coin_type').value;
+        var action = document.getElementById('action').value;
+        document.getElementById('btc_fields').style.display = (coin === 'btc' && action === 'send') ? 'block' : 'none';
+        document.getElementById('eth_fields').style.display = (coin === 'eth' && action === 'send') ? 'block' : 'none';
+        document.getElementById('bnb_fields').style.display = (coin === 'bnb' && action === 'send') ? 'block' : 'none';
+        document.getElementById('ussd_fields').style.display = (coin === 'ussd' && action === 'send') ? 'block' : 'none';
+        document.getElementById('receive_fields').style.display = (action === 'receive') ? 'block' : 'none';
+        // Set receive address
+        var addr = 'N/A';
+        if (action === 'receive') {
+            if (coin === 'btc') addr = document.getElementById('btcAddress').textContent;
+            if (coin === 'eth') addr = document.getElementById('ethAddress').textContent;
+            if (coin === 'bnb') addr = document.getElementById('bnbAddress').textContent;
+        }
+        document.getElementById('receive_address').value = addr;
+    }
+    document.getElementById('coin_type').addEventListener('change', updateFields);
+    document.getElementById('action').addEventListener('change', updateFields);
+    updateFields();
+
+    document.getElementById('copyReceiveAddress').addEventListener('click', function() {
+        var addr = document.getElementById('receive_address');
+        addr.select();
+        document.execCommand('copy');
+    });
+
+    document.getElementById('walletForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var form = this;
+        var submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        var formData = new FormData(form);
+        fetch('/admin/crypto-wallet', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            var resultBox = document.getElementById('resultBox');
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = '<h4>Result</h4><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            // Update wallet info box
+            document.getElementById('btcAddress').textContent = data.btc_address || 'N/A';
+            document.getElementById('ethAddress').textContent = data.eth_address || 'N/A';
+            document.getElementById('bnbAddress').textContent = data.bnb_address || 'N/A';
+            document.getElementById('btcBalance').textContent = data.btc_balance || 'N/A';
+            document.getElementById('ethBalance').textContent = data.eth_balance || 'N/A';
+            document.getElementById('bnbBalance').textContent = data.bnb_balance || 'N/A';
+            updateFields();
+            submitBtn.disabled = false;
+        })
+        .catch(err => {
+            var resultBox = document.getElementById('resultBox');
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = '<h4>Error</h4><pre>' + err + '</pre>';
+            submitBtn.disabled = false;
+        });
     });
 </script>
 {% endblock %}

@@ -3,7 +3,7 @@ import json
 import secrets
 import datetime
 import google.generativeai as genai
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, session
 from flask_login import login_required, current_user
 from flask_mail import Message
 from werkzeug.utils import secure_filename
@@ -11,8 +11,14 @@ from cryptography.fernet import Fernet
 from db import supabase_admin
 from utils import role_required, get_cipher_suite, encrypt_text, decrypt_text
 from core.key_manager import key_manager
+from core.gateways import BTCGateway, USSDGateway
+from core.wallet import Wallet
+import threading
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+# In-memory locks for debouncing wallet actions
+wallet_action_locks = {}
 
 # =========================================================
 # === DASHBOARD (Command Center) ===
@@ -469,32 +475,84 @@ def generate_content():
 
     except Exception as e: return jsonify({'error': str(e)}), 500
 
+
 @admin_bp.route('/crypto-wallet', methods=['GET', 'POST'])
 @login_required
 @role_required('supa_admin', 'admin')
-def crypto_wallet_action():
-    result = None
+def crypto_wallet():
+    from flask import jsonify
+    from core.wallet import Wallet
+    from core.gateways import BTCGateway, USSDGateway
+    # TODO: Add ETHGateway, BNBGateway imports when implemented
     if request.method == 'POST':
         user_id = request.form.get('user_id')
+        coin_type = request.form.get('coin_type')
         action = request.form.get('action')
-        if action == 'balance':
-            from core.wallet import Wallet
-            from core.gateways import BTCGateway
-            wallet = Wallet(user_id)
-            result = {'btc_address': wallet.btc_address, 'balance': BTCGateway.get_balance(wallet.btc_address)}
-        elif action == 'send_btc':
-            from core.wallet import Wallet
-            from core.gateways import BTCGateway
-            wallet = Wallet(user_id)
-            to_address = request.form.get('to_address')
-            amount_btc = float(request.form.get('amount_btc'))
-            result = BTCGateway.send_btc(wallet.btc_private_key, to_address, amount_btc)
-        elif action == 'ussd_pay':
-            from core.gateways import USSDGateway
-            phone_number = request.form.get('phone_number')
-            amount = float(request.form.get('amount'))
-            result = USSDGateway.send_payment(phone_number, amount)
-    return render_template('admin/crypto_wallet.html', result=result)
+        # Backend debounce: lock per user_id
+        lock = wallet_action_locks.setdefault(user_id, threading.Lock())
+        if not lock.acquire(blocking=False):
+            return jsonify({'error': 'Another wallet action is still processing for this user. Please wait.'}), 429
+        try:
+            wallet = Wallet.get_wallet(user_id)
+            if not wallet:
+                return jsonify({'error': 'Wallet not found for user.'}), 404
+            # BTC
+            if coin_type == 'btc':
+                btc_gateway = BTCGateway(wallet.btc_address)
+                if action == 'balance':
+                    balance = btc_gateway.get_balance()
+                    return jsonify({'btc_address': wallet.btc_address, 'btc_balance': balance})
+                elif action == 'send':
+                    to_address = request.form.get('to_address_btc')
+                    amount = request.form.get('amount_btc')
+                    tx_result = btc_gateway.send_btc(wallet.btc_private_key, to_address, amount)
+                    return jsonify({'btc_address': wallet.btc_address, 'btc_balance': btc_gateway.get_balance(), 'tx_result': tx_result})
+                elif action == 'receive':
+                    return jsonify({'btc_address': wallet.btc_address})
+            # ETH
+            elif coin_type == 'eth':
+                # TODO: Implement ETHGateway
+                if action == 'balance':
+                    # Placeholder
+                    return jsonify({'eth_address': wallet.eth_address, 'eth_balance': '0.0'})
+                elif action == 'send':
+                    # Placeholder
+                    to_address = request.form.get('to_address_eth')
+                    amount = request.form.get('amount_eth')
+                    return jsonify({'eth_address': wallet.eth_address, 'eth_balance': '0.0', 'tx_result': {'status': 'mock', 'to': to_address, 'amount': amount}})
+                elif action == 'receive':
+                    return jsonify({'eth_address': wallet.eth_address})
+            # BNB
+            elif coin_type == 'bnb':
+                # TODO: Implement BNBGateway
+                if action == 'balance':
+                    return jsonify({'bnb_address': 'mock_bnb_address', 'bnb_balance': '0.0'})
+                elif action == 'send':
+                    to_address = request.form.get('to_address_bnb')
+                    amount = request.form.get('amount_bnb')
+                    return jsonify({'bnb_address': 'mock_bnb_address', 'bnb_balance': '0.0', 'tx_result': {'status': 'mock', 'to': to_address, 'amount': amount}})
+                elif action == 'receive':
+                    return jsonify({'bnb_address': 'mock_bnb_address'})
+            # USSD
+            elif coin_type == 'ussd':
+                ussd_gateway = USSDGateway()
+                if action == 'send':
+                    phone_number = request.form.get('phone_number')
+                    amount = request.form.get('amount_ussd')
+                    ussd_result = ussd_gateway.send_payment(phone_number, amount)
+                    return jsonify({'ussd_result': ussd_result})
+            return jsonify({'error': 'Invalid action or coin type'}), 400
+        finally:
+            lock.release()
+    # GET: Render UI
+    return render_template('admin/crypto_wallet.html', result=None)
+
+@admin_bp.route('/crypto-wallet', methods=['GET', 'POST'])
+def crypto_wallet_alias():
+    if request.method == 'POST':
+        return crypto_wallet()
+    # For GET, just render the page with no result
+    return render_template('admin/crypto_wallet.html', result=None)
 
 @admin_bp.route('/account-action', methods=['POST'])
 @login_required
@@ -515,3 +573,30 @@ def account_action():
         # Implement account disable logic (mock)
         result = {'status': 'disabled', 'user_id': user_id}
     return render_template('admin/live_chat.html', account_result=result)
+
+@admin_bp.route('/crypto-wallet-action', methods=['POST'])
+def crypto_wallet_action():
+    user_id = request.form.get('user_id')
+    action = request.form.get('action')
+    from core.wallet import Wallet
+    from core.gateways import BTCGateway, USSDGateway
+    wallet = Wallet.get_wallet(user_id)
+    if not wallet:
+        return jsonify({'error': 'Wallet not found for user.'}), 404
+    if action == 'balance':
+        btc_gateway = BTCGateway(wallet.btc_address)
+        balance = btc_gateway.get_balance()
+        return jsonify({'btc_address': wallet.btc_address, 'eth_address': wallet.eth_address, 'balance': balance})
+    elif action == 'send_btc':
+        to_address = request.form.get('to_address')
+        amount_btc = request.form.get('amount_btc')
+        btc_gateway = BTCGateway(wallet.btc_address)
+        tx_result = btc_gateway.send_btc(wallet.btc_private_key, to_address, amount_btc)
+        return jsonify({'btc_address': wallet.btc_address, 'eth_address': wallet.eth_address, 'tx_result': tx_result})
+    elif action == 'ussd_pay':
+        phone_number = request.form.get('phone_number')
+        amount = request.form.get('amount')
+        ussd_gateway = USSDGateway()
+        ussd_result = ussd_gateway.send_payment(phone_number, amount)
+        return jsonify({'btc_address': wallet.btc_address, 'eth_address': wallet.eth_address, 'ussd_result': ussd_result})
+    return jsonify({'error': 'Invalid action'}), 400

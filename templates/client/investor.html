@@ -50,13 +50,7 @@
     .vault-grid {
         display: grid;
         grid-template-columns: 380px 1fr;
-        {% if is_sandbox_demo %}
-        height: calc(100vh - 105px); /* 70 Navbar + 35 Banner */
-        margin-top: 105px; /* Push content down */
-        {% else %}
-        height: calc(100vh - 70px); /* 70 Navbar + 0 Banner */
-        margin-top: 70px; /* Push content down */
-        {% endif %}
+        /* Height/margin moved to HTML style attribute using Jinja */
         gap: 0;
         position: relative;
         z-index: 1; 
@@ -273,6 +267,7 @@
         font-weight: 800; 
         background: -webkit-linear-gradient(#fff, #999);
         -webkit-background-clip: text;
+        background-clip: text;
         -webkit-text-fill-color: transparent;
         line-height: 1; 
         letter-spacing: -2px;
@@ -455,49 +450,52 @@
 </div>
 
 <script>
-    // DEFINE DEMO STATE GLOBALLY
-    const IS_DEMO_LOCKED = {{ 'true' if is_sandbox_demo else 'false' }};
-    
-    const slider = document.getElementById('execution-slider');
-    const knob = document.getElementById('slider-knob');
-    let isDragging = false;
-    let startX, currentX;
+    // Set demo lock as a global JS variable for linter compatibility
+    window.IS_DEMO_LOCKED = {{ 'true' if is_sandbox_demo else 'false' }};
 
-    // --- SLIDER LOGIC ---
-    knob.addEventListener('mousedown', (e) => {
-        if(knob.classList.contains('authorized')) return;
-        isDragging = true;
-        startX = e.clientX;
-        slider.classList.add('active');
-    });
+    document.addEventListener('DOMContentLoaded', () => {
+        const IS_DEMO_LOCKED = window.IS_DEMO_LOCKED;
+        const slider = document.getElementById('execution-slider');
+        const knob = document.getElementById('slider-knob');
+        let isDragging = false;
+        let startX, currentX;
 
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        const maxDist = slider.offsetWidth - knob.offsetWidth - 6;
-        let dist = e.clientX - startX;
-        
-        if (dist < 0) dist = 0;
-        if (dist > maxDist) dist = maxDist;
-        
-        knob.style.transform = `translateX(${dist}px)`;
-        
-        // Threshold to trigger
-        if (dist > maxDist * 0.9) {
-            completeExecution();
+        // --- SLIDER LOGIC ---
+        knob.addEventListener('mousedown', (e) => {
+            if(knob.classList.contains('authorized')) return;
+            isDragging = true;
+            startX = e.clientX;
+            slider.classList.add('active');
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const maxDist = slider.offsetWidth - knob.offsetWidth - 6;
+            let dist = e.clientX - startX;
+            if (dist < 0) dist = 0;
+            if (dist > maxDist) dist = maxDist;
+            knob.style.transform = `translateX(${dist}px)`;
+            // Threshold to trigger
+            if (dist > maxDist * 0.9) {
+                completeExecution();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            if (!knob.classList.contains('authorized')) {
+                knob.style.transform = `translateX(0px)`; // Snap back
+            }
+        });
+
+        async function completeExecution() {
+            isDragging = false;
+            knob.classList.add('authorized');
+            // ...existing code...
         }
+        // ...existing code...
     });
-
-    document.addEventListener('mouseup', () => {
-        if (!isDragging) return;
-        isDragging = false;
-        if (!knob.classList.contains('authorized')) {
-            knob.style.transform = `translateX(0px)`; // Snap back
-        }
-    });
-
-    async function completeExecution() {
-        isDragging = false;
-        knob.classList.add('authorized');
         knob.innerHTML = '<i class="fas fa-check"></i>';
         document.getElementById('slider-text').innerText = "ORDER EXECUTED";
         document.getElementById('slider-text').style.color = "#2ecc71";
@@ -522,13 +520,12 @@
         setTimeout(() => {
             document.getElementById('gavel-modal').style.display = 'none';
             document.getElementById('crypto-sig-container').style.display = 'none';
-            
+            // Always reset slider and modal state for repeated demo triggers
             knob.classList.remove('authorized');
             knob.style.transform = `translateX(0px)`;
             knob.innerHTML = '<i class="fas fa-fingerprint"></i>';
             document.getElementById('slider-text').innerText = "SLIDE TO AUTHORIZE";
             document.getElementById('slider-text').style.color = "#555";
-            
             appendChat("System", `Order ${ticketId} authorized. Settlement pending via Arc L1.<br><span style='font-family:monospace; font-size:0.8em; color:#0072ff;'>SIG: ${mockSig}</span>`);
         }, 3000);
     }
@@ -647,6 +644,7 @@ ${data.reasoning}`;
             }
             
             appendChat("Sentinel", "Forensic Link Failure: " + e.message);
+            resetDemoSlider();
         }
     }
 
@@ -698,6 +696,15 @@ ${data.reasoning}`;
         div.style.borderBottom = "1px solid #1a1a1a";
         div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
         document.getElementById('execution-log').prepend(div);
+    }
+
+    // Also reset slider/modal state on error to allow re-trigger
+    function resetDemoSlider() {
+        knob.classList.remove('authorized');
+        knob.style.transform = `translateX(0px)`;
+        knob.innerHTML = '<i class="fas fa-fingerprint"></i>';
+        document.getElementById('slider-text').innerText = "SLIDE TO AUTHORIZE";
+        document.getElementById('slider-text').style.color = "#555";
     }
 </script>
 
@@ -968,21 +975,19 @@ ${data.reasoning}`;
                 const div = document.createElement('div');
                 div.className = IS_DEMO_LOCKED ? 'market-ticker demo-locked' : 'market-ticker';
                 div.id = `ticker-${t}`;
-                
                 // DISABLE CLICKING IN DEMO MODE
                 if (!IS_DEMO_LOCKED) {
                     div.onclick = () => handleAssetClick(t);
                 } else {
                     div.onclick = () => {
-                         // Optional: Flash the demo banner warning
-                         const banner = document.querySelector('.demo-banner'); // If class added
-                         // Or just simple alert/toast
-                         alert("DEMO MODE: Automated Flight Path Active. Manual selection disabled.");
+                        // Optional: Flash the demo banner warning
+                        const banner = document.querySelector('.demo-banner');
+                        // Or just simple alert/toast
+                        alert("DEMO MODE: Automated Flight Path Active. Manual selection disabled.");
                     };
                     div.style.cursor = 'not-allowed';
                     div.style.opacity = '0.7';
                 }
-
                 div.innerHTML = `
                     <div>
                         <div class="ticker-symbol">
@@ -1077,23 +1082,20 @@ ${data.reasoning}`;
         }
 
         // Initialize when DOM ready
+
         document.addEventListener('DOMContentLoaded', () => {
             init3DMarketPulse();
             initIntelScanner();
-
             // --- SANDBOX DEMO AUTO-START ---
             {% if is_sandbox_demo %}
             setTimeout(() => {
                 const tickers = ['NVDA', 'PLTR', 'BTC-USD', 'CL=F', 'GC=F', 'TSLA'];
                 const randomTicker = tickers[Math.floor(Math.random() * tickers.length)];
-                
                 // Simulate Human Interaction
-                appendChat("System", `<i class="fas fa-magic"></i> Demo Mode Active: Auto-Selecting Random Asset...`);
-                
+                appendChat("System", `<i class='fas fa-magic'></i> Demo Mode Active: Auto-Selecting Random Asset...");
                 setTimeout(() => {
                     handleAssetClick(randomTicker);
                 }, 1000);
-                
             }, 1000);
             {% endif %}
         });

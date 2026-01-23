@@ -86,6 +86,8 @@ def client_access():
     if request.method == 'POST':
         email = request.form.get('email')
         auth_input = request.form.get('auth_input').strip()
+        print(f"[DEBUG] Received email: {email}")
+        print(f"[DEBUG] Received auth_input: {auth_input}")
         
         
         try:
@@ -94,35 +96,33 @@ def client_access():
             
             if client_res.data and len(client_res.data) > 0:
                 client_data = client_res.data[0]
-                
+                print(f"[DEBUG] DB client_data: {client_data}")
                 # Check for Valid Session OTP (OR Master Key)
                 session_otp = session.get('recovery_otp')
                 is_valid_otp = session_otp and auth_input == session_otp and session.get('recovery_email') == email
-                
                 # Case 1: RECOVERY (OTP or Key)
                 if is_valid_otp or auth_input == client_data['recovery_key']:
-                     session['temp_client_email'] = email
-                     session['temp_client_key'] = auth_input # Generic truthy verification token
-                     
-                     if is_valid_otp:
-                         session.pop('recovery_otp', None) # Consume OTP
-                         flash("Identity Verified. Proceed to Credential Reset.", "info")
-                     else:
-                         flash("Master Key Accepted. Proceed to Credential Reset.", "info")
-                         
-                     return redirect(url_for('auth.client_setup')) 
-
+                    print(f"[DEBUG] OTP valid: {is_valid_otp}, Recovery key match: {auth_input == client_data['recovery_key']}")
+                    session['temp_client_email'] = email
+                    session['temp_client_key'] = auth_input # Generic truthy verification token
+                    if is_valid_otp:
+                        session.pop('recovery_otp', None) # Consume OTP
+                        flash("Identity Verified. Proceed to Credential Reset.", "info")
+                    else:
+                        flash("Master Key Accepted. Proceed to Credential Reset.", "info")
+                    return redirect(url_for('auth.client_setup')) 
                 # Case 2: LOGIN (Entered Password)
-                elif check_password_hash(client_data['password_hash'], auth_input):
+                print(f"[DEBUG] Password hash from DB: {client_data['password_hash']}")
+                pw_check = check_password_hash(client_data['password_hash'], auth_input)
+                print(f"[DEBUG] check_password_hash result: {pw_check}")
+                if pw_check:
                     session['client_access'] = True
                     session['client_id'] = client_data['id'] # CRITICAL: Lock ID into session
                     session['client_email'] = email
                     flash("Secure Channel Established.", "success")
                     return redirect(url_for('public.client_dashboard'))
-                
                 else:
                     flash("Access Denied: Invalid Password or Key.", "error")
-                    
             else:
                 # Case 3: FIRST TIME REGISTRATION
                 audit_res = supabase_admin.table('audit_requests')\

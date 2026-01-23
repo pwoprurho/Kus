@@ -3,23 +3,40 @@ import os
 from dotenv import load_dotenv
 from flask import g
 from supabase import create_client
+import socket
+from urllib.parse import urlparse
 
 # Load Environment Variables
 load_dotenv(override=True)
 
-# Initialize Supabase Client
+# Initialize Supabase Client with hostname validation to provide clearer errors
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
 
+def _resolve_hostname(url: str) -> bool:
+    try:
+        parsed = urlparse(url)
+        host = parsed.hostname or url
+        # Try to resolve DNS for the host
+        socket.getaddrinfo(host, None)
+        return True
+    except Exception:
+        return False
+
 if not SUPABASE_URL or not SUPABASE_KEY:
-    print("CRITICAL WARNING: Supabase credentials not found in .env file.")
+    print("CRITICAL WARNING: Supabase credentials not found in .env file. Set SUPABASE_URL and SUPABASE_KEY.")
     supabase_admin = None
 else:
-    try:
-        supabase_admin = create_client(SUPABASE_URL, SUPABASE_KEY)
-    except Exception as e:
-        print(f"Failed to initialize Supabase client: {e}")
+    # Validate hostname resolution before attempting client creation
+    if not _resolve_hostname(SUPABASE_URL):
+        print(f"Supabase host resolution failed for '{SUPABASE_URL}'. Check network/DNS and SUPABASE_URL value.")
         supabase_admin = None
+    else:
+        try:
+            supabase_admin = create_client(SUPABASE_URL, SUPABASE_KEY)
+        except Exception as e:
+            print(f"Failed to initialize Supabase client: {e}")
+            supabase_admin = None
 
 def close_db_connection(e=None):
     """

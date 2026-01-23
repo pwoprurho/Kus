@@ -267,11 +267,10 @@
     </main>
 </div>
 
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-+2QwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQw==" crossorigin="anonymous"></script>
 <script>
-    let pollingInterval = null;
-    // CRITICAL: Set to track rendered IDs to prevent flashing/re-rendering
+    // --- Real-time Client Chat with Socket.IO ---
     let knownMessageIds = new Set();
-    
     const fileInput = document.getElementById('client-file');
     const attachBtn = document.getElementById('btn-attach');
     const textInput = document.getElementById('client-input');
@@ -290,16 +289,27 @@
         }
     });
 
-    // 2. Sync Logic (APPEND ONLY - FIXES FLASHING)
-    async function fetchMessages() {
-        try {
-            const res = await fetch('/api/client/chat/sync');
-            const messages = await res.json();
-            renderMessages(messages);
-        } catch (e) {
-            console.error("Sync Error:", e);
+    // 2. Socket.IO Setup
+    const socket = io({transports: ['websocket']});
+
+    socket.on('connect', () => {
+        // Join the client room (server should use session or user id)
+        socket.emit('join_client_room');
+    });
+
+    // Initial handshake: request chat history
+    socket.on('chat_history', (messages) => {
+        renderMessages(messages);
+    });
+
+    // Listen for new messages in real time
+    socket.on('new_message', (msg) => {
+        if (!knownMessageIds.has(msg.id)) {
+            appendMessage(msg);
+            knownMessageIds.add(msg.id);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
         }
-    }
+    });
 
     function renderMessages(messages) {
         // Remove loading placeholder if messages exist
@@ -307,44 +317,33 @@
             const empty = document.querySelector('.empty-placeholder');
             if (empty) empty.remove();
         }
-
         // Add Welcome Banner Once
         if (knownMessageIds.size === 0 && messages.length === 0) {
-             const welcome = document.createElement('div');
-             welcome.className = 'msg-bubble msg-remote'; // Remote = Officer style
-             welcome.style.width = '100%';
-             welcome.style.maxWidth = '600px';
-             welcome.innerHTML = `Identity Verified. Secure channel established with Kusmus HQ.<br>An officer will be with you shortly.`;
-             messagesArea.appendChild(welcome);
+            const welcome = document.createElement('div');
+            welcome.className = 'msg-bubble msg-remote';
+            welcome.style.width = '100%';
+            welcome.style.maxWidth = '600px';
+            welcome.innerHTML = `Identity Verified. Secure channel established with Kusmus HQ.<br>An officer will be with you shortly.`;
+            messagesArea.appendChild(welcome);
         }
-
         let hasNew = false;
-        
         messages.forEach(msg => {
-            // THE FIX: Check ID before appending
             if (!knownMessageIds.has(msg.id)) {
                 appendMessage(msg);
                 knownMessageIds.add(msg.id);
                 hasNew = true;
             }
         });
-
-        // Scroll ONLY if new messages were added
         if (hasNew) {
             messagesArea.scrollTop = messagesArea.scrollHeight;
         }
     }
 
     function appendMessage(msg) {
-        // Determine class: 'client' in DB is ME (Self), 'admin' is REMOTE (Officer)
         const cssClass = msg.sender_type === 'client' ? 'msg-self' : 'msg-remote';
-        
         const div = document.createElement('div');
         div.className = `msg-bubble ${cssClass}`;
-        
         let content = msg.message || "";
-        
-        // Handle Attachments
         if (msg.signed_attachment) {
             if (msg.attachment_type === 'image') {
                 content += `<div class="attachment-view"><img src="${msg.signed_attachment}" alt="Secure Attachment" onload="this.parentElement.scrollIntoView({behavior:'smooth'})"></div>`;
@@ -352,58 +351,50 @@
                 content += `<a href="${msg.signed_attachment}" target="_blank" class="file-download"><i class="fas fa-file-download"></i> Download Secure Document</a>`;
             }
         }
-        
         div.innerHTML = content;
         messagesArea.appendChild(div);
     }
 
-    // 3. Send Message Logic
+    // 3. Send Message Logic (with file upload)
     async function sendClientMessage() {
         const text = textInput.value.trim();
         const file = fileInput.files[0];
-        
         if (!text && !file) return;
-
         // Optimistic Append (Temp ID)
         const tempMsg = {
             id: 'temp-' + Date.now(),
-            sender_type: 'client', // Self
+            sender_type: 'client',
             message: text || (file ? `[Uploading ${file.name}...]` : ''),
             signed_attachment: null
         };
         appendMessage(tempMsg);
         messagesArea.scrollTop = messagesArea.scrollHeight;
-
         try {
             const formData = new FormData();
             formData.append('message', text);
             if (file) formData.append('file', file);
-
-            await fetch('/api/client/chat/send', {
-                method: 'POST',
-                body: formData
-            });
-
-            // Cleanup Inputs
-            textInput.value = '';
-            fileInput.value = '';
-            attachBtn.classList.remove('has-file');
-            textInput.placeholder = "Type your directive here... (Press Enter)";
-            
-            // Force Sync
-            setTimeout(fetchMessages, 500); 
+            // Use XHR for file upload, then emit socket event on success
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/client/chat/send', true);
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    // On success, server will emit new_message to this room
+                    textInput.value = '';
+                    fileInput.value = '';
+                    attachBtn.classList.remove('has-file');
+                    textInput.placeholder = "Type your directive here... (Press Enter)";
+                } else {
+                    alert("Transmission Failed");
+                }
+            };
+            xhr.send(formData);
         } catch (e) {
             alert("Transmission Failed");
         }
     }
 
-    // Enter Key to Send
     textInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendClientMessage();
     });
-
-    // Start Polling immediately
-    setInterval(fetchMessages, 3000);
-    fetchMessages();
 </script>
 {% endblock %}

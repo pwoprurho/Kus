@@ -15,7 +15,7 @@ if not url or not key:
 supabase: Client = create_client(url, key)
 
 # 3. Define the Admin User Credentials
-ADMIN_EMAIL = "akporurho@proton.me"
+ADMIN_EMAIL = "akporurho@yahoo.com"
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 if not ADMIN_PASSWORD:
     print("Error: ADMIN_PASSWORD not found in .env")

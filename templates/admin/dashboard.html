@@ -104,6 +104,36 @@
         font-size: 0.8rem;
         color: #555;
     }
+
+    /* Dashboard Links */
+    .dashboard-links {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 40px;
+        justify-content: center;
+    }
+    .dashboard-links .btn {
+        font-size: 1.1rem;
+        padding: 14px 32px;
+        border-radius: 8px;
+        text-align: center;
+        display: inline-block;
+        transition: 0.3s;
+    }
+    .dashboard-links .btn-primary {
+        background: #0072ff;
+        color: white;
+        border: none;
+    }
+    .dashboard-links .btn-success {
+        background: #00ff88;
+        color: white;
+        border: none;
+    }
+
+    .dashboard-links .btn:hover {
+        filter: brightness(0.9);
+    }
 </style>
 
 <div class="command-center-wrapper">
@@ -118,6 +148,12 @@
             <a href="{{ url_for('admin.admin_calendar_events') }}" class="btn-action">CALENDAR</a>
             <a href="{{ url_for('auth.logout') }}" class="btn-action">LOGOUT</a>
         </div>
+    </div>
+
+    <!-- Dashboard Links -->
+    <div class="dashboard-links" style="display: flex; gap: 20px; margin-bottom: 40px; justify-content: center; margin-top: 0;">
+        <a href="{{ url_for('admin.live_chat') }}" class="btn btn-primary" style="font-size: 1.1rem; padding: 14px 32px; border-radius: 8px;">Live Chat & Account Management</a>
+        <a href="{{ url_for('admin.crypto_wallet_action') }}" class="btn btn-success" style="font-size: 1.1rem; padding: 14px 32px; border-radius: 8px;">Crypto Wallet Admin</a>
     </div>
 
     <div class="stats-grid">
@@ -149,7 +185,8 @@
             <!-- CSS Bar Chart -->
             <div style="flex-grow: 1; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding-top: 20px; height: 150px;">
                 {% for i in range(12) %}
-                <div style="width: 100%; background: rgba(0,114,255,0.1); border-radius: 4px 4px 0 0; position: relative; height: {{ range(20, 90)|random }}%;">
+                {% set bar_height = (range(20, 90)|random) %}
+                <div style="width: 100%; background: rgba(0,114,255,0.1); border-radius: 4px 4px 0 0; position: relative; height: {{ bar_height }}%;">
                     <div style="position: absolute; bottom: 0; width: 100%; height: 100%; background: linear-gradient(to top, rgba(0,114,255,0.4), transparent);"></div>
                 </div>
                 {% endfor %}
@@ -270,10 +307,10 @@
                         <a href="{{ url_for('admin.edit_post', post_id=post.id) }}" class="btn-action">Edit</a>
                         
                         {% if post.status != 'Published' %}
-                        <a href="{{ url_for('admin.publish_post', post_id=post.id) }}" 
-                           class="btn-action" 
-                           style="border-color:#0072ff; color:#0072ff;"
-                           onclick="return confirm('Declassify this insight for public viewing?')">Declassify</a>
+                                <a href="{{ url_for('admin.publish_post', post_id=post.id) }}" 
+                                    class="btn-action" 
+                                    style="border-color:#0072ff; color:#0072ff;"
+                                    onclick="return confirm('Declassify this insight for public viewing?')">Declassify</a>
                         {% endif %}
 
                         <a href="{{ url_for('admin.delete_post', post_id=post.id) }}" 

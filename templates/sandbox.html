@@ -927,7 +927,6 @@
                 if(el) { 
                     el.className = 'system-alert-bubble resolved';
                     el.innerHTML = `<i class="fas fa-check-circle"></i> ANALYSIS COMPLETE`; 
-                    
                     // Log the conclusion for administrator
                     const div = document.createElement('div');
                     div.className = 'log-entry';
@@ -936,6 +935,9 @@
                     div.style.color = '#2ecc71';
                     document.getElementById('activity-log').prepend(div);
                 }
+                // Reset alert state after analysis completes to allow repeat triggers
+                isAlertState = false;
+                document.querySelector('.main-terminal').classList.remove('red-alert-active');
             }
         } catch(e) {
             console.error(e);
@@ -943,15 +945,27 @@
         }
     }
 
+    let latencyAvg = null;
     function updateStats(event, t0) {
         const rtt = Math.round(performance.now() - t0);
+        // Exponential moving average for latency
+        if (latencyAvg === null) latencyAvg = rtt;
+        else latencyAvg = Math.round(0.6 * latencyAvg + 0.4 * rtt);
+
+        // Latency grade logic
+        let grade = 'A', color = '#2ecc71';
+        if (latencyAvg > 800) { grade = 'F'; color = '#ff3333'; }
+        else if (latencyAvg > 500) { grade = 'D'; color = '#ff4444'; }
+        else if (latencyAvg > 300) { grade = 'C'; color = '#ff884d'; }
+        else if (latencyAvg > 150) { grade = 'B'; color = '#ffcc00'; }
+
         if(event.v_score) document.getElementById('v-score').innerText = event.v_score;
         if(event.status) document.getElementById('security-status-text').innerText = event.status;
-        
+
         const latEl = document.getElementById('latency-text');
         if(latEl) {
-            latEl.innerText = rtt + 'ms';
-            latEl.style.color = rtt > 300 ? '#ff4444' : (rtt > 100 ? '#ffcc00' : '#2ecc71');
+            latEl.innerHTML = `${latencyAvg}ms <span style="font-size:0.8em; font-weight:600; color:${color}; margin-left:8px;">${grade}</span>`;
+            latEl.style.color = color;
         }
 
         if(event.threat_level) {
@@ -959,17 +973,17 @@
             const el = document.getElementById('threat-level');
             if(el) {
                 el.innerText = tl.toUpperCase();
-                let color = '#2ecc71';
+                let tcolor = '#2ecc71';
                 if(tl === 'critical' || tl === 'high') { 
-                    color = (tl === 'critical') ? '#ff3333' : '#ff884d'; 
+                    tcolor = (tl === 'critical') ? '#ff3333' : '#ff884d'; 
                     isAlertState = true; 
                     document.querySelector('.main-terminal').classList.add('red-alert-active'); 
                 } else { 
-                    color = (tl === 'medium') ? '#ffd700' : '#2ecc71'; 
+                    tcolor = (tl === 'medium') ? '#ffd700' : '#2ecc71'; 
                     isAlertState = false; 
                     document.querySelector('.main-terminal').classList.remove('red-alert-active'); 
                 }
-                el.style.color = color;
+                el.style.color = tcolor;
             }
         }
 

@@ -296,11 +296,10 @@
     {% endif %}
 </div>
 
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-+2QwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQw==" crossorigin="anonymous"></script>
 <script>
     let currentClientId = null;
-    let pollingInterval = null;
     let knownMessageIds = new Set();
-    
     const fileInput = document.getElementById('admin-file');
     const attachBtn = document.getElementById('btn-attach');
     const textInput = document.getElementById('admin-input');
@@ -319,66 +318,54 @@
         }
     });
 
-    // 2. Client Selection
+    // 2. Socket.IO Setup
+    const socket = io({transports: ['websocket']});
+
     function selectClient(clientId, name, element) {
         currentClientId = clientId;
         document.getElementById('chat-title').innerHTML = `<i class="fas fa-user-shield"></i> ${name}`;
         document.getElementById('input-area').style.display = 'flex';
-        
         document.querySelectorAll('.client-item').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
-        
-        // Reset View for New Client
         messagesArea.innerHTML = '';
         knownMessageIds.clear();
-
-        fetchMessages();
-        if (pollingInterval) clearInterval(pollingInterval);
-        pollingInterval = setInterval(fetchMessages, 3000);
+        // Join the admin room for this client
+        socket.emit('join_admin_room', {client_id: clientId});
     }
 
-    // 3. Sync Logic (APPEND ONLY - FIXES FLASHING)
-    async function fetchMessages() {
-        if (!currentClientId) return;
-        try {
-            const res = await fetch(`/admin/api/chat/${currentClientId}`);
-            if (!res.ok) throw new Error('Failed to fetch chat history');
-            const data = await res.json();
-            renderMessages(data.history, data.context);
-        } catch (e) {
-            console.error("Sync Error:", e);
-            // Optionally update the chat title to show connection failed
-            document.getElementById('chat-title').innerHTML = `<i class="fas fa-exclamation-triangle"></i> CONNECTION FAILED`;
+    // Listen for chat history for selected client
+    socket.on('chat_history', (payload) => {
+        if (!currentClientId || payload.client_id !== currentClientId) return;
+        renderMessages(payload.history, payload.context);
+    });
+
+    // Listen for new messages in real time
+    socket.on('new_message', (msg) => {
+        if (!currentClientId || msg.client_id !== currentClientId) return;
+        if (!knownMessageIds.has(msg.id)) {
+            appendMessage(msg);
+            knownMessageIds.add(msg.id);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
         }
-    }
+    });
 
     function renderMessages(messages, context) {
-        // Remove empty placeholder
         const emptyPlaceholder = document.querySelector('.empty-placeholder');
-        if (emptyPlaceholder) {
-            emptyPlaceholder.remove();
-        }
-
-        // Render Context (Once)
+        if (emptyPlaceholder) emptyPlaceholder.remove();
         if (context && context.original_challenge !== 'N/A' && !document.querySelector('.context-panel')) {
             const ctx = document.createElement('div');
             ctx.className = 'context-panel';
             ctx.innerHTML = `<h4>Strategic Objective (Filed: ${context.date_filed})</h4><p>"${context.original_challenge}"</p>`;
             messagesArea.prepend(ctx);
         }
-
         let hasNew = false;
-        
         messages.forEach(msg => {
-            // THE FIX: Check ID before appending
             if (msg.id && !knownMessageIds.has(msg.id)) {
                 appendMessage(msg);
                 knownMessageIds.add(msg.id);
                 hasNew = true;
             }
         });
-
-        // Scroll ONLY if new messages were added
         if (hasNew) {
             messagesArea.scrollTop = messagesArea.scrollHeight;
         }
@@ -387,60 +374,53 @@
     function appendMessage(msg) {
         const div = document.createElement('div');
         div.className = `msg-bubble ${msg.sender_type === 'admin' ? 'msg-admin' : 'msg-client'}`;
-        
         let content = msg.message || "";
-        
         if (msg.signed_attachment) {
             if (msg.attachment_type === 'image') {
-                content += `<div class="attachment-view"><img src="${msg.signed_attachment}" alt="Secure Attachment" onload="this.parentElement.scrollIntoView({behavior:'smooth'})"></div>`;
+                content += `<div class=\"attachment-view\"><img src=\"${msg.signed_attachment}\" alt=\"Secure Attachment\" onload=\"this.parentElement.scrollIntoView({behavior:'smooth'})\"></div>`;
             } else {
-                content += `<a href="${msg.signed_attachment}" target="_blank" class="file-download"><i class="fas fa-file-download"></i> Download Secure File</a>`;
+                content += `<a href=\"${msg.signed_attachment}\" target=\"_blank\" class=\"file-download\"><i class=\"fas fa-file-download\"></i> Download Secure File</a>`;
             }
         }
-        
         div.innerHTML = content;
         messagesArea.appendChild(div);
     }
 
-    // 4. Send Message Logic
+    // 3. Send Message Logic (with file upload)
     async function sendAdminMessage() {
         const text = textInput.value.trim();
         const file = fileInput.files[0];
-        
         if ((!text && !file) || !currentClientId) return;
-
         // Optimistic Append (Temp ID)
         const tempId = 'temp-' + Date.now();
         const tempMsg = {
             id: tempId,
             sender_type: 'admin',
             message: text || (file ? `[Sending ${file.name}...]` : ''),
-            signed_attachment: null
+            signed_attachment: null,
+            client_id: currentClientId
         };
         appendMessage(tempMsg);
         messagesArea.scrollTop = messagesArea.scrollHeight;
-
         try {
             const formData = new FormData();
             formData.append('client_id', currentClientId);
             formData.append('message', text);
             if (file) formData.append('file', file);
-
-            const res = await fetch('/admin/api/chat/send', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!res.ok) throw new Error('Server failed to process message.');
-
-            // Cleanup
-            textInput.value = '';
-            fileInput.value = '';
-            attachBtn.classList.remove('has-file');
-            textInput.placeholder = "Type your directive here...";
-            
-            // Force Sync to get the real message ID and display correctly
-            setTimeout(fetchMessages, 500); 
+            // Use XHR for file upload, then emit socket event on success
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/admin/api/chat/send', true);
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    textInput.value = '';
+                    fileInput.value = '';
+                    attachBtn.classList.remove('has-file');
+                    textInput.placeholder = "Type your directive here...";
+                } else {
+                    alert("Transmission Failed");
+                }
+            };
+            xhr.send(formData);
         } catch (e) {
             alert("Transmission Failed: " + e.message);
         }
