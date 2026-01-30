@@ -462,6 +462,38 @@
         color: rgba(255, 255, 255, 0.2);
         font-style: italic;
     }
+
+    /* --- MOBILE RESPONSIVENESS --- */
+    @media (max-width: 1024px) {
+        .vault-grid {
+            grid-template-columns: 1fr !important;
+            height: auto !important;
+        }
+
+        .intel-panel {
+            display: none !important;
+        }
+
+        .sentinel-workspace {
+            padding: 20px 15px !important;
+            height: auto !important;
+            min-height: 100vh;
+        }
+
+        .chat-bubble {
+            max-width: 92% !important;
+            padding: 15px !important;
+        }
+
+        #market-input {
+            font-size: 1.2rem !important;
+        }
+
+        .market-pulse-controls {
+            flex-direction: column;
+            gap: 10px;
+        }
+    }
 </style>
 
 <div class="vault-grid">

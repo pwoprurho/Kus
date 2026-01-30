@@ -4,12 +4,27 @@
 {% block content %}
 <style>
     /* Mobile-Specific Reset */
-    header, footer, #chat-widget-container { display: none !important; }
-    body { background-color: #000; color: #fff; height: 100vh; overflow: hidden; }
+    header,
+    footer,
+    #chat-widget-container {
+        display: none !important;
+    }
+
+    body {
+        background-color: #000;
+        color: #fff;
+        height: 100vh;
+        overflow: hidden;
+    }
 
     .mobile-gate-container {
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        height: 100%; padding: 30px; text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 30px;
+        text-align: center;
         background: radial-gradient(circle at center, #111 0%, #000 80%);
     }
 
@@ -18,13 +33,16 @@
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 40px 25px; border-radius: 20px;
+        padding: 40px 25px;
+        border-radius: 20px;
         box-shadow: 0 10px 40px rgba(0, 114, 255, 0.15);
         max-width: 400px;
     }
 
     .icon-glow {
-        font-size: 3.5rem; color: #0072ff; margin-bottom: 25px;
+        font-size: 3.5rem;
+        color: #0072ff;
+        margin-bottom: 25px;
         text-shadow: 0 0 20px rgba(0, 114, 255, 0.6);
     }
 </style>
@@ -32,19 +50,52 @@
 <div class="mobile-gate-container">
     <div class="glass-warning">
         <i class="fas fa-desktop icon-glow"></i>
-        <h2 style="font-family: 'Garamond', serif; font-size: 1.8rem; margin-bottom: 15px;">Desktop Interface Required</h2>
-        
-        <p style="color: #ccc; line-height: 1.6; font-size: 0.95rem; margin-bottom: 30px;">
-            The Sentinel Converged Telemetry Suite processes high-density forensic data that cannot be visualized on mobile screens.
+        <h2
+            style="font-family: 'Inter', sans-serif; font-size: 1.8rem; margin-bottom: 15px; font-weight: 800; letter-spacing: -1px;">
+            Desktop Interface Required</h2>
+
+        <p style="color: #ccc; line-height: 1.6; font-size: 0.95rem; margin-bottom: 25px;">
+            The Sentinel Converged Telemetry Suite processes high-density forensic data that requires a widescreen
+            workstation for full visualization and interactive control.
         </p>
 
-        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px dashed #444; margin-bottom: 25px;">
-            <span style="color: #00ff88; font-family: monospace; font-size: 0.8rem;">STATUS: WORKSTATION ACCESS ONLY</span>
+        <div
+            style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 25px; text-align: left;">
+            <p
+                style="color: #0072ff; font-weight: 700; font-size: 0.8rem; margin-bottom: 10px; text-transform: uppercase;">
+                Next Steps:</p>
+            <ul style="color: #aaa; font-size: 0.85rem; padding-left: 18px; line-height: 1.8;">
+                <li>Enable <strong>"Desktop Site"</strong> in your browser settings.</li>
+                <li>Copy the secure entry link and open on your primary workstation.</li>
+            </ul>
         </div>
 
-        <p style="color: #666; font-size: 0.8rem;">
-            Please open this URL on your desktop workstation to initialize the demo.
+        <button onclick="copyEntryLink()" id="copyBtn"
+            style="width: 100%; padding: 14px; border-radius: 8px; border: none; background: #0072ff; color: #fff; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s;">
+            <i class="far fa-copy"></i> <span id="btnText">COPY ENTRY LINK</span>
+        </button>
+
+        <p style="color: #555; font-size: 0.75rem; margin-top: 20px;">
+            STATUS: WORKSTATION ACCESS ONLY (ENFORCED)
         </p>
     </div>
 </div>
+
+<script>
+    function copyEntryLink() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            const btn = document.getElementById('copyBtn');
+            const text = document.getElementById('btnText');
+            btn.style.background = '#00ff88';
+            btn.style.color = '#000';
+            text.innerText = 'LINK COPIED TO CLIPBOARD';
+            setTimeout(() => {
+                btn.style.background = '#0072ff';
+                btn.style.color = '#fff';
+                text.innerText = 'COPY ENTRY LINK';
+            }, 3000);
+        });
+    }
+</script>
 {% endblock %}

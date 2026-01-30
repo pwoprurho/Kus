@@ -468,6 +468,63 @@
     .demo-card.coming-soon .card-action {
         display: none;
     }
+
+    /* --- MOBILE RESPONSIVENESS --- */
+    @media (max-width: 1024px) {
+        .sandbox-grid {
+            grid-template-columns: 1fr;
+            height: auto;
+            overflow-y: auto;
+            display: block;
+            /* Fallback for older browsers */
+        }
+
+        .sidebar-left,
+        .sidebar-right {
+            display: none !important;
+        }
+
+        body {
+            overflow: auto;
+            height: auto;
+        }
+
+        .demo-grid-container {
+            padding: 20px;
+        }
+
+        .demo-page-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .demo-cards-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .mobile-back-header {
+            display: flex !important;
+            padding: 20px;
+            background: rgba(10, 10, 10, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            align-items: center;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .mobile-back-header a {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    }
+
+    .mobile-back-header {
+        display: none;
+    }
 </style>
 
 <div id="canvas-container"><canvas id="three-canvas"></canvas></div>
@@ -496,6 +553,9 @@
     </aside>
 
     <main class="main-terminal">
+        <div class="mobile-back-header">
+            <a href="/"><i class="fas fa-arrow-left"></i> EXIT TO SITE</a>
+        </div>
         <div class="demo-grid-container">
             <div class="demo-page-header">
                 <h2>Select Environment</h2>

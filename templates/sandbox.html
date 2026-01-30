@@ -537,6 +537,53 @@
     ::-webkit-scrollbar-thumb:hover {
         background: rgba(255, 255, 255, 0.2);
     }
+
+    /* --- MOBILE RESPONSIVENESS --- */
+    @media (max-width: 1024px) {
+        .sandbox-grid {
+            grid-template-columns: 1fr;
+            height: auto;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-left,
+        .sidebar-right {
+            display: none !important;
+        }
+
+        body {
+            overflow: auto;
+            height: auto;
+        }
+
+        .main-terminal {
+            height: calc(100vh - 80px);
+            /* Leave room for some context if needed */
+            width: 100vw;
+            flex: 1;
+            position: relative;
+        }
+
+        #chat-container {
+            padding: 20px 5%;
+            bottom: 120px;
+            /* More room for input */
+        }
+
+        .input-wrapper {
+            width: 90%;
+            bottom: 20px;
+            padding: 10px 15px;
+        }
+
+        .bubble {
+            max-width: 90%;
+        }
+
+        /* Mobile specific controls could be added here if needed */
+    }
 </style>
 
 <div id="canvas-container"><canvas id="three-canvas"></canvas></div>

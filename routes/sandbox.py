@@ -125,6 +125,14 @@ def sandbox_view():
 
     selected_demo = request.args.get('demo', '')
 
+    # --- MOBILE GATE ENFORCEMENT ---
+    ua = request.headers.get('User-Agent', '').lower()
+    is_mobile = any(x in ua for x in ['iphone', 'android', 'blackberry', 'windows phone'])
+    # Only block if it's NOT desktop mode (some mobile browsers can trick this)
+    # but we'll stick to a simple UA check for now as requested.
+    if is_mobile:
+        return render_template("demo_mobile.html")
+
     # If no demo selected, show the selector
     if not selected_demo:
         return render_template("select_demo.html", demos=DEMO_REGISTRY)
