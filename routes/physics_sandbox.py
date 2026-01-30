@@ -81,10 +81,17 @@ PREBUILT_TEMPLATES = {
     
     const world = new CANNON.World();
     world.gravity.set(0, -9.81, 0);
+    world.solver.iterations = 10;
+    world.defaultContactMaterial.contactEquationStiffness = 1e8;
+    world.defaultContactMaterial.contactEquationRelaxation = 3;
     
     const defaultMaterial = new CANNON.Material('default');
-    const defaultContactMaterial = new CANNON.ContactMaterial(defaultMaterial, defaultMaterial, { friction: 0.3, restitution: 0.5 });
+    const defaultContactMaterial = new CANNON.ContactMaterial(defaultMaterial, defaultMaterial, { 
+        friction: 0.4, 
+        restitution: 0.6 
+    });
     world.addContactMaterial(defaultContactMaterial);
+    world.defaultContactMaterial = defaultContactMaterial;
     
     // Ground
     const groundGeo = new THREE.PlaneGeometry(20, 20);
@@ -101,16 +108,17 @@ PREBUILT_TEMPLATES = {
     
     // Ball
     const ballRadius = 0.5;
+    const dropHeight = 10;
     const ballGeo = new THREE.SphereGeometry(ballRadius, 32, 32);
     const ballMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, metalness: 0.3, roughness: 0.4 });
     const ball = new THREE.Mesh(ballGeo, ballMat);
     ball.castShadow = true;
-    ball.position.set(0, 10, 0);
+    ball.position.set(0, dropHeight, 0);
     scene.add(ball);
     
     const ballBody = new CANNON.Body({ mass: 1, material: defaultMaterial });
     ballBody.addShape(new CANNON.Sphere(ballRadius));
-    ballBody.position.set(0, 10, 0);
+    ballBody.position.set(0, dropHeight, 0);
     world.addBody(ballBody);
     
     // Grid helper
@@ -118,10 +126,17 @@ PREBUILT_TEMPLATES = {
     grid.position.y = 0.01;
     scene.add(grid);
     
-    const timeStep = 1 / 60;
+    const fixedTimeStep = 1 / 60;
+    let lastTime = performance.now();
+    
     function animate() {
         requestAnimationFrame(animate);
-        world.step(timeStep);
+        
+        const now = performance.now();
+        const dt = (now - lastTime) / 1000;
+        lastTime = now;
+        
+        world.step(fixedTimeStep, dt, 3);
         ball.position.copy(ballBody.position);
         ball.quaternion.copy(ballBody.quaternion);
         renderer.render(scene, camera);
@@ -144,7 +159,7 @@ PREBUILT_TEMPLATES = {
             }
         },
         reset: () => {
-            ballBody.position.set(0, 10, 0);
+            ballBody.position.set(0, dropHeight, 0);
             ballBody.velocity.set(0, 0, 0);
             ballBody.angularVelocity.set(0, 0, 0);
         }
@@ -166,14 +181,14 @@ PREBUILT_TEMPLATES = {
     scene.background = new THREE.Color(0x1a1a2e);
     
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(5, 5, 10);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(0, 4, 8);
+    camera.lookAt(0, 2, 0);
     
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
     scene.add(ambientLight);
     
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -183,18 +198,25 @@ PREBUILT_TEMPLATES = {
     
     const world = new CANNON.World();
     world.gravity.set(0, -9.81, 0);
-    world.broadphase = new CANNON.NaiveBroadphase();
+    world.solver.iterations = 20;
     
     const defaultMaterial = new CANNON.Material('default');
     
-    // Pivot point (static)
+    // Pivot point (static body at origin of pendulum)
+    const pivotPosition = new CANNON.Vec3(0, 5, 0);
     const pivotBody = new CANNON.Body({ mass: 0 });
-    pivotBody.position.set(0, 4, 0);
+    pivotBody.position.copy(pivotPosition);
     world.addBody(pivotBody);
     
-    // Pendulum bob
+    // Pendulum parameters
+    const stringLength = 3;
     const bobRadius = 0.3;
-    const stringLength = 2;
+    const startAngle = Math.PI / 4; // 45 degrees initial displacement
+    
+    // Calculate initial bob position (displaced at an angle)
+    const bobStartX = Math.sin(startAngle) * stringLength;
+    const bobStartY = pivotPosition.y - Math.cos(startAngle) * stringLength;
+    
     const bobGeo = new THREE.SphereGeometry(bobRadius, 32, 32);
     const bobMat = new THREE.MeshStandardMaterial({ color: 0x3498db, metalness: 0.3, roughness: 0.4 });
     const bob = new THREE.Mesh(bobGeo, bobMat);
@@ -203,29 +225,32 @@ PREBUILT_TEMPLATES = {
     
     const bobBody = new CANNON.Body({ mass: 1, material: defaultMaterial });
     bobBody.addShape(new CANNON.Sphere(bobRadius));
-    bobBody.position.set(stringLength, 2, 0);
+    bobBody.position.set(bobStartX, bobStartY, 0);
     bobBody.linearDamping = 0.01;
+    bobBody.angularDamping = 0.01;
     world.addBody(bobBody);
     
-    // Point-to-point constraint (pendulum string)
-    const constraint = new CANNON.PointToPointConstraint(
-        pivotBody, new CANNON.Vec3(0, 0, 0),
-        bobBody, new CANNON.Vec3(-stringLength, 2, 0)
-    );
+    // Use DistanceConstraint for accurate pendulum (maintains fixed distance)
+    const constraint = new CANNON.DistanceConstraint(pivotBody, bobBody, stringLength);
     world.addConstraint(constraint);
     
     // String visualization
     const stringGeo = new THREE.BufferGeometry();
-    const stringMat = new THREE.LineBasicMaterial({ color: 0x888888 });
+    const stringMat = new THREE.LineBasicMaterial({ color: 0xcccccc, linewidth: 2 });
     const stringLine = new THREE.Line(stringGeo, stringMat);
     scene.add(stringLine);
     
     // Pivot point visualization
     const pivotGeo = new THREE.SphereGeometry(0.1, 16, 16);
-    const pivotMat = new THREE.MeshBasicMaterial({ color: 0x888888 });
+    const pivotMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const pivotMesh = new THREE.Mesh(pivotGeo, pivotMat);
-    pivotMesh.position.set(0, 4, 0);
+    pivotMesh.position.set(pivotPosition.x, pivotPosition.y, pivotPosition.z);
     scene.add(pivotMesh);
+    
+    // Grid for reference
+    const grid = new THREE.GridHelper(10, 10, 0x444444, 0x333333);
+    grid.position.y = 0;
+    scene.add(grid);
     
     const timeStep = 1 / 60;
     function animate() {
@@ -237,7 +262,7 @@ PREBUILT_TEMPLATES = {
         
         // Update string visualization
         const positions = new Float32Array([
-            0, 4, 0,
+            pivotPosition.x, pivotPosition.y, pivotPosition.z,
             bob.position.x, bob.position.y, bob.position.z
         ]);
         stringGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -256,7 +281,7 @@ PREBUILT_TEMPLATES = {
     return {
         updateGravity: (x, y, z) => world.gravity.set(x, y, z),
         reset: () => {
-            bobBody.position.set(stringLength, 2, 0);
+            bobBody.position.set(bobStartX, bobStartY, 0);
             bobBody.velocity.set(0, 0, 0);
             bobBody.angularVelocity.set(0, 0, 0);
         }
@@ -278,7 +303,7 @@ PREBUILT_TEMPLATES = {
     scene.background = new THREE.Color(0x1a1a2e);
     
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 8, 20);
+    camera.position.set(0, 5, 18);
     camera.lookAt(0, 1, 0);
     
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -295,10 +320,16 @@ PREBUILT_TEMPLATES = {
     
     const world = new CANNON.World();
     world.gravity.set(0, -9.81, 0);
+    world.solver.iterations = 20;
     
     const defaultMaterial = new CANNON.Material('default');
-    const bouncyMaterial = new CANNON.ContactMaterial(defaultMaterial, defaultMaterial, { friction: 0.3, restitution: 0.95 });
-    world.addContactMaterial(bouncyMaterial);
+    // Perfectly elastic collision (restitution = 1.0)
+    const elasticMaterial = new CANNON.ContactMaterial(defaultMaterial, defaultMaterial, { 
+        friction: 0.0, 
+        restitution: 1.0 
+    });
+    world.addContactMaterial(elasticMaterial);
+    world.defaultContactMaterial = elasticMaterial;
     
     // Ground
     const groundGeo = new THREE.PlaneGeometry(30, 10);
@@ -314,8 +345,10 @@ PREBUILT_TEMPLATES = {
     world.addBody(groundBody);
     
     const ballRadius = 0.5;
+    const ballY = ballRadius + 0.01; // Just above ground
+    const startSpeed = 6;
     
-    // Ball 1 (red)
+    // Ball 1 (red) - moving right
     const ball1Geo = new THREE.SphereGeometry(ballRadius, 32, 32);
     const ball1Mat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, metalness: 0.3, roughness: 0.4 });
     const ball1 = new THREE.Mesh(ball1Geo, ball1Mat);
@@ -324,11 +357,13 @@ PREBUILT_TEMPLATES = {
     
     const ball1Body = new CANNON.Body({ mass: 1, material: defaultMaterial });
     ball1Body.addShape(new CANNON.Sphere(ballRadius));
-    ball1Body.position.set(-8, ballRadius + 0.5, 0);
-    ball1Body.velocity.set(8, 0, 0);
+    ball1Body.position.set(-6, ballY, 0);
+    ball1Body.velocity.set(startSpeed, 0, 0);
+    ball1Body.linearDamping = 0;
+    ball1Body.angularDamping = 0;
     world.addBody(ball1Body);
     
-    // Ball 2 (blue)
+    // Ball 2 (blue) - moving left
     const ball2Geo = new THREE.SphereGeometry(ballRadius, 32, 32);
     const ball2Mat = new THREE.MeshStandardMaterial({ color: 0x3498db, metalness: 0.3, roughness: 0.4 });
     const ball2 = new THREE.Mesh(ball2Geo, ball2Mat);
@@ -337,18 +372,27 @@ PREBUILT_TEMPLATES = {
     
     const ball2Body = new CANNON.Body({ mass: 1, material: defaultMaterial });
     ball2Body.addShape(new CANNON.Sphere(ballRadius));
-    ball2Body.position.set(8, ballRadius + 0.5, 0);
-    ball2Body.velocity.set(-8, 0, 0);
+    ball2Body.position.set(6, ballY, 0);
+    ball2Body.velocity.set(-startSpeed, 0, 0);
+    ball2Body.linearDamping = 0;
+    ball2Body.angularDamping = 0;
     world.addBody(ball2Body);
     
     const grid = new THREE.GridHelper(30, 30, 0x444444, 0x333333);
     grid.position.y = 0.01;
     scene.add(grid);
     
-    const timeStep = 1 / 60;
+    const fixedTimeStep = 1 / 60;
+    let lastTime = performance.now();
+    
     function animate() {
         requestAnimationFrame(animate);
-        world.step(timeStep);
+        
+        const now = performance.now();
+        const dt = (now - lastTime) / 1000;
+        lastTime = now;
+        
+        world.step(fixedTimeStep, dt, 3);
         
         ball1.position.copy(ball1Body.position);
         ball1.quaternion.copy(ball1Body.quaternion);
@@ -369,11 +413,11 @@ PREBUILT_TEMPLATES = {
     return {
         updateGravity: (x, y, z) => world.gravity.set(x, y, z),
         reset: () => {
-            ball1Body.position.set(-8, ballRadius + 0.5, 0);
-            ball1Body.velocity.set(8, 0, 0);
+            ball1Body.position.set(-6, ballY, 0);
+            ball1Body.velocity.set(startSpeed, 0, 0);
             ball1Body.angularVelocity.set(0, 0, 0);
-            ball2Body.position.set(8, ballRadius + 0.5, 0);
-            ball2Body.velocity.set(-8, 0, 0);
+            ball2Body.position.set(6, ballY, 0);
+            ball2Body.velocity.set(-startSpeed, 0, 0);
             ball2Body.angularVelocity.set(0, 0, 0);
         }
     };
