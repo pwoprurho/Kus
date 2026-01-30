@@ -21,6 +21,7 @@ from routes.public import public_bp
 from routes.auth import auth_bp
 from routes.admin import admin_bp
 from routes.tax import tax_bp
+from routes.physics_sandbox import physics_bp
 
 # 3. Setup Flask-Login
 login_manager = LoginManager()
@@ -47,21 +48,8 @@ def load_user(user_id):
         print(f"Session Load Error: {e}")
         return None
 
-# --- MOBILE GATE SECURITY ---
-@app.before_request
-def mobile_gate():
-    """
-    Intercepts mobile users trying to access complex dashboards.
-    Redirects to the 'Desktop Required' page.
-    """
-    restricted_paths = ['/sandbox', '/admin']
-    
-    if any(request.path.startswith(p) for p in restricted_paths):
-        user_agent = request.headers.get('User-Agent', '').lower()
-        mobile_agents = ['android', 'webos', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone']
-        
-        if any(agent in user_agent for agent in mobile_agents):
-            return render_template('demo_mobile.html')
+# --- MOBILE ACCESSIBILITY ENABLED ---
+# Gate removed to allow all devices access to research protocols.
 
 # 4. Register Blueprints
 app.register_blueprint(public_bp)
@@ -69,6 +57,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(sandbox_bp)
 app.register_blueprint(tax_bp)
+app.register_blueprint(physics_bp)
 
 # 5. Error Handlers
 @app.errorhandler(403)
