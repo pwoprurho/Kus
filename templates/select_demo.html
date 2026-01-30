@@ -510,7 +510,7 @@
 
                 {% for key in sorted_keys %}
                 {% set info = demos[key] %}
-                {% set is_coming_soon = (key == 'deep_research') %}
+                {% set is_coming_soon = false %}
 
                 <a href="{{ url_for('sandbox.sandbox_view') }}?demo={{ key }}"
                     class="demo-card {{ 'coming-soon' if is_coming_soon else '' }}" {{ 'onclick="return false;"' if
@@ -531,6 +531,8 @@
                         <i class="fas fa-microscope"></i>
                         {% elif 'physics' in key %}
                         <i class="fas fa-atom"></i>
+                        {% elif 'electoral' in key or 'integrity' in key %}
+                        <i class="fas fa-landmark"></i>
                         {% else %}
                         <i class="fas fa-cube"></i>
                         {% endif %}
