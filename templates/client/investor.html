@@ -5,45 +5,51 @@
 <!-- IMPORT PREMIUM FONT: INTER and JETBRAINS MONO -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
 
 
 <!-- FULL SCREEN MARKET BACKDROP -->
-<div id="market-pulse-bg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 1;"></div>
+<div id="market-pulse-bg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 1;">
+</div>
 
 <!-- DEMO MODE DISCLAIMER BANNER -->
 {% if is_sandbox_demo %}
 <div class="demo-banner">
-    <i class="fas fa-exclamation-triangle"></i> DEMO ENVIRONMENT: Direct access to Deriv/Brokerage accounts is simulated. Execution is virtual only.
+    <i class="fas fa-exclamation-triangle"></i> DEMO ENVIRONMENT: Direct access to Deriv/Brokerage accounts is
+    simulated. Execution is virtual only.
 </div>
 {% endif %}
 
 <style>
     /* DEMO BANNER STYLING - Adjusted to flow WITH navbar */
     .demo-banner {
-        position: fixed; 
-        top: 70px; /* Pushed BELOW the 70px Navbar */
-        left: 0; 
-        width: 100%; 
-        background: rgba(255, 68, 68, 0.9); 
-        color: white; 
-        text-align: center; 
-        padding: 8px 10px; 
-        z-index: 999; 
-        font-weight: 600; 
-        letter-spacing: 0.5px; 
-        font-size: 0.8rem; 
+        position: fixed;
+        top: 70px;
+        /* Pushed BELOW the 70px Navbar */
+        left: 0;
+        width: 100%;
+        background: rgba(255, 68, 68, 0.9);
+        color: white;
+        text-align: center;
+        padding: 8px 10px;
+        z-index: 999;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        font-size: 0.8rem;
         backdrop-filter: blur(5px);
         transform: translateY(0);
         animation: slideDown 0.5s ease-out;
     }
 
     /* SOVEREIGN VAULT THEME - PREMIUM STANDARD */
-    body { 
-        background-color: #030303; 
+    body {
+        background-color: #030303;
         font-family: 'Inter', sans-serif;
         color: #e0e0e0;
-        margin-top: 40px; /* Not needed for body, handled by element positioning */
+        margin-top: 40px;
+        /* Not needed for body, handled by element positioning */
     }
 
     /* Adjust Vault Grid to account for banner + navbar */
@@ -53,21 +59,27 @@
         /* Height/margin moved to HTML style attribute using Jinja */
         gap: 0;
         position: relative;
-        z-index: 1; 
+        z-index: 1;
     }
 
-    button, input { font-family: 'Inter', sans-serif; }
+    button,
+    input {
+        font-family: 'Inter', sans-serif;
+    }
+
     /* LEFT: INTEL FEED - PREMIUM GLASS */
     .intel-panel {
-        background: rgba(22, 27, 34, 0.7); /* Matching Tax Agent */
+        background: rgba(22, 27, 34, 0.7);
+        /* Matching Tax Agent */
         backdrop-filter: blur(12px) saturate(180%);
         border-right: 1px solid rgba(255, 255, 255, 0.08);
         padding: 30px;
         display: flex;
         flex-direction: column;
         gap: 25px;
-        box-shadow: 10px 0 30px rgba(0,0,0,0.5);
-        overflow-y: auto; /* Enable Scrolling for Sidebar */
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+        overflow-y: auto;
+        /* Enable Scrolling for Sidebar */
     }
 
     .intel-header {
@@ -83,6 +95,7 @@
         align-items: center;
         gap: 10px;
     }
+
     .intel-header::before {
         content: '';
         width: 8px;
@@ -104,28 +117,44 @@
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         margin-bottom: 10px;
     }
-    .market-ticker:hover { 
-        border-color: rgba(255, 255, 255, 0.2); 
-        background: rgba(255, 255, 255, 0.07); 
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-    }
-    .market-ticker:active { transform: scale(0.98); }
 
-    .ticker-symbol { font-weight: 800; color: #fff; font-size: 1.25rem; letter-spacing: -0.5px; }
-    .ticker-meta { font-size: 0.75rem; color: #999; text-align: right; font-weight: 500; }
-    
-    .signal-bull { 
-        color: #2ecc71; 
-        font-weight: 700; 
+    .market-ticker:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.07);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .market-ticker:active {
+        transform: scale(0.98);
+    }
+
+    .ticker-symbol {
+        font-weight: 800;
+        color: #fff;
+        font-size: 1.25rem;
+        letter-spacing: -0.5px;
+    }
+
+    .ticker-meta {
+        font-size: 0.75rem;
+        color: #999;
+        text-align: right;
+        font-weight: 500;
+    }
+
+    .signal-bull {
+        color: #2ecc71;
+        font-weight: 700;
         background: rgba(46, 204, 113, 0.1);
         padding: 4px 8px;
         border-radius: 4px;
         display: inline-block;
         margin-bottom: 4px;
     }
-    .signal-bear { 
-        color: #ff4444; 
+
+    .signal-bear {
+        color: #ff4444;
         font-weight: 700;
         background: rgba(255, 68, 68, 0.1);
         padding: 4px 8px;
@@ -143,10 +172,11 @@
         opacity: 0;
         transition: opacity 0.5s ease;
     }
+
     .live-news-marker.active {
         opacity: 1;
     }
-    
+
     .live-news-pulse {
         width: 8px;
         height: 8px;
@@ -155,7 +185,7 @@
         box-shadow: 0 0 0 rgba(255, 68, 68, 0.7);
         animation: pulse-red 2s infinite;
     }
-    
+
     .news-tooltip {
         font-size: 0.6rem;
         color: #ff4444;
@@ -167,112 +197,167 @@
     }
 
     @keyframes pulse-red {
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
-        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 68, 68, 0); }
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+        0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+        }
+
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 6px rgba(255, 68, 68, 0);
+        }
+
+        100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+        }
     }
-    
+
     @keyframes flashText {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
     }
 
     /* RIGHT: SENTINEL INTERFACE */
     .sentinel-workspace {
         position: relative;
         /* Matching Tax Agent Opacity */
-        background: rgba(22, 27, 34, 0.7); 
-        backdrop-filter: blur(12px); 
+        background: rgba(22, 27, 34, 0.7);
+        backdrop-filter: blur(12px);
         display: flex;
         flex-direction: column;
         padding: 60px;
-        overflow-y: auto; /* Enable Scrolling for Main Chat Area */
+        overflow-y: auto;
+        /* Enable Scrolling for Main Chat Area */
         overflow-x: hidden;
     }
-    
+
     .sentinel-workspace::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; width: 100%; height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
     }
 
     /* CHAT BUBBLES - PREMIUM */
-    .message-row { display: flex; margin-bottom: 25px; animation: slideIn 0.3s ease-out; }
-    .message-row.user { justify-content: flex-end; }
-    
+    .message-row {
+        display: flex;
+        margin-bottom: 25px;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .message-row.user {
+        justify-content: flex-end;
+    }
+
     .chat-bubble {
         max-width: 70%;
         padding: 18px 24px;
         border-radius: 18px;
         font-size: 0.95rem;
         line-height: 1.6;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
-    
+
     .chat-bubble.user {
         background: #0072ff;
         color: white;
         background: linear-gradient(135deg, #0072ff 0%, #005bb5 100%);
         border-bottom-right-radius: 4px;
     }
-    
+
     .chat-bubble.ai {
-        background: rgba(255,255,255,0.05);
+        background: rgba(255, 255, 255, 0.05);
         color: #eee;
-        border: 1px solid rgba(255,255,255,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-bottom-left-radius: 4px;
         backdrop-filter: blur(10px);
     }
 
     @keyframes slideIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     /* GAVEL MODAL (The Execution Layer) */
     .gavel-modal {
         background: rgba(12, 12, 16, 0.95);
         backdrop-filter: blur(30px);
-        border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 20px 80px rgba(0,0,0,0.9);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 20px 80px rgba(0, 0, 0, 0.9);
         border-radius: 20px;
         width: 650px;
         margin: auto;
         padding: 40px;
-        display: none; /* Hidden by default */
+        display: none;
+        /* Hidden by default */
         flex-direction: column;
         gap: 25px;
         position: relative;
         z-index: 100;
         animation: modalPop 0.4s cubic-bezier(0.19, 1, 0.22, 1);
     }
-    
+
     @keyframes modalPop {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
     }
 
     .verdict-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         padding-bottom: 20px;
     }
-    
-    .certainty-gauge { text-align: right; }
-    .certainty-val { 
-        font-size: 3.5rem; 
-        font-weight: 800; 
+
+    .certainty-gauge {
+        text-align: right;
+    }
+
+    .certainty-val {
+        font-size: 3.5rem;
+        font-weight: 800;
         background: -webkit-linear-gradient(#fff, #999);
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
-        line-height: 1; 
+        line-height: 1;
         letter-spacing: -2px;
     }
-    .certainty-label { font-size: 0.75rem; color: #888; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; margin-top: 5px; }
+
+    .certainty-label {
+        font-size: 0.75rem;
+        color: #888;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-top: 5px;
+    }
 
     .forensic-summary {
         font-family: 'JetBrains Mono', monospace;
@@ -293,10 +378,10 @@
         position: relative;
         overflow: hidden;
         margin-top: 30px;
-        border: 1px solid rgba(255,255,255,0.15);
-        box-shadow: inset 0 2px 15px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: inset 0 2px 15px rgba(0, 0, 0, 0.5);
     }
-    
+
     .slider-track-text {
         position: absolute;
         width: 100%;
@@ -329,17 +414,25 @@
         cursor: grab;
         z-index: 2;
         transition: transform 0.1s;
-        border: 1px solid rgba(255,255,255,0.2);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
-    .slider-knob i { pointer-events: none; font-size: 1.2rem; }
-    .slider-knob:active { cursor: grabbing; transform: scale(0.95); }
+
+    .slider-knob i {
+        pointer-events: none;
+        font-size: 1.2rem;
+    }
+
+    .slider-knob:active {
+        cursor: grabbing;
+        transform: scale(0.95);
+    }
 
     /* SUCCESS STATE */
     .authorized {
         background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
         box-shadow: 0 0 25px rgba(46, 204, 113, 0.6) !important;
     }
-    
+
     .chat-interface {
         flex: 1;
         display: flex;
@@ -347,11 +440,11 @@
         justify-content: flex-end;
         padding-bottom: 20px;
     }
-    
+
     #market-input {
         background: transparent;
         border: none;
-        border-bottom: 1px solid rgba(255,255,255,0.2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         color: #fff;
         padding: 20px 0;
         font-size: 1.5rem;
@@ -360,9 +453,15 @@
         font-family: 'Inter', sans-serif;
         transition: border-color 0.3s;
     }
-    #market-input:focus { border-color: #0072ff; }
-    #market-input::placeholder { color: rgba(255,255,255,0.2); font-style: italic; }
 
+    #market-input:focus {
+        border-color: #0072ff;
+    }
+
+    #market-input::placeholder {
+        color: rgba(255, 255, 255, 0.2);
+        font-style: italic;
+    }
 </style>
 
 <div class="vault-grid">
@@ -370,34 +469,38 @@
         <div>
             <div class="intel-header">
                 Insider Watchlist
-                <a href="{{ url_for('public.client_settings') }}" style="margin-left:auto; color:#666; font-size:1.2rem;" title="Configure Krag Bot">
+                <a href="{{ url_for('public.client_settings') }}"
+                    style="margin-left:auto; color:#666; font-size:1.2rem;" title="Configure Krag Bot">
                     <i class="fas fa-cog"></i>
                 </a>
             </div>
             <!-- PREMIUM DYNAMIC WATCHLIST -->
             <div id="insider-list" style="min-height: 200px;">
                 <!-- Tickers injected via JS -->
-                <div style="font-size: 0.8rem; color: #666; font-style: italic; padding: 10px;">Initializing Global Intel Scan...</div>
+                <div style="font-size: 0.8rem; color: #666; font-style: italic; padding: 10px;">Initializing Global
+                    Intel Scan...</div>
             </div>
         </div>
 
 
         <div>
             <div class="intel-header">Chairman's Log</div>
-            <div id="execution-log" style="font-family: 'JetBrains Mono'; font-size: 0.75rem; color: #666; height: 300px; overflow-y:auto;">
+            <div id="execution-log"
+                style="font-family: 'JetBrains Mono'; font-size: 0.75rem; color: #666; height: 300px; overflow-y:auto;">
                 <!-- Logs go here -->
             </div>
         </div>
-        
+
     </aside>
 
     <main class="sentinel-workspace">
         <div class="chat-interface" id="workspace-chat">
             <!-- Messages Appear Here -->
         </div>
-        
-        <input type="text" id="market-input" placeholder="Issue a Sentinel Command (e.g. 'Analyze PLTR')" onkeypress="handleInput(event)">
-        
+
+        <input type="text" id="market-input" placeholder="Issue a Sentinel Command (e.g. 'Analyze PLTR')"
+            onkeypress="handleInput(event)">
+
         <!-- THE CHAIRMAN'S GAVEL -->
         <div id="gavel-modal" class="gavel-modal">
             <div class="verdict-header">
@@ -412,7 +515,9 @@
             </div>
 
             <div class="forensic-summary" id="order-rationale">
-                [FORENSIC LOCK] Insider buy volume (500k) aligns with Tier-1 narrative ("Defense Contract Renewed"). No conflicting sell-pressure detected. Historical correlation for this pattern is 89%.
+                <span style="color:var(--accent); font-weight:800; letter-spacing:1px;">FORENSIC LOCK</span> Insider buy
+                volume (500k) aligns with Tier-1 narrative ("Defense Contract Renewed"). No conflicting sell-pressure
+                detected. Historical correlation for this pattern is 89%.
             </div>
 
             <div style="display:flex; justify-content:space-between; margin-top:10px;">
@@ -438,9 +543,13 @@
             </div>
 
             <!-- CRYPTOGRAPHIC SIGNATURE DISPLAY -->
-            <div id="crypto-sig-container" style="display:none; margin-top: 15px; border-top: 1px dashed #333; padding-top: 10px;">
-                <div style="font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Sovereign Signature (SHA-256)</div>
-                <div id="crypto-sig-hash" style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: #0072ff; word-break: break-all;">
+            <div id="crypto-sig-container"
+                style="display:none; margin-top: 15px; border-top: 1px dashed #333; padding-top: 10px;">
+                <div
+                    style="font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
+                    Sovereign Signature (SHA-256)</div>
+                <div id="crypto-sig-hash"
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: #0072ff; word-break: break-all;">
                     <!-- Hash inserted here -->
                 </div>
             </div>
@@ -462,7 +571,7 @@
 
         // --- SLIDER LOGIC ---
         knob.addEventListener('mousedown', (e) => {
-            if(knob.classList.contains('authorized')) return;
+            if (knob.classList.contains('authorized')) return;
             isDragging = true;
             startX = e.clientX;
             slider.classList.add('active');
@@ -492,45 +601,41 @@
         async function completeExecution() {
             isDragging = false;
             knob.classList.add('authorized');
-            // ...existing code...
+            knob.innerHTML = '<i class="fas fa-check"></i>';
+            document.getElementById('slider-text').innerText = "ORDER EXECUTED";
+            document.getElementById('slider-text').style.color = "#2ecc71";
+
+            // Extract Data for Signing
+            const ticketId = document.getElementById('ticket-id').innerText;
+            const asset = document.getElementById('order-asset').innerText;
+
+            // Mock signature generation
+            const mockSig = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+
+            document.getElementById('crypto-sig-hash').innerText = mockSig;
+            document.getElementById('crypto-sig-container').style.display = 'block';
+
+            // Send execution signal
+            logEvent(`EXEC Order ${ticketId} Signed by Chairman. Hash: ${mockSig.substring(0, 12)}...`);
+
+            // Keep modal open briefly to show signature
+            setTimeout(() => {
+                document.getElementById('gavel-modal').style.display = 'none';
+                document.getElementById('crypto-sig-container').style.display = 'none';
+
+                // Reset state for repeated triggers
+                knob.classList.remove('authorized');
+                knob.style.transform = `translateX(0px)`;
+                knob.innerHTML = '<i class="fas fa-fingerprint"></i>';
+                document.getElementById('slider-text').innerText = "SLIDE TO AUTHORIZE";
+                document.getElementById('slider-text').style.color = "#555";
+
+                appendChat("System", `Order ${ticketId} authorized. Settlement pending via Arc L1.<br><span style='font-family:monospace; font-size:0.8em; color:#0072ff;'>SIG: ${mockSig}</span>`);
+            }, 3000);
         }
-        // ...existing code...
     });
-        knob.innerHTML = '<i class="fas fa-check"></i>';
-        document.getElementById('slider-text').innerText = "ORDER EXECUTED";
-        document.getElementById('slider-text').style.color = "#2ecc71";
-        
-        // Extract Data for Signing
-        const ticketId = document.getElementById('ticket-id').innerText;
-        const asset = document.getElementById('order-asset').innerText;
-        
-        // Simulate generating signature locally or fetching from backend
-        // In a real app, we'd call an endpoint to sign. For now, let's mock the visual.
-        // Or better, let's hash it locally just for effect or call a simple helper if we had one exposed.
-        // We'll simulate a hash for immediate feedback.
-        const mockSig = "0x" + Array.from({length:64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-        
-        document.getElementById('crypto-sig-hash').innerText = mockSig;
-        document.getElementById('crypto-sig-container').style.display = 'block';
 
-        // Send execution signal to backend
-        logEvent(`[EXEC] Order ${ticketId} Signed by Chairman. Hash: ${mockSig.substring(0,12)}...`);
-        
-        // Keep modal open briefly to show signature
-        setTimeout(() => {
-            document.getElementById('gavel-modal').style.display = 'none';
-            document.getElementById('crypto-sig-container').style.display = 'none';
-            // Always reset slider and modal state for repeated demo triggers
-            knob.classList.remove('authorized');
-            knob.style.transform = `translateX(0px)`;
-            knob.innerHTML = '<i class="fas fa-fingerprint"></i>';
-            document.getElementById('slider-text').innerText = "SLIDE TO AUTHORIZE";
-            document.getElementById('slider-text').style.color = "#555";
-            appendChat("System", `Order ${ticketId} authorized. Settlement pending via Arc L1.<br><span style='font-family:monospace; font-size:0.8em; color:#0072ff;'>SIG: ${mockSig}</span>`);
-        }, 3000);
-    }
 
-    
     // --- CHAT LOGIC ---
     function handleInput(e) {
         if (e.key === 'Enter') {
@@ -543,7 +648,7 @@
     function handleAssetClick(ticker) {
         // Trigger both the Chat Analysis AND the 3D Chart Switch
         submitAnalysis(ticker);
-        
+
         if (window.loadAssetChart) {
             window.loadAssetChart(ticker);
         }
@@ -552,42 +657,42 @@
     async function submitAnalysis(ticker) {
         // Distinguish between pure ticker click vs chat query
         const isTicker = !ticker.includes(' ') && ticker.length < 10;
-        
+
         const msg = isTicker ? `Analyze ${ticker}` : ticker;
         appendChat("Chairman", msg);
-        
+
         let loadingMsg = `<i class="fas fa-circle-notch fa-spin"></i> Retrieving Insider Filings and Market Narratives...`;
         if (isTicker) {
             loadingMsg = `<i class="fas fa-satellite-dish fa-spin"></i> Re-tasking Krag_Bot Satellite for ${ticker} Analysis...`;
         }
-        
+
         appendChat("Sentinel", loadingMsg);
-        
+
         try {
             if (isTicker) {
                 // NEW: Use the Specialized Krag_Bot Endpoint
                 // We assume the input is a valid ticker symbol
                 const res = await fetch(`/api/sentinel/analyze/${ticker}`);
                 if (!res.ok) throw new Error("Satellite Link Unstable (Check Ticker or API)");
-                
+
                 const data = await res.json();
-                
+
                 // Clean up the "Thinking" loader
                 const rows = document.querySelectorAll('.message-row.ai');
-                if(rows.length > 0) rows[rows.length-1].remove();
-                
+                if (rows.length > 0) rows[rows.length - 1].remove();
+
                 // Format the Krag_Bot structured response into MARKDOWN
                 const emoji = data.decision === 'BUY' ? '🟢' : (data.decision === 'SELL' ? '🔴' : '🟡');
                 const markdownContent = `### ${emoji} ${data.decision} \`${data.confidence}% CONFIDENCE\`
 **RSI:** ${data.signals.RSI ? data.signals.RSI.toFixed(2) : 'N/A'} | **Trend:** ${data.signals.Trend || 'N/A'}
 
 ${data.reasoning}`;
-                
+
                 appendChat("Sentinel", markdownContent);
-                
+
                 // Trigger Execution Prompt if high confidence
                 if (data.decision !== 'HOLD' && data.confidence > 60) {
-                     // Create a pseudo-order for the Gavel Modal
+                    // Create a pseudo-order for the Gavel Modal
                     const orderData = {
                         ticket_id: 'KB-' + Date.now().toString().slice(-6),
                         conviction: data.confidence,
@@ -603,23 +708,23 @@ ${data.reasoning}`;
                 // FALLBACK: Generic Chat
                 const res = await fetch('/api/sandbox/chat', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message: msg,
                         demo_id: 'market_sentinel'
                     })
                 });
-                
+
                 const data = await res.json();
-                
+
                 // Clean up the "Thinking" loader
                 const rows = document.querySelectorAll('.message-row.ai');
-                if(rows.length > 0) rows[rows.length-1].remove();
+                if (rows.length > 0) rows[rows.length - 1].remove();
 
                 // Display Response
                 const content = data.response;
                 appendChat("Sentinel", content);
-                
+
                 // CHECK FOR STAGED ORDER (Checking the text output for JSON/Code Block)
                 // Ideally, the mcp_tool output is injected into the response text.
                 // We can parse the text for the "STAGED" JSON block.
@@ -628,21 +733,21 @@ ${data.reasoning}`;
                     const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
                     if (jsonMatch) {
                         const orderData = JSON.parse(jsonMatch[1]);
-                        if(orderData.status === 'STAGED') {
+                        if (orderData.status === 'STAGED') {
                             promptExecution(orderData);
                         }
                     }
                 }
             }
-            
-        } catch(e) {
+
+        } catch (e) {
             // Remove Loader if exists
             const rows = document.querySelectorAll('.message-row.ai');
-            if(rows.length > 0) {
-                const last = rows[rows.length-1];
-                if(last.innerHTML.includes('fa-spin')) last.remove();
+            if (rows.length > 0) {
+                const last = rows[rows.length - 1];
+                if (last.innerHTML.includes('fa-spin')) last.remove();
             }
-            
+
             appendChat("Sentinel", "Forensic Link Failure: " + e.message);
             resetDemoSlider();
         }
@@ -651,7 +756,7 @@ ${data.reasoning}`;
     function appendChat(role, html) {
         const row = document.createElement('div');
         const bubble = document.createElement('div');
-        
+
         // Use new Premium CSS classes
         if (role === 'Chairman') {
             row.className = 'message-row user';
@@ -660,17 +765,17 @@ ${data.reasoning}`;
         } else {
             row.className = 'message-row ai';
             bubble.className = 'chat-bubble ai';
-            
+
             // Premium Header for AI
             const header = `<div style="font-size:0.65rem; color:#888; margin-bottom:10px; text-transform:uppercase; letter-spacing:2px; display:flex; align-items:center; gap:6px;"><span style="width:6px; height:6px; background:#2ecc71; border-radius:50%; box-shadow:0 0 5px #2ecc71;"></span> Market Sentinel</div>`;
-            
+
             // Parse Markdown if available
             bubble.innerHTML = header + (window.marked ? marked.parse(html) : html);
         }
-        
+
         row.appendChild(bubble);
         document.getElementById('workspace-chat').appendChild(row);
-        
+
         // Smooth scroll to bottom
         const container = document.getElementById('workspace-chat');
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
@@ -683,7 +788,7 @@ ${data.reasoning}`;
         document.getElementById('order-asset').innerText = order.ticker;
         document.getElementById('order-action').innerText = order.action;
         document.getElementById('order-val').innerText = "$" + order.total_value.toLocaleString();
-        
+
         // Extract rationale or use generic
         document.getElementById('order-rationale').innerText = `[FORENSIC LOCK] ${order.message} Insider signals reconciled with tier-1 data sources.`;
 
@@ -709,286 +814,286 @@ ${data.reasoning}`;
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- Three.js CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script>
-        // --- 3D MARKET VIZ: THE PULSE (BACKGROUND LAYER) ---
-        const init3DMarketPulse = async () => {
-            const container = document.getElementById('market-pulse-bg'); // TARGET GLOBAL BG
-            if (!container) return;
+<!-- Three.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    // --- 3D MARKET VIZ: THE PULSE (BACKGROUND LAYER) ---
+    const init3DMarketPulse = async () => {
+        const container = document.getElementById('market-pulse-bg'); // TARGET GLOBAL BG
+        if (!container) return;
 
-            // 1. Scene Setup
-            const scene = new THREE.Scene();
-            // Background color - let CSS handle opacity, but set scene transparent
-            // scene.background = new THREE.Color(0x08080a); 
-            // Better: No background color, let CSS body color show
-            
-            // Add subtle fog to blend into distance
-            scene.fog = new THREE.FogExp2(0x050505, 0.015);
+        // 1. Scene Setup
+        const scene = new THREE.Scene();
+        // Background color - let CSS handle opacity, but set scene transparent
+        // scene.background = new THREE.Color(0x08080a); 
+        // Better: No background color, let CSS body color show
 
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 18; // Closer for more impact
-            camera.position.y = 2;  // More direct angle
-            camera.lookAt(0, 0, 0);
+        // Add subtle fog to blend into distance
+        scene.fog = new THREE.FogExp2(0x050505, 0.015);
 
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // Alpha true for transparency
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            container.appendChild(renderer.domElement);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 18; // Closer for more impact
+        camera.position.y = 2;  // More direct angle
+        camera.lookAt(0, 0, 0);
 
-            // 2. Texture Loading (User Image for Background Tiles)
-            const textureLoader = new THREE.TextureLoader();
-            const timestamp = new Date().getTime(); // Cache buster
-            const marketTexture = textureLoader.load(`/static/images/market_pulse.jpeg?v=${timestamp}`, 
-                (tex) => { 
-                    tex.wrapS = THREE.RepeatWrapping;
-                    tex.wrapT = THREE.RepeatWrapping;
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // Alpha true for transparency
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // 2. Texture Loading (User Image for Background Tiles)
+        const textureLoader = new THREE.TextureLoader();
+        const timestamp = new Date().getTime(); // Cache buster
+        const marketTexture = textureLoader.load(`/static/images/market_pulse.jpeg?v=${timestamp}`,
+            (tex) => {
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+            }
+        );
+
+        // 3. Create Elements (A Vast Field of Data Blocks)
+        // Use BoxGeometry but with adjusted UVs for planar mapping
+        const cubes = [];
+        const gridSize = 24; // 24x24 = 576 cubes (Higher density)
+        const cubeSize = 1.5; // Maximize surface area
+        const spacing = 1.52; // Minimize gap to 0.02
+
+        for (let x = 0; x < gridSize; x++) {
+            for (let z = 0; z < gridSize; z++) {
+                // Create unique geometry per cube to support unique UVs
+                const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+
+                // --- UV MAPPING LOGIC START ---
+                // Calculate relative position (0.0 to 1.0)
+                const uMin = x / gridSize;
+                const uMax = (x + 1) / gridSize;
+                const vMin = (gridSize - z - 1) / gridSize; // Flip Z for correct image orientation?
+                const vMax = (gridSize - z) / gridSize;
+
+                // BoxGeometry Face Order (Standard): +x, -x, +y, -y, +z, -z
+                // We primarily care about the TOP face (+y) and maybe FRONT (+z)
+                // Let's map ALL faces to the fragment for simplicity, or just TOP
+
+                const uvs = geometry.attributes.uv;
+                for (let i = 0; i < uvs.count; i++) {
+                    // This is a naive planar map approximation
+                    // Ideally we target specific face indices. 
+                    // Top Face is usually indices 8,9,10,11
+                    // But let's just use the material offset approach as it is cleaner for BoxGeometry
                 }
-            );
 
-            // 3. Create Elements (A Vast Field of Data Blocks)
-            // Use BoxGeometry but with adjusted UVs for planar mapping
-            const cubes = [];
-            const gridSize = 24; // 24x24 = 576 cubes (Higher density)
-            const cubeSize = 1.5; // Maximize surface area
-            const spacing = 1.52; // Minimize gap to 0.02
+                // Better approach: CLONE Material
+                // Use BASIC material for maximum clarity (no reflections)
+                const mat = new THREE.MeshBasicMaterial({
+                    map: marketTexture,
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 1.0
+                });
 
-            for (let x = 0; x < gridSize; x++) {
-                for (let z = 0; z < gridSize; z++) {
-                    // Create unique geometry per cube to support unique UVs
-                    const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-                    
-                    // --- UV MAPPING LOGIC START ---
-                    // Calculate relative position (0.0 to 1.0)
-                    const uMin = x / gridSize;
-                    const uMax = (x + 1) / gridSize;
-                    const vMin = (gridSize - z - 1) / gridSize; // Flip Z for correct image orientation?
-                    const vMax = (gridSize - z) / gridSize;
+                // Use Texture Transform
+                mat.map = marketTexture.clone(); // Must be a clone to have unique offset
+                mat.map.needsUpdate = true;
+                mat.map.repeat.set(1 / gridSize, 1 / gridSize);
+                mat.map.offset.set(x / gridSize, z / gridSize);
 
-                    // BoxGeometry Face Order (Standard): +x, -x, +y, -y, +z, -z
-                    // We primarily care about the TOP face (+y) and maybe FRONT (+z)
-                    // Let's map ALL faces to the fragment for simplicity, or just TOP
-                    
-                    const uvs = geometry.attributes.uv;
-                    for (let i = 0; i < uvs.count; i++) {
-                        // This is a naive planar map approximation
-                        // Ideally we target specific face indices. 
-                        // Top Face is usually indices 8,9,10,11
-                        // But let's just use the material offset approach as it is cleaner for BoxGeometry
-                    }
-                    
-                    // Better approach: CLONE Material
-                    // Use BASIC material for maximum clarity (no reflections)
-                    const mat = new THREE.MeshBasicMaterial({
-                        map: marketTexture,
-                        color: 0xffffff,
-                        transparent: true,
-                        opacity: 1.0
-                    });
-                    
-                    // Use Texture Transform
-                    mat.map = marketTexture.clone(); // Must be a clone to have unique offset
-                    mat.map.needsUpdate = true;
-                    mat.map.repeat.set(1/gridSize, 1/gridSize);
-                    mat.map.offset.set(x/gridSize, z/gridSize);
+                // --- UV MAPPING LOGIC END ---
 
-                    // --- UV MAPPING LOGIC END ---
+                const cube = new THREE.Mesh(geometry, mat);
+                cube.position.x = (x - gridSize / 2) * spacing;
+                cube.position.z = (z - gridSize / 2) * spacing;
 
-                    const cube = new THREE.Mesh(geometry, mat);
-                    cube.position.x = (x - gridSize/2) * spacing;
-                    cube.position.z = (z - gridSize/2) * spacing;
-                    
-                    // Initial State: Submerged
-                    cube.position.y = -10; 
-                    
-                    cube.userData = { 
-                        offset: Math.random() * 100, 
-                        speed: 0.2 + Math.random() * 0.4,
-                        baseX: cube.position.x,
-                        baseZ: cube.position.z
-                    };
-                    
-                    scene.add(cube);
-                    cubes.push(cube);
-                }
+                // Initial State: Submerged
+                cube.position.y = -10;
+
+                cube.userData = {
+                    offset: Math.random() * 100,
+                    speed: 0.2 + Math.random() * 0.4,
+                    baseX: cube.position.x,
+                    baseZ: cube.position.z
+                };
+
+                scene.add(cube);
+                cubes.push(cube);
+            }
+        }
+
+        // 4. Lighting - Dramatic Shadows (Lighting still needed for Chart Mode, but Orbit Mode uses BasicMaterial)
+        const ambientLight = new THREE.AmbientLight(0x444444);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 20, 10);
+        scene.add(directionalLight);
+
+        const moodLight = new THREE.PointLight(0x0072ff, 1, 60);
+        moodLight.position.set(0, 10, 0);
+        scene.add(moodLight);
+
+        // 5. Fetch Market Trend Data
+        let marketTrend = 0;
+        try {
+            const res = await fetch('/api/market/trend');
+            const data = await res.json();
+            marketTrend = data.score || 0;
+            console.log("Global BG Trend:", marketTrend);
+
+            // VISUAL IMPACT BASED ON TREND
+            if (marketTrend > 0) {
+                moodLight.color.setHex(0x00ff88); // Green Light
+                // material.color.setHex(0xddeeff);  // BasicMaterial doesn't react well to tinting if texture is white, but we can try
+                marketTexture.anisotropy = 16; // Sharpen texture
+            } else if (marketTrend < 0) {
+                moodLight.color.setHex(0xff0044); // Red Light
+            }
+        } catch (e) { console.error(e); }
+
+        // 6. Animation Loop
+        let isChartMode = false; // State flag to control animation logic
+
+        const animate = function () {
+            requestAnimationFrame(animate);
+            const time = Date.now() * 0.001;
+
+            if (!isChartMode) {
+                // ORBITING CUBE MODE -> Continuous Rotation
+                scene.rotation.y = time * 0.05;
+
+                cubes.forEach((cube) => {
+                    const sineWave = Math.sin(time * cube.userData.speed + cube.userData.offset);
+
+                    // MARKET DYNAMICS APPLIED TO BACKGROUND
+                    let trendBias = (marketTrend / 5);
+                    let targetY = trendBias + (sineWave * 1.5);
+                    let centerLine = -2;
+
+                    cube.position.y += ((centerLine + targetY) - cube.position.y) * 0.05;
+
+                    let scaleAll = 1 + (Math.abs(marketTrend) / 100);
+                    cube.scale.set(scaleAll, scaleAll, scaleAll);
+                });
+            } else {
+                // CHART MODE -> Static or Slight Sway
+                // Smoothly reset rotation if needed or just drift slowly
+                // For now, let's just do a very slow pan so it looks 3D
+                scene.rotation.y = Math.sin(time * 0.1) * 0.1;
             }
 
-            // 4. Lighting - Dramatic Shadows (Lighting still needed for Chart Mode, but Orbit Mode uses BasicMaterial)
-            const ambientLight = new THREE.AmbientLight(0x444444); 
-            scene.add(ambientLight);
-
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(10, 20, 10);
-            scene.add(directionalLight);
-            
-            const moodLight = new THREE.PointLight(0x0072ff, 1, 60);
-            moodLight.position.set(0, 10, 0);
-            scene.add(moodLight);
-
-            // 5. Fetch Market Trend Data
-            let marketTrend = 0; 
-            try {
-                const res = await fetch('/api/market/trend');
-                const data = await res.json();
-                marketTrend = data.score || 0;
-                console.log("Global BG Trend:", marketTrend);
-                
-                // VISUAL IMPACT BASED ON TREND
-                if (marketTrend > 0) {
-                    moodLight.color.setHex(0x00ff88); // Green Light
-                    // material.color.setHex(0xddeeff);  // BasicMaterial doesn't react well to tinting if texture is white, but we can try
-                    marketTexture.anisotropy = 16; // Sharpen texture
-                } else if (marketTrend < 0) {
-                    moodLight.color.setHex(0xff0044); // Red Light
-                }
-            } catch (e) { console.error(e); }
-
-            // 6. Animation Loop
-            let isChartMode = false; // State flag to control animation logic
-
-            const animate = function () {
-                requestAnimationFrame(animate);
-                const time = Date.now() * 0.001;
-
-                if (!isChartMode) {
-                    // ORBITING CUBE MODE -> Continuous Rotation
-                    scene.rotation.y = time * 0.05;
-
-                    cubes.forEach((cube) => {
-                        const sineWave = Math.sin(time * cube.userData.speed + cube.userData.offset);
-                        
-                        // MARKET DYNAMICS APPLIED TO BACKGROUND
-                        let trendBias = (marketTrend / 5); 
-                        let targetY = trendBias + (sineWave * 1.5);
-                        let centerLine = -2;
-                        
-                        cube.position.y += ((centerLine + targetY) - cube.position.y) * 0.05;
-                        
-                        let scaleAll = 1 + (Math.abs(marketTrend)/100);
-                        cube.scale.set(scaleAll, scaleAll, scaleAll);
-                    });
-                } else {
-                    // CHART MODE -> Static or Slight Sway
-                    // Smoothly reset rotation if needed or just drift slowly
-                    // For now, let's just do a very slow pan so it looks 3D
-                    scene.rotation.y = Math.sin(time * 0.1) * 0.1; 
-                }
-
-                renderer.render(scene, camera);
-            };
-
-            animate();
-            
-            // Handle Resize
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-            
-            // --- EXPOSE API FOR MODE SWITCHING ---
-            window.loadAssetChart = async (ticker) => {
-                isChartMode = true; // Stop the orbiting animation
-                
-                // Remove Orbiting Cubes
-                cubes.forEach(c => {
-                    c.visible = false;
-                });
-                
-                // Fetch History
-                try {
-                    console.log(`Fetching history for ${ticker}...`);
-                    const res = await fetch(`/api/market/history?ticker=${ticker}&period=6mo`);
-                    const json = await res.json();
-                    
-                    if(json.candles) {
-                        drawCandlesticks(json.candles);
-                    }
-                } catch(e) { console.error("Chart Error", e); }
-            };
-
-            let candlesMesh = [];
-            
-            function drawCandlesticks(data) {
-                // ...existing candlestick drawing code...
-                // (Omitted for brevity, using existing functionality)
-                 // Clear old
-                candlesMesh.forEach(m => scene.remove(m));
-                candlesMesh = [];
-                
-                // Calculate Scale
-                const prices = data.map(d => d.close);
-                const maxP = Math.max(...prices);
-                const minP = Math.min(...prices);
-                const range = maxP - minP;
-                
-                // Camera Reset for Chart View
-                // camera.position.set(0, 0, 30);
-                // scene.rotation.y = 0; // Stop rotation or lock to front view?
-                // Let's keep rotation but maybe slower, or reset to 0 for clarity
-                scene.rotation.y = 0;
-                
-                const width = 0.5;
-                const gap = 0.2;
-                const totalWidth = data.length * (width + gap);
-                
-                data.forEach((d, i) => {
-                    // Normalize Height
-                    // Map price range to Y: -10 to +10
-                    const yOpen = ((d.open - minP) / range) * 20 - 10;
-                    const yClose = ((d.close - minP) / range) * 20 - 10;
-                    
-                    const height = Math.abs(yClose - yOpen); 
-                    const yPos = Math.min(yOpen, yClose) + height/2;
-                    
-                    // Color
-                    const isGreen = d.close >= d.open;
-                    const color = isGreen ? 0x00ff88 : 0xff4444;
-                    
-                    // Body
-                    const geo = new THREE.BoxGeometry(width, Math.max(0.1, height), width);
-                    const mat = new THREE.MeshPhongMaterial({ color: color, shininess: 100 });
-                    const mesh = new THREE.Mesh(geo, mat);
-                    
-                    mesh.position.x = (i * (width + gap)) - (totalWidth/2);
-                    mesh.position.y = yPos;
-                    mesh.position.z = 0;
-                    
-                    scene.add(mesh);
-                    candlesMesh.push(mesh);
-                    
-                    // Wick (High/Low)
-                    // Simplified: Just a thin line/box
-                });
-            }
+            renderer.render(scene, camera);
         };
 
-        // --- LIVE INTEL SCANNER & WATCHLIST BUILDER ---
-        async function initIntelScanner() {
-            const tickers = ['NVDA', 'PLTR', 'BTC-USD', 'CL=F', 'GC=F', 'TSLA'];
-            const container = document.getElementById('insider-list');
-            if(!container) return;
+        animate();
 
-            // 1. Build Initial Structure
-            container.innerHTML = ''; // Clear loading text
-            
-            for (const t of tickers) {
-                const div = document.createElement('div');
-                div.className = IS_DEMO_LOCKED ? 'market-ticker demo-locked' : 'market-ticker';
-                div.id = `ticker-${t}`;
-                // DISABLE CLICKING IN DEMO MODE
-                if (!IS_DEMO_LOCKED) {
-                    div.onclick = () => handleAssetClick(t);
-                } else {
-                    div.onclick = () => {
-                        // Optional: Flash the demo banner warning
-                        const banner = document.querySelector('.demo-banner');
-                        // Or just simple alert/toast
-                        alert("DEMO MODE: Automated Flight Path Active. Manual selection disabled.");
-                    };
-                    div.style.cursor = 'not-allowed';
-                    div.style.opacity = '0.7';
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- EXPOSE API FOR MODE SWITCHING ---
+        window.loadAssetChart = async (ticker) => {
+            isChartMode = true; // Stop the orbiting animation
+
+            // Remove Orbiting Cubes
+            cubes.forEach(c => {
+                c.visible = false;
+            });
+
+            // Fetch History
+            try {
+                console.log(`Fetching history for ${ticker}...`);
+                const res = await fetch(`/api/market/history?ticker=${ticker}&period=6mo`);
+                const json = await res.json();
+
+                if (json.candles) {
+                    drawCandlesticks(json.candles);
                 }
-                div.innerHTML = `
+            } catch (e) { console.error("Chart Error", e); }
+        };
+
+        let candlesMesh = [];
+
+        function drawCandlesticks(data) {
+            // ...existing candlestick drawing code...
+            // (Omitted for brevity, using existing functionality)
+            // Clear old
+            candlesMesh.forEach(m => scene.remove(m));
+            candlesMesh = [];
+
+            // Calculate Scale
+            const prices = data.map(d => d.close);
+            const maxP = Math.max(...prices);
+            const minP = Math.min(...prices);
+            const range = maxP - minP;
+
+            // Camera Reset for Chart View
+            // camera.position.set(0, 0, 30);
+            // scene.rotation.y = 0; // Stop rotation or lock to front view?
+            // Let's keep rotation but maybe slower, or reset to 0 for clarity
+            scene.rotation.y = 0;
+
+            const width = 0.5;
+            const gap = 0.2;
+            const totalWidth = data.length * (width + gap);
+
+            data.forEach((d, i) => {
+                // Normalize Height
+                // Map price range to Y: -10 to +10
+                const yOpen = ((d.open - minP) / range) * 20 - 10;
+                const yClose = ((d.close - minP) / range) * 20 - 10;
+
+                const height = Math.abs(yClose - yOpen);
+                const yPos = Math.min(yOpen, yClose) + height / 2;
+
+                // Color
+                const isGreen = d.close >= d.open;
+                const color = isGreen ? 0x00ff88 : 0xff4444;
+
+                // Body
+                const geo = new THREE.BoxGeometry(width, Math.max(0.1, height), width);
+                const mat = new THREE.MeshPhongMaterial({ color: color, shininess: 100 });
+                const mesh = new THREE.Mesh(geo, mat);
+
+                mesh.position.x = (i * (width + gap)) - (totalWidth / 2);
+                mesh.position.y = yPos;
+                mesh.position.z = 0;
+
+                scene.add(mesh);
+                candlesMesh.push(mesh);
+
+                // Wick (High/Low)
+                // Simplified: Just a thin line/box
+            });
+        }
+    };
+
+    // --- LIVE INTEL SCANNER & WATCHLIST BUILDER ---
+    async function initIntelScanner() {
+        const tickers = ['NVDA', 'PLTR', 'BTC-USD', 'CL=F', 'GC=F', 'TSLA'];
+        const container = document.getElementById('insider-list');
+        if (!container) return;
+
+        // 1. Build Initial Structure
+        container.innerHTML = ''; // Clear loading text
+
+        for (const t of tickers) {
+            const div = document.createElement('div');
+            div.className = IS_DEMO_LOCKED ? 'market-ticker demo-locked' : 'market-ticker';
+            div.id = `ticker-${t}`;
+            // DISABLE CLICKING IN DEMO MODE
+            if (!IS_DEMO_LOCKED) {
+                div.onclick = () => handleAssetClick(t);
+            } else {
+                div.onclick = () => {
+                    // Optional: Flash the demo banner warning
+                    const banner = document.querySelector('.demo-banner');
+                    // Or just simple alert/toast
+                    alert("DEMO MODE: Automated Flight Path Active. Manual selection disabled.");
+                };
+                div.style.cursor = 'not-allowed';
+                div.style.opacity = '0.7';
+            }
+            div.innerHTML = `
                     <div>
                         <div class="ticker-symbol">
                             ${t.replace('=F', '')} 
@@ -1004,100 +1109,99 @@ ${data.reasoning}`;
                         <span id="time-${t}"></span>
                     </div>
                 `;
-                container.appendChild(div);
-            }
-
-            // 2. Hydrate with Real Insider Data (One-off)
-            tickers.forEach(async (t) => {
-                try {
-                    const res = await fetch(`/api/insider/${t}`);
-                    const json = await res.json();
-                    
-                    const subEl = document.getElementById(`sub-${t}`);
-                    const sigEl = document.getElementById(`sig-${t}`);
-                    const timeEl = document.getElementById(`time-${t}`);
-                    
-                    if (json.recent_filings && json.recent_filings.length > 0) {
-                        // Use latest
-                        const latest = json.recent_filings[0];
-                        // Simplify text
-                        let desc = latest.description || "Transaction";
-                        if(desc.length > 20) desc = desc.substring(0, 18) + '...';
-                        
-                        subEl.textContent = `${latest.reporting_person}: ${desc}`;
-                        
-                        // Parse Date
-                        if(latest.transaction_date) {
-                             timeEl.textContent = latest.transaction_date.substring(5); // Remove Year for space
-                        }
-
-                        // Determine Sentiment
-                        const isBuy = desc.toLowerCase().includes('buy') || desc.toLowerCase().includes('purchase') 
-                                      || latest.description.includes('Award') || latest.description.includes('Grant');
-                        
-                        if (isBuy) {
-                           sigEl.className = 'signal-bull';
-                           sigEl.textContent = 'ACCUMULATE'; 
-                        } else {
-                           sigEl.className = 'signal-bear';
-                           sigEl.textContent = 'DISTRIBUTION';
-                        }
-                    } else {
-                        // NO DATA -> Check if it's Crypto/Commodity
-                        if(t.includes('-') || t.includes('=')) {
-                            subEl.textContent = 'Forensic Flow Analysis';
-                            sigEl.className = 'signal-bull'; // Default to momentum? Or neutral.
-                            sigEl.textContent = 'MOMENTUM'; 
-                        } else {
-                            subEl.textContent = 'No Recent Inside Activity';
-                            sigEl.className = 'signal-bear'; // Neutral
-                            sigEl.style.backgroundColor = 'rgba(255,255,255,0.1)';
-                            sigEl.style.color = '#999';
-                            sigEl.textContent = 'NEUTRAL';
-                        }
-                    }
-                } catch(e) {
-                    console.warn(`Insider fetch failed for ${t}`, e);
-                    document.getElementById(`sub-${t}`).textContent = 'Intel Stream Unavailable';
-                }
-            });
-
-            // 3. Scan Loop for NEWS (Recurring)
-            setInterval(async () => {
-                const symbol = tickers[Math.floor(Math.random() * tickers.length)];
-                try {
-                    const res = await fetch(`/api/news/${symbol}`);
-                    const data = await res.json();
-                    
-                    if (data.news && data.news.length > 0) {
-                        const newsId = "news-" + symbol;
-                        const marker = document.getElementById(newsId);
-                        if(marker) {
-                            marker.classList.add('active');
-                            setTimeout(() => marker.classList.remove('active'), 8000);
-                        }
-                    }
-                } catch (e) { console.error("Scanner Error", e); }
-            }, 8000); 
+            container.appendChild(div);
         }
 
-        // Initialize when DOM ready
+        // 2. Hydrate with Real Insider Data (One-off)
+        tickers.forEach(async (t) => {
+            try {
+                const res = await fetch(`/api/insider/${t}`);
+                const json = await res.json();
 
-        document.addEventListener('DOMContentLoaded', () => {
-            init3DMarketPulse();
-            initIntelScanner();
-            // --- SANDBOX DEMO AUTO-START ---
-            {% if is_sandbox_demo %}
-            setTimeout(() => {
-                const tickers = ['NVDA', 'PLTR', 'BTC-USD', 'CL=F', 'GC=F', 'TSLA'];
-                const randomTicker = tickers[Math.floor(Math.random() * tickers.length)];
-                // Simulate Human Interaction
-                appendChat("System", `<i class='fas fa-magic'></i> Demo Mode Active: Auto-Selecting Random Asset...");
-                setTimeout(() => {
-                    handleAssetClick(randomTicker);
-                }, 1000);
-            }, 1000);
-            {% endif %}
+                const subEl = document.getElementById(`sub-${t}`);
+                const sigEl = document.getElementById(`sig-${t}`);
+                const timeEl = document.getElementById(`time-${t}`);
+
+                if (json.recent_filings && json.recent_filings.length > 0) {
+                    // Use latest
+                    const latest = json.recent_filings[0];
+                    // Simplify text
+                    let desc = latest.description || "Transaction";
+                    if (desc.length > 20) desc = desc.substring(0, 18) + '...';
+
+                    subEl.textContent = `${latest.reporting_person}: ${desc}`;
+
+                    // Parse Date
+                    if (latest.transaction_date) {
+                        timeEl.textContent = latest.transaction_date.substring(5); // Remove Year for space
+                    }
+
+                    // Determine Sentiment
+                    const isBuy = desc.toLowerCase().includes('buy') || desc.toLowerCase().includes('purchase')
+                        || latest.description.includes('Award') || latest.description.includes('Grant');
+
+                    if (isBuy) {
+                        sigEl.className = 'signal-bull';
+                        sigEl.textContent = 'ACCUMULATE';
+                    } else {
+                        sigEl.className = 'signal-bear';
+                        sigEl.textContent = 'DISTRIBUTION';
+                    }
+                } else {
+                    // NO DATA -> Check if it's Crypto/Commodity
+                    if (t.includes('-') || t.includes('=')) {
+                        subEl.textContent = 'Forensic Flow Analysis';
+                        sigEl.className = 'signal-bull'; // Default to momentum? Or neutral.
+                        sigEl.textContent = 'MOMENTUM';
+                    } else {
+                        subEl.textContent = 'No Recent Inside Activity';
+                        sigEl.className = 'signal-bear'; // Neutral
+                        sigEl.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                        sigEl.style.color = '#999';
+                        sigEl.textContent = 'NEUTRAL';
+                    }
+                }
+            } catch (e) {
+                console.warn(`Insider fetch failed for ${t}`, e);
+                document.getElementById(`sub-${t}`).textContent = 'Intel Stream Unavailable';
+            }
         });
-    </script>
+
+        // 3. Scan Loop for NEWS (Recurring)
+        setInterval(async () => {
+            const symbol = tickers[Math.floor(Math.random() * tickers.length)];
+            try {
+                const res = await fetch(`/api/news/${symbol}`);
+                const data = await res.json();
+
+                if (data.news && data.news.length > 0) {
+                    const newsId = "news-" + symbol;
+                    const marker = document.getElementById(newsId);
+                    if (marker) {
+                        marker.classList.add('active');
+                        setTimeout(() => marker.classList.remove('active'), 8000);
+                    }
+                }
+            } catch (e) { console.error("Scanner Error", e); }
+        }, 8000);
+    }
+
+    // Initialize when DOM ready
+
+    document.addEventListener('DOMContentLoaded', () => {
+        init3DMarketPulse();
+        initIntelScanner();
+        // --- SANDBOX DEMO AUTO-START ---
+        {% if is_sandbox_demo %}
+        setTimeout(() => {
+            const tickers = ['NVDA', 'PLTR', 'BTC-USD', 'CL=F', 'GC=F', 'TSLA'];
+            const randomTicker = tickers[Math.floor(Math.random() * tickers.length)];
+            appendChat("System", `<i class='fas fa-magic'></i> Demo Mode Active: Auto-Selecting Random Asset...`);
+            setTimeout(() => {
+                handleAssetClick(randomTicker);
+            }, 1000);
+        }, 1000);
+        {% endif %}
+    });
+</script>
 {% endblock %}

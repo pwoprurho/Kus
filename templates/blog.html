@@ -6,21 +6,22 @@
 <style>
     .blog-header {
         text-align: center;
-        margin-top: 120px;
+        margin-top: 100px;
         margin-bottom: 60px;
         position: relative;
         z-index: 10;
     }
-    
+
     .blog-header h1 {
         font-size: 3rem;
         background: -webkit-linear-gradient(#fff, #888);
         -webkit-background-clip: text;
-        background-clip: text; /* Standard property */
+        background-clip: text;
+        /* Standard property */
         -webkit-text-fill-color: transparent;
         margin-bottom: 15px;
     }
-    
+
     .blog-header p {
         color: #0072ff;
         font-family: 'Inter', sans-serif;
@@ -139,7 +140,7 @@
         color: #fff;
         border-bottom-color: #fff;
     }
-    
+
     #no-results {
         display: none;
         grid-column: 1 / -1;
@@ -163,30 +164,31 @@
 
 <div class="blog-grid fade-in">
     {% if posts %}
-        {% for post in posts %}
-        <div class="blog-card">
-            <div class="card-body">
-                <div class="card-date">{{ post.published_at.split('T')[0] if post.published_at else 'Draft' }}</div>
-                <h3 class="card-title">{{ post.title }}</h3>
-                <p class="card-summary">{{ post.summary }}</p>
-                <a href="{{ url_for('public.blog_post', post_id=post.id) }}" class="btn-read">Read Declassified Briefing &rarr;</a>
-            </div>
+    {% for post in posts %}
+    <div class="blog-card">
+        <div class="card-body">
+            <div class="card-date">{{ post.published_at.split('T')[0] if post.published_at else 'Draft' }}</div>
+            <h3 class="card-title">{{ post.title }}</h3>
+            <p class="card-summary">{{ post.summary }}</p>
+            <a href="{{ url_for('public.blog_post', post_id=post.id) }}" class="btn-read">Read Declassified Briefing
+                &rarr;</a>
         </div>
-        {% endfor %}
-        <div id="no-results">No briefings match your query.</div>
+    </div>
+    {% endfor %}
+    <div id="no-results">No briefings match your query.</div>
     {% else %}
-        <div style="grid-column: 1/-1; text-align: center; color: #666; padding: 50px;">
-            <h3>System Standby</h3>
-            <p>No intelligence briefings have been declassified yet.</p>
-        </div>
+    <div style="grid-column: 1/-1; text-align: center; color: #666; padding: 50px;">
+        <h3>System Standby</h3>
+        <p>No intelligence briefings have been declassified yet.</p>
+    </div>
     {% endif %}
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('blog-search');
         if (searchInput) {
-            searchInput.addEventListener('input', function(e) {
+            searchInput.addEventListener('input', function (e) {
                 const searchTerm = e.target.value.toLowerCase();
                 const cards = document.querySelectorAll('.blog-card');
                 let hasVisible = false;
@@ -194,7 +196,7 @@
                 cards.forEach(card => {
                     const title = card.querySelector('.card-title').innerText.toLowerCase();
                     const summary = card.querySelector('.card-summary').innerText.toLowerCase();
-                    
+
                     if (title.includes(searchTerm) || summary.includes(searchTerm)) {
                         card.style.display = 'flex';
                         hasVisible = true;

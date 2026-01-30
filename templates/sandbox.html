@@ -7,105 +7,131 @@
 
 <style>
     /* GLOBAL LAYOUT & TYPOGRAPHY */
-    header, footer, #chat-widget-container { display: none !important; }
-    body { 
-        background-color: #050505; 
-        color: #e0e0e0; 
-        font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-        overflow: hidden; 
-        height: 100vh; 
-        margin: 0; 
+    header,
+    footer,
+    #chat-widget-container {
+        display: none !important;
+    }
+
+    body {
+        background-color: #050505;
+        color: #e0e0e0;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        height: 100vh;
+        margin: 0;
         font-size: 14px;
         line-height: 1.5;
     }
 
     /* BACKGROUND & CANVAS */
-    #canvas-container { 
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        z-index: 0; pointer-events: none; 
-        background: radial-gradient(circle at 50% 50%, #151520 0%, #000000 80%); 
+    #canvas-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+        background: radial-gradient(circle at 50% 50%, #151520 0%, #000000 80%);
     }
 
     /* MAIN GRID LAYOUT */
-    .sandbox-grid { 
-        position: relative; 
-        z-index: 10; 
-        display: grid; 
-        grid-template-columns: 320px 1fr 350px; 
-        height: 100vh; 
-        width: 100vw; 
-        overflow: hidden; 
+    .sandbox-grid {
+        position: relative;
+        z-index: 10;
+        display: grid;
+        grid-template-columns: 320px 1fr 350px;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
     }
-    
+
     /* GLASS PANELS (Modern Glassmorphism) */
-    .glass-panel { 
-        background: rgba(10, 10, 14, 0.65); 
-        backdrop-filter: blur(20px); 
+    .glass-panel {
+        background: rgba(10, 10, 14, 0.65);
+        backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        display: flex; 
-        flex-direction: column; 
-        border-right: 1px solid rgba(255, 255, 255, 0.06); 
-        border-left: 1px solid rgba(255, 255, 255, 0.06); 
-        height: 100%; 
-        overflow: hidden; 
-        min-height: 0; 
-        box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid rgba(255, 255, 255, 0.06);
+        border-left: 1px solid rgba(255, 255, 255, 0.06);
+        height: 100%;
+        overflow: hidden;
+        min-height: 0;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
     }
 
     /* SIDEBAR LEFT styling */
-    .sidebar-left { padding: 25px; gap: 20px; }
-    
-    .btn-back { 
-        display: inline-flex; 
-        align-items: center; 
-        gap: 8px; 
-        color: #888; 
-        text-decoration: none; 
-        font-size: 0.7rem; 
+    .sidebar-left {
+        padding: 25px;
+        gap: 20px;
+    }
+
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #888;
+        text-decoration: none;
+        font-size: 0.7rem;
         font-weight: 600;
-        text-transform: uppercase; 
-        letter-spacing: 1.2px; 
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
         padding: 8px 0;
-        transition: all 0.2s ease; 
-        margin-bottom: 5px; 
+        transition: all 0.2s ease;
+        margin-bottom: 5px;
         opacity: 0.7;
     }
-    .btn-back:hover { color: #fff; opacity: 1; transform: translateX(-2px); }
+
+    .btn-back:hover {
+        color: #fff;
+        opacity: 1;
+        transform: translateX(-2px);
+    }
 
     /* METRIC CARDS (Replaces boxy look) */
-    .metric-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
-    .stat-card { 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
+    .metric-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
+    }
+
+    .stat-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         padding: 12px 0;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
-    .stat-label { 
-        font-size: 0.7rem; 
-        color: #6c7a89; 
-        font-weight: 600; 
-        letter-spacing: 0.5px; 
-        text-transform: uppercase; 
+
+    .stat-label {
+        font-size: 0.7rem;
+        color: #6c7a89;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
     }
-    .stat-value { 
-        font-size: 1.1rem; 
-        font-weight: 600; 
-        color: #fff; 
+
+    .stat-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #fff;
         font-family: 'Inter', sans-serif;
         text-shadow: 0 0 10px rgba(0, 114, 255, 0.3);
     }
-    
-    .status-indicator { 
-        display: inline-flex; 
-        align-items: center; 
-        gap: 6px; 
-        font-size: 0.75rem; 
-        font-weight: 600; 
-        padding: 4px 10px; 
-        border-radius: 12px; 
-        background: rgba(46, 204, 113, 0.1); 
-        color: #2ecc71; 
+
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 12px;
+        background: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
         border: 1px solid rgba(46, 204, 113, 0.2);
     }
 
@@ -120,7 +146,7 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
         overflow: hidden;
     }
-    
+
     .thought-summary {
         padding: 8px 12px;
         cursor: pointer;
@@ -134,85 +160,138 @@
         font-family: 'Inter', sans-serif;
         font-weight: 500;
     }
-    
+
     .thought-summary:hover {
         color: #58a6ff;
-        background: rgba(255,255,255,0.02);
+        background: rgba(255, 255, 255, 0.02);
     }
-    
+
     .thought-content {
         padding: 10px 12px;
         border-top: 1px solid rgba(255, 255, 255, 0.05);
         font-family: 'JetBrains Mono', 'Fira Code', monospace;
         font-size: 0.8rem;
-        color: #9cdcfe; /* VS Code variable color */
+        color: #9cdcfe;
+        /* VS Code variable color */
         background: rgba(0, 0, 0, 0.2);
         white-space: pre-wrap;
         line-height: 1.5;
     }
-    .thought-line strong { color: #fff; font-weight: 500; }
+
+    .thought-line strong {
+        color: #fff;
+        font-weight: 500;
+    }
 
     /* CENTER CHAT AREA */
-    .main-terminal { position: relative; display: block; background: transparent; height: 100%; overflow: hidden; }
-    #chat-container { 
-        position: absolute; top: 0; left: 0; right: 0; bottom: 25%; /* Match input area */
-        overflow-y: auto; 
-        padding: 40px 8% 20px; 
-        display: flex; 
-        flex-direction: column; 
-        gap: 20px; 
-        scrollbar-width: thin;
-        scrollbar-color: rgba(255,255,255,0.1) transparent;
+    .main-terminal {
+        position: relative;
+        display: block;
+        background: transparent;
+        height: 100%;
+        overflow: hidden;
     }
-    
+
+    #chat-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 25%;
+        /* Match input area */
+        overflow-y: auto;
+        padding: 40px 8% 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    }
+
     /* BUBBLE STYLING (Refined to match Tax Agent Client) */
-    .bubble { 
-        max-width: 80%; 
+    .bubble {
+        max-width: 80%;
         padding: 1rem 1.25rem;
-        border-radius: 12px; 
-        font-size: 0.95rem; 
-        line-height: 1.5; 
+        border-radius: 12px;
+        font-size: 0.95rem;
+        line-height: 1.5;
         position: relative;
         margin-bottom: 10px;
     }
-    .ai-bubble { 
-        align-self: flex-start; 
-        background: rgba(255, 255, 255, 0.08); 
-        color: #e6edf3; 
+
+    .ai-bubble {
+        align-self: flex-start;
+        background: rgba(255, 255, 255, 0.08);
+        color: #e6edf3;
         border-bottom-left-radius: 2px;
         border: 1px solid rgba(255, 255, 255, 0.05);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
-    .user-bubble { 
-        align-self: flex-end; 
-        background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%); 
-        color: white; 
+
+    .user-bubble {
+        align-self: flex-end;
+        background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%);
+        color: white;
         border-bottom-right-radius: 2px;
         font-weight: 400;
         box-shadow: 0 4px 15px rgba(0, 114, 255, 0.3);
     }
-    .user-bubble strong { color: #fff; }
+
+    .user-bubble strong {
+        color: #fff;
+    }
 
     /* MARKDOWN CONTENT STYLING (Matches Tax Agent) */
-    .ai-bubble h1, .ai-bubble h2, .ai-bubble h3 { 
-        color: #fff; margin-top: 0.8rem; margin-bottom: 0.5rem; font-weight: 600; 
+    .ai-bubble h1,
+    .ai-bubble h2,
+    .ai-bubble h3 {
+        color: #fff;
+        margin-top: 0.8rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
     }
-    .ai-bubble h3 { font-size: 1.1em; }
-    .ai-bubble p { margin-bottom: 0.8rem; }
-    .ai-bubble ul, .ai-bubble ol { padding-left: 1.5rem; margin-bottom: 0.8rem; }
-    .ai-bubble li { margin-bottom: 0.25rem; }
-    .ai-bubble strong { color: #fff; font-weight: 600; }
-    .ai-bubble a { color: #58a6ff; text-decoration: none; }
-    .ai-bubble a:hover { text-decoration: underline; }
+
+    .ai-bubble h3 {
+        font-size: 1.1em;
+    }
+
+    .ai-bubble p {
+        margin-bottom: 0.8rem;
+    }
+
+    .ai-bubble ul,
+    .ai-bubble ol {
+        padding-left: 1.5rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .ai-bubble li {
+        margin-bottom: 0.25rem;
+    }
+
+    .ai-bubble strong {
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .ai-bubble a {
+        color: #58a6ff;
+        text-decoration: none;
+    }
+
+    .ai-bubble a:hover {
+        text-decoration: underline;
+    }
 
     .ai-bubble pre {
-        background: #161b22; 
-        border: 1px solid rgba(255,255,255,0.1);
+        background: #161b22;
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 6px;
         padding: 10px;
         overflow-x: auto;
         margin-bottom: 1rem;
     }
+
     .ai-bubble code {
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.85em;
@@ -221,109 +300,159 @@
         border-radius: 4px;
         color: #e6edf3;
     }
-    .ai-bubble pre code { background: transparent; padding: 0; }
 
-    .ai-bubble table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.9em; }
-    .ai-bubble th, .ai-bubble td { padding: 6px 12px; border: 1px solid rgba(255,255,255,0.1); }
-    .ai-bubble th { background: rgba(255,255,255,0.05); text-align: left; }
-    .ai-bubble tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+    .ai-bubble pre code {
+        background: transparent;
+        padding: 0;
+    }
+
+    .ai-bubble table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+        font-size: 0.9em;
+    }
+
+    .ai-bubble th,
+    .ai-bubble td {
+        padding: 6px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .ai-bubble th {
+        background: rgba(255, 255, 255, 0.05);
+        text-align: left;
+    }
+
+    .ai-bubble tr:nth-child(even) {
+        background: rgba(255, 255, 255, 0.02);
+    }
 
     /* SYSTEM ALERTS */
-    .system-alert-bubble { 
-        align-self: center; 
+    .system-alert-bubble {
+        align-self: center;
         width: auto;
         min-width: 300px;
         max-width: 90%;
-        background: rgba(255, 68, 68, 0.08); 
-        border: 1px solid rgba(255, 68, 68, 0.2); 
-        color: #ff6b6b; 
-        padding: 12px 20px; 
-        font-family: 'JetBrains Mono', monospace; 
-        font-size: 0.8rem; 
-        text-align: center; 
-        border-radius: 8px; 
-        margin: 15px 0; 
+        background: rgba(255, 68, 68, 0.08);
+        border: 1px solid rgba(255, 68, 68, 0.2);
+        color: #ff6b6b;
+        padding: 12px 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        text-align: center;
+        border-radius: 8px;
+        margin: 15px 0;
         backdrop-filter: blur(4px);
     }
-    .system-alert-bubble.processing { 
-        background: rgba(0, 114, 255, 0.08); 
-        border-color: rgba(0, 114, 255, 0.3); 
-        color: #4facfe; 
+
+    .system-alert-bubble.processing {
+        background: rgba(0, 114, 255, 0.08);
+        border-color: rgba(0, 114, 255, 0.3);
+        color: #4facfe;
     }
-    .system-alert-bubble.resolved { 
-        background: rgba(0, 255, 136, 0.15); 
-        border-color: #00ff88; 
-        color: #00ff88; 
-        text-align: center; 
+
+    .system-alert-bubble.resolved {
+        background: rgba(0, 255, 136, 0.15);
+        border-color: #00ff88;
+        color: #00ff88;
+        text-align: center;
         box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
     }
-    
+
     /* MODERN INPUT AREA (Floating) */
-    .input-wrapper { 
+    .input-wrapper {
         position: absolute;
         bottom: 20%;
         left: 50%;
         transform: translateX(-50%);
-        width: 80%; 
+        width: 80%;
         max-width: 800px;
-        background: rgba(15, 15, 20, 0.9); 
+        background: rgba(15, 15, 20, 0.9);
         backdrop-filter: blur(16px);
-        border: 1px solid rgba(255,255,255,0.08); 
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 100px;
-        padding: 6px 6px 6px 25px; 
-        display: flex; 
-        align-items: center; 
-        gap: 12px; 
-        z-index: 20; 
-        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        padding: 6px 6px 6px 25px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 20;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     }
-    .input-wrapper input { 
-        flex: 1; 
-        background: transparent; 
-        border: none; 
-        color: #fff; 
-        outline: none; 
+
+    .input-wrapper input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #fff;
+        outline: none;
         font-size: 1rem;
         padding: 10px 0;
         font-family: 'Inter', sans-serif;
     }
-    .input-wrapper input::placeholder { color: #555; font-weight: 400; }
-    
-    .input-wrapper button { 
-        width: 42px; height: 42px; 
-        border-radius: 50%; 
-        background: rgba(255,255,255,0.05); 
-        border: 1px solid rgba(255,255,255,0.05);
-        color: #0072ff; 
-        cursor: pointer; 
-        display: flex; align-items: center; justify-content: center;
+
+    .input-wrapper input::placeholder {
+        color: #555;
+        font-weight: 400;
+    }
+
+    .input-wrapper button {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        color: #0072ff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
-    .input-wrapper button:hover { background: #0072ff; color: #fff; transform: translateY(-2px); }
-    .input-wrapper button:active { transform: translateY(0); }
+
+    .input-wrapper button:hover {
+        background: #0072ff;
+        color: #fff;
+        transform: translateY(-2px);
+    }
+
+    .input-wrapper button:active {
+        transform: translateY(0);
+    }
 
     /* LOGS SIDEBAR */
-    .sidebar-right { 
-        padding: 0; 
-        font-family: 'JetBrains Mono', 'Fira Code', monospace; 
-        font-size: 11px; 
+    .sidebar-right {
+        padding: 0;
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 11px;
         background: rgba(5, 5, 8, 0.7);
     }
+
     .log-header {
         padding: 15px 20px;
-        border-bottom: 1px solid rgba(255,255,255,0.06);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         font-size: 0.7rem;
         font-weight: 700;
         color: #888;
         letter-spacing: 1px;
         text-transform: uppercase;
-        display: flex; justify-content: space-between; align-items: center;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
-    #activity-log { height: 100%; overflow-y: auto; display: flex; flex-direction: column-reverse; padding: 10px 0; justify-content: flex-end; }
-    
-    .log-entry { 
-        padding: 4px 15px; 
-        border-bottom: 1px solid rgba(255,255,255,0.02); 
+
+    #activity-log {
+        height: 100%;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column-reverse;
+        padding: 10px 0;
+        justify-content: flex-end;
+    }
+
+    .log-entry {
+        padding: 4px 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.02);
         color: #888;
         display: flex;
         gap: 12px;
@@ -332,6 +461,7 @@
         line-height: 1.4;
         min-height: min-content;
     }
+
     .badge {
         display: inline-block;
         padding: 0 4px;
@@ -342,38 +472,80 @@
         text-transform: uppercase;
         vertical-align: middle;
     }
-    .log-ts { 
-        color: #555; 
-        font-size: 0.7rem; 
-        white-space: nowrap; 
-        width: 60px; 
+
+    .log-ts {
+        color: #555;
+        font-size: 0.7rem;
+        white-space: nowrap;
+        width: 60px;
         flex-shrink: 0;
         text-align: right;
         font-variant-numeric: tabular-nums;
     }
-    .log-entry:hover { background: rgba(255,255,255,0.02); }
-    
-    .log-ts { color: #444; font-size: 10px; }
-    .log-content { color: #888; }
-    .log-entry.critical .log-content { color: #ff5555; }
-    .log-entry.warning .log-content { color: #f1c40f; }
-    .log-entry.info .log-content { color: #3498db; }
 
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-    
+    .log-entry:hover {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .log-ts {
+        color: #444;
+        font-size: 10px;
+    }
+
+    .log-content {
+        color: #888;
+    }
+
+    .log-entry.critical .log-content {
+        color: #ff5555;
+    }
+
+    .log-entry.warning .log-content {
+        color: #f1c40f;
+    }
+
+    .log-entry.info .log-content {
+        color: #3498db;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     /* Scrollbars */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
 </style>
 
 <div id="canvas-container"><canvas id="three-canvas"></canvas></div>
 
 <div class="sandbox-grid">
     <aside class="sidebar-left glass-panel">
-        <a href="{{ url_for('public.audit_request') }}" class="btn-back"><i class="fas fa-chevron-left"></i> EXIT SIMULATION</a>
-        
+        <a href="{{ url_for('public.audit_request') }}" class="btn-back"><i class="fas fa-chevron-left"></i> EXIT
+            SIMULATION</a>
+
         <div class="metric-group">
             <div class="stat-card">
                 <div class="stat-label">Target Asset</div>
@@ -384,10 +556,11 @@
                 <div class="stat-label">Security Score</div>
                 <div style="text-align: right;">
                     <div class="stat-value" id="v-score">100</div>
-                    <div id="security-status-text" style="font-size: 0.65rem; color: #2ecc71; letter-spacing: 1px;">SECURED</div>
+                    <div id="security-status-text" style="font-size: 0.65rem; color: #2ecc71; letter-spacing: 1px;">
+                        SECURED</div>
                 </div>
             </div>
-            
+
             <div class="stat-card">
                 <div class="stat-label">Threat Level</div>
                 <div class="stat-value" id="threat-level" style="color:#2ecc71;">LOW</div>
@@ -395,12 +568,14 @@
 
             <div class="stat-card">
                 <div class="stat-label">Latency</div>
-                <div class="stat-value" id="latency-text" style="color:#f1c40f; font-family:'JetBrains Mono', monospace; font-size: 0.9rem;">12ms</div>
+                <div class="stat-value" id="latency-text"
+                    style="color:#f1c40f; font-family:'JetBrains Mono', monospace; font-size: 0.9rem;">12ms</div>
             </div>
 
             <div class="stat-card" style="border-bottom: none;">
                 <div class="stat-label">Defense Protocol</div>
-                <div class="status-indicator" style="background: rgba(0, 114, 255, 0.1); color: #4facfe; border-color: rgba(0, 114, 255, 0.2);">
+                <div class="status-indicator"
+                    style="background: rgba(0, 114, 255, 0.1); color: #4facfe; border-color: rgba(0, 114, 255, 0.2);">
                     <i class="fas fa-shield-alt"></i> PROACTIVE
                 </div>
             </div>
@@ -415,7 +590,8 @@
             <button onclick="openScheduler()" title="Schedule Review"><i class="far fa-calendar-alt"></i></button>
             <input type="text" id="sandbox-input" placeholder="Type a directive..." autocomplete="off">
             <button onclick="toggleChatView()" title="Expand View"><i class="fas fa-expand-alt"></i></button>
-            <button onclick="sendDirective()" style="background: #0072ff; color: white;"><i class="fas fa-paper-plane"></i></button>
+            <button onclick="sendDirective()" style="background: #0072ff; color: white;"><i
+                    class="fas fa-paper-plane"></i></button>
         </div>
     </main>
 
@@ -438,9 +614,9 @@
     let currentMode = 'proactive';
 
     // Normalize Identity Early
-    if(rawDemo === 'robotics' || rawDemo === 'surge_vla') {
+    if (rawDemo === 'robotics' || rawDemo === 'surge_vla') {
         backendDemoId = 'surge_vla';
-        rawDemo = 'surge_vla'; 
+        rawDemo = 'surge_vla';
     } else if (rawDemo === 'sentinel' || rawDemo === 'sentinel_monitor') {
         backendDemoId = 'sentinel_monitor';
     }
@@ -456,19 +632,19 @@
         }
 
         try {
-            renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: true});
+            renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             renderer.outputEncoding = THREE.sRGBEncoding;
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
             renderer.physicallyCorrectLights = true;
-            
+
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.z = 5;
             scene.background = new THREE.Color(0x050507);
-            
+
             // Lighting
             const hemi = new THREE.HemisphereLight(0x8899ff, 0x222222, 0.6);
             scene.add(hemi);
@@ -483,25 +659,25 @@
             rim2.position.set(4, 2, -6); scene.add(rim2);
 
             // Ground
-            const groundMat = new THREE.MeshStandardMaterial({color: 0x060606, metalness: 0.0, roughness: 0.7});
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x060606, metalness: 0.0, roughness: 0.7 });
             const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), groundMat);
-            ground.rotation.x = -Math.PI/2;
+            ground.rotation.x = -Math.PI / 2;
             ground.position.y = -1.5;
             ground.receiveShadow = true;
             scene.add(ground);
-            
+
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
-            
+
             // Build Initial Asset
             buildAsset();
 
             // Start Animation Loop
             animate();
-            
+
         } catch (e) {
             console.error("Critical 3D Initialization Failure:", e);
         }
@@ -515,15 +691,15 @@
 
         if (rawDemo === 'robotics' || rawDemo === 'surge_vla') {
             const content = new THREE.Group();
-            
+
             // Scaled Down 50%
             content.scale.set(0.5, 0.5, 0.5);
             content.position.y = -0.75; // Lower to keep base on ground (-1.5)
-            
+
             // --- INDUSTRIAL ROBOTIC ARM (Crane/Kuka style) ---
             // 1. Base
             const baseGeo = new THREE.CylinderGeometry(1.2, 1.4, 0.4, 32);
-            const baseMat = new THREE.MeshStandardMaterial({color: 0x333333, metalness: 0.8, roughness: 0.4});
+            const baseMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.4 });
             const base = new THREE.Mesh(baseGeo, baseMat);
             base.position.y = -1.3;
             base.receiveShadow = true;
@@ -531,7 +707,7 @@
 
             // 2. Turret (Rotates Y)
             const turretGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.8, 32);
-            const orangeMat = new THREE.MeshStandardMaterial({color: 0xffaa00, metalness: 0.6, roughness: 0.3}); // Industrial Orange
+            const orangeMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, metalness: 0.6, roughness: 0.3 }); // Industrial Orange
             const turret = new THREE.Mesh(turretGeo, orangeMat);
             turret.position.y = -0.7;
             turret.castShadow = true;
@@ -541,7 +717,7 @@
             const arm1Group = new THREE.Group();
             arm1Group.position.set(0, -0.5, 0); // Pivot point
             arm1Group.rotation.z = -0.2; // Initial pose
-            
+
             const arm1Geo = new THREE.BoxGeometry(0.6, 2.5, 0.6);
             const arm1 = new THREE.Mesh(arm1Geo, orangeMat);
             arm1.position.y = 1.25; // Offset from pivot
@@ -550,7 +726,7 @@
 
             // Joint decoration
             const joint1 = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.8, 16), baseMat);
-            joint1.rotation.x = Math.PI/2;
+            joint1.rotation.x = Math.PI / 2;
             joint1.position.y = 0;
             arm1Group.add(joint1);
 
@@ -569,7 +745,7 @@
 
             // Elbow Joint
             const joint2 = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.7, 16), baseMat);
-            joint2.rotation.x = Math.PI/2;
+            joint2.rotation.x = Math.PI / 2;
             joint2.position.y = 0;
             arm2Group.add(joint2);
 
@@ -577,33 +753,33 @@
 
             // 5. End Effector / Claw
             const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.4, 16), baseMat);
-            wrist.rotation.z = Math.PI/2;
+            wrist.rotation.z = Math.PI / 2;
             wrist.position.y = 2.1;
             arm2Group.add(wrist);
 
-            const claw1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 0.1), new THREE.MeshStandardMaterial({color: 0x999999}));
+            const claw1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 0.1), new THREE.MeshStandardMaterial({ color: 0x999999 }));
             claw1.position.set(0, 0.4, 0.15);
             wrist.add(claw1);
-            const claw2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 0.1), new THREE.MeshStandardMaterial({color: 0x999999}));
+            const claw2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 0.1), new THREE.MeshStandardMaterial({ color: 0x999999 }));
             claw2.position.set(0, 0.4, -0.15);
             wrist.add(claw2);
-            
+
             group.add(content);
-            
+
             // Animation Hooks (Must point to the created objects inside content)
             group.userData = { isRobot: true, arm1: arm1Group, arm2: arm2Group, wrist: wrist, turret: turret };
 
         } else if (rawDemo === 'sentinel' || rawDemo === 'sentinel_monitor') {
             const content = new THREE.Group();
-            
+
             // Scaled Down 50%
             content.scale.set(0.5, 0.5, 0.5);
             content.position.y = -0.75; // Lower to keep base on ground (-1.5)
-            
+
             // --- SENTINEL TOWER (Blue Lattice + Orange Base + Green Waves) ---
-            
+
             // 1. Base Plate (Orange)
-            const baseMat = new THREE.MeshStandardMaterial({color: 0xff8822, metalness: 0.4, roughness: 0.6});
+            const baseMat = new THREE.MeshStandardMaterial({ color: 0xff8822, metalness: 0.4, roughness: 0.6 });
             const base = new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 3), baseMat);
             base.position.y = -1.3;
             base.castShadow = true; base.receiveShadow = true;
@@ -613,13 +789,13 @@
             // Using a wireframe geometry for the lattice look
             const towerHeight = 5.0;
             const towerGeo = new THREE.CylinderGeometry(0.6, 1.2, towerHeight, 4, 8, true);
-            const towerMat = new THREE.MeshBasicMaterial({color: 0x4466ff, wireframe: true, opacity: 0.8, transparent: true});
+            const towerMat = new THREE.MeshBasicMaterial({ color: 0x4466ff, wireframe: true, opacity: 0.8, transparent: true });
             const tower = new THREE.Mesh(towerGeo, towerMat);
             tower.position.y = 1.2;
             // Add a solid inner core for volume
             const core = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.4, 0.8, towerHeight, 4, 1), 
-                new THREE.MeshStandardMaterial({color: 0x001144, roughness: 0.2, metalness: 0.8, transparent: true, opacity: 0.9})
+                new THREE.CylinderGeometry(0.4, 0.8, towerHeight, 4, 1),
+                new THREE.MeshStandardMaterial({ color: 0x001144, roughness: 0.2, metalness: 0.8, transparent: true, opacity: 0.9 })
             );
             core.position.y = 0;
             tower.add(core); // Core inside tower
@@ -627,31 +803,31 @@
 
             // 3. Top Cap (Orange)
             const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.3, 32), baseMat);
-            cap.position.y = towerHeight/2 + 0.15;
+            cap.position.y = towerHeight / 2 + 0.15;
             tower.add(cap);
-            const dome = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16, 0, Math.PI * 2, 0, Math.PI/2), baseMat);
+            const dome = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), baseMat);
             dome.position.y = 0.15;
             cap.add(dome);
 
             // 4. Signal Emitters (Green Waves) - Will animate
             group.userData = { isSentinel: true, waves: [] };
             const waveGeo = new THREE.TorusGeometry(1, 0.05, 8, 32);
-            const waveMat = new THREE.MeshBasicMaterial({color: 0x00ff44, transparent: true, opacity: 0 }); // Start invisible
+            const waveMat = new THREE.MeshBasicMaterial({ color: 0x00ff44, transparent: true, opacity: 0 }); // Start invisible
 
-            for(let i=0; i<3; i++) {
+            for (let i = 0; i < 3; i++) {
                 const wave = new THREE.Mesh(waveGeo, waveMat.clone());
-                wave.rotation.x = Math.PI/2;
+                wave.rotation.x = Math.PI / 2;
                 wave.position.y = 3.5; // Emit from top
                 wave.scale.set(0.1, 0.1, 0.1);
                 content.add(wave);
-                group.userData.waves.push({ mesh: wave, offset: i * 0.33 }); 
+                group.userData.waves.push({ mesh: wave, offset: i * 0.33 });
             }
-            
+
             group.add(content);
 
         } else {
             // default fallback
-            const cone = new THREE.Mesh(new THREE.ConeGeometry(1.5, 3, 4), new THREE.MeshPhongMaterial({color: 0x0072ff, wireframe: true}));
+            const cone = new THREE.Mesh(new THREE.ConeGeometry(1.5, 3, 4), new THREE.MeshPhongMaterial({ color: 0x0072ff, wireframe: true }));
             group.add(cone);
         }
 
@@ -662,13 +838,13 @@
     function animate() {
         if (!renderer || !scene || !camera) return;
         requestAnimationFrame(animate);
-        
+
         const now = Date.now() * 0.001; // Seconds
 
         if (currentMesh) {
             // General Idle Rotation for non-robots (Robots stay rooted usually, or rotate base)
             if (!currentMesh.userData.isRobot) {
-                 currentMesh.rotation.y += isAlertState ? 0.05 : 0.002;
+                currentMesh.rotation.y += isAlertState ? 0.05 : 0.002;
             }
 
             if (currentMesh.userData.isRobot) {
@@ -676,34 +852,34 @@
                 const arm1 = currentMesh.userData.arm1;
                 const arm2 = currentMesh.userData.arm2;
                 const wrist = currentMesh.userData.wrist;
-                
+
                 // Smooth Sine motion
                 if (arm1) arm1.rotation.z = -0.3 + Math.sin(now * 0.8) * 0.05;
                 if (arm2) arm2.rotation.z = 0.6 + Math.cos(now * 0.7) * 0.08;
                 if (wrist) wrist.rotation.y += 0.01;
 
-                if(isAlertState) {
+                if (isAlertState) {
                     // Alert Mode: Jerky movements
                     if (arm1) arm1.rotation.z += Math.sin(now * 15) * 0.05;
                     currentMesh.children[1].rotation.y += 0.1; // Rotate turret fast
                 }
-            } 
+            }
             else if (currentMesh.userData.isSentinel) {
                 // Sentinel Animation: Wave Emission
                 if (currentMesh.userData.waves) {
                     currentMesh.userData.waves.forEach((w) => {
                         const cycle = (now + w.offset) % 3.0; // 3 second cycle
-                        
+
                         // Access mesh directly or wrapper? In buildAsset I pushed { mesh: wave, offset: ... }
                         // But I need to check if I added the mesh to the group. Yes.
                         // Wait, I pushed an object to userData.waves, so 'w' is that object.
-                        
+
                         if (cycle < 2.5) {
                             // Expansion phase
                             const progress = cycle / 2.5;
                             const scale = 0.2 + (progress * 5.0); // Expand wide
                             w.mesh.scale.set(scale, scale, scale);
-                            w.mesh.material.opacity = (1.0 - progress) * 0.8; 
+                            w.mesh.material.opacity = (1.0 - progress) * 0.8;
                         } else {
                             // Reset
                             w.mesh.scale.set(0.01, 0.01, 0.01);
@@ -711,14 +887,14 @@
                         }
                     });
                 }
-                
-                if(isAlertState) {
-                     currentMesh.rotation.y += 0.1; // Fast spin on alert
+
+                if (isAlertState) {
+                    currentMesh.rotation.y += 0.1; // Fast spin on alert
                 }
             }
             else {
                 // Default fallback bouncy alert
-                if(isAlertState) {
+                if (isAlertState) {
                     currentMesh.position.y = Math.sin(now * 10) * 0.1;
                 } else {
                     currentMesh.position.y = 0;
@@ -732,7 +908,7 @@
     // Mode is locked to PROACTIVE for this visualization
 
     // --- DATASETS FOR DIFFERENT DEMOS ---
-    
+
     // 1. O-RAN / SENTINEL (Security & Telecom Ops)
     const ORAN_EVENTS = [
         { type: "Security", msg: "SQL Injection detected in Control Plane", severity: "CRITICAL" },
@@ -764,18 +940,18 @@
 
     function generateForensicLog() {
         const now = new Date();
-        const ts = `[${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}]`;
-        
+        const ts = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+
         let eventPool = (backendDemoId === 'surge_vla') ? ROBOTICS_EVENTS : ORAN_EVENTS;
-        
+
         // Randomly pick an event template
         const template = eventPool[Math.floor(Math.random() * eventPool.length)];
-        
+
         // Dynamic Injection based on Context
         let msg = template.msg;
         if (backendDemoId === 'sentinel_monitor' && template.type === 'Security' && template.severity === 'CRITICAL') {
-             const src = SUSPICIOUS_IPS[Math.floor(Math.random() * SUSPICIOUS_IPS.length)];
-             msg += ` | SRC:${src}`;
+            const src = SUSPICIOUS_IPS[Math.floor(Math.random() * SUSPICIOUS_IPS.length)];
+            msg += ` | SRC:${src}`;
         }
         if (backendDemoId === 'surge_vla' && (template.type === 'Hardware' || template.type === 'Security')) {
             const rack = RACKS[Math.floor(Math.random() * RACKS.length)];
@@ -783,7 +959,7 @@
         }
 
         const isCrit = (template.severity === 'CRITICAL');
-        
+
         // Only trigger alert state on CRITICAL events if not already alerting
         // But for random background noise, we might want to suppress too many criticals?
         // Let's keep the user's original probability logic roughly.
@@ -791,9 +967,9 @@
         // Let's rely on the array distribution. To make criticals rarer, we can filter or weight them.
         // Simple hack: If not alert state, allow critical. If alert state, maybe focus on resolution?
         // Using straight random for now.
-        
+
         return {
-            text: `${ts} [${template.severity}] ${msg}`,
+            text: `${ts} ${template.severity} ${msg}`,
             isCrit: isCrit,
             severity: template.severity
         };
@@ -803,10 +979,10 @@
     async function sendDirective(overrideMsg = null) {
         const input = document.getElementById('sandbox-input');
         const text = overrideMsg || input.value.trim();
-        if(!text) return;
+        if (!text) return;
 
         let sysId = null;
-        if(!overrideMsg) {
+        if (!overrideMsg) {
             appendBubble(text, 'user');
             input.value = '';
         } else {
@@ -814,7 +990,7 @@
             appendBubble(`<i class="fas fa-shield-alt"></i> VANGUARD TRIGGER:<br>${text}`, 'system-alert', sysId);
             setTimeout(() => {
                 const el = document.getElementById(sysId);
-                if(el) { el.classList.add('processing'); el.innerHTML = `<i class="fas fa-cog fa-spin"></i> ANALYZING ATTACK VECTOR...`; }
+                if (el) { el.classList.add('processing'); el.innerHTML = `<i class="fas fa-cog fa-spin"></i> ANALYZING ATTACK VECTOR...`; }
             }, 500);
         }
 
@@ -822,7 +998,7 @@
         // Placeholder for AI response
         appendBubble('<i class="fas fa-circle-notch fa-spin"></i> Initializing Uplink...', 'ai', aiBubbleId);
         const aiBubble = document.getElementById(aiBubbleId);
-        
+
         // Setup accumulation variables
         let accumulatedText = "";
         let accumulatedThoughts = "";
@@ -833,7 +1009,7 @@
             const t0 = performance.now();
             const response = await fetch('/api/sandbox/chat_stream', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: text,
                     demo_id: backendDemoId,
@@ -848,44 +1024,44 @@
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                
+
                 buffer += decoder.decode(value, { stream: true });
                 const lines = buffer.split('\n\n');
-                buffer = lines.pop(); 
+                buffer = lines.pop();
 
                 for (const line of lines) {
                     if (line.startsWith('data: ')) {
                         const jsonStr = line.slice(6);
                         if (jsonStr === '[DONE]') continue;
-                        
+
                         try {
                             const event = JSON.parse(jsonStr);
-                            
+
                             if (event.type === 'thought') {
                                 // Initialize thought container structure if not present
                                 if (!thoughtContainer) {
                                     aiBubble.innerHTML = ''; // Clear "Initializing..."
-                                    
+
                                     thoughtContainer = document.createElement('details');
                                     thoughtContainer.className = 'thought-bubble';
                                     thoughtContainer.open = true; // Auto-open for dramatic effect? Or false? Let's keep it open briefly or false. 
                                     // Tax agent usually keeps it closed or auto-open. Let's start OPEN so user sees the "Trace".
-                                    
+
                                     const summary = document.createElement('summary');
                                     summary.className = 'thought-summary';
                                     summary.innerHTML = '<i class="fas fa-microchip"></i> Neural Process';
-                                    
+
                                     thoughtContentDiv = document.createElement('div');
                                     thoughtContentDiv.className = 'thought-content';
-                                    
+
                                     thoughtContainer.appendChild(summary);
                                     thoughtContainer.appendChild(thoughtContentDiv);
                                     aiBubble.appendChild(thoughtContainer);
                                 }
-                                
+
                                 accumulatedThoughts += event.content + '\n';
                                 thoughtContentDiv.innerText = accumulatedThoughts;
-                                
+
                             } else if (event.type === 'content') {
                                 // If first content chunk and "Initializing" is still there (no thoughts), clear it.
                                 if (aiBubble.innerHTML.includes('Initializing Uplink')) {
@@ -893,12 +1069,12 @@
                                 }
 
                                 accumulatedText += event.content;
-                                
+
                                 // Render markdown content. 
                                 // NOTE: We must preserve the thoughtContainer if it exists!
                                 // Simplest way: Split innerHTML? No, that breaks DOM references.
                                 // Better: Have a dedicated content div inside aiBubble?
-                                
+
                                 let contentDiv = aiBubble.querySelector('.markdown-content');
                                 if (!contentDiv) {
                                     contentDiv = document.createElement('div');
@@ -906,10 +1082,10 @@
                                     aiBubble.appendChild(contentDiv);
                                 }
                                 contentDiv.innerHTML = marked.parse(accumulatedText);
-                                
+
                                 const container = document.getElementById('chat-container');
                                 container.scrollTop = container.scrollHeight;
-                                
+
                             } else if (event.type === 'meta') {
                                 updateStats(event, t0);
                             }
@@ -921,16 +1097,16 @@
             if (thoughtContainer) {
                 // thoughtContainer.open = false; 
             }
-            if(sysId) {
+            if (sysId) {
                 const el = document.getElementById(sysId);
                 // Force reset classes to ensure resolved color takes precedence
-                if(el) { 
+                if (el) {
                     el.className = 'system-alert-bubble resolved';
-                    el.innerHTML = `<i class="fas fa-check-circle"></i> ANALYSIS COMPLETE`; 
+                    el.innerHTML = `<i class="fas fa-check-circle"></i> ANALYSIS COMPLETE`;
                     // Log the conclusion for administrator
                     const div = document.createElement('div');
                     div.className = 'log-entry';
-                    const ts = new Date().toLocaleTimeString('en-US', {hour12:false});
+                    const ts = new Date().toLocaleTimeString('en-US', { hour12: false });
                     div.innerHTML = `<div class="log-ts">[${ts}]</div><div style="flex:1;"><span class="badge" style="background:rgba(46,204,113,0.15); color:#2ecc71; margin-right:6px;">VANGUARD</span>Analysis Resolved: Threat Neutralized.</div>`;
                     div.style.color = '#2ecc71';
                     document.getElementById('activity-log').prepend(div);
@@ -939,7 +1115,7 @@
                 isAlertState = false;
                 document.querySelector('.main-terminal').classList.remove('red-alert-active');
             }
-        } catch(e) {
+        } catch (e) {
             console.error(e);
             appendBubble('System Error: ' + e.message, 'system-alert');
         }
@@ -959,35 +1135,35 @@
         else if (latencyAvg > 300) { grade = 'C'; color = '#ff884d'; }
         else if (latencyAvg > 150) { grade = 'B'; color = '#ffcc00'; }
 
-        if(event.v_score) document.getElementById('v-score').innerText = event.v_score;
-        if(event.status) document.getElementById('security-status-text').innerText = event.status;
+        if (event.v_score) document.getElementById('v-score').innerText = event.v_score;
+        if (event.status) document.getElementById('security-status-text').innerText = event.status;
 
         const latEl = document.getElementById('latency-text');
-        if(latEl) {
+        if (latEl) {
             latEl.innerHTML = `${latencyAvg}ms <span style="font-size:0.8em; font-weight:600; color:${color}; margin-left:8px;">${grade}</span>`;
             latEl.style.color = color;
         }
 
-        if(event.threat_level) {
+        if (event.threat_level) {
             const tl = event.threat_level.toLowerCase();
             const el = document.getElementById('threat-level');
-            if(el) {
+            if (el) {
                 el.innerText = tl.toUpperCase();
                 let tcolor = '#2ecc71';
-                if(tl === 'critical' || tl === 'high') { 
-                    tcolor = (tl === 'critical') ? '#ff3333' : '#ff884d'; 
-                    isAlertState = true; 
-                    document.querySelector('.main-terminal').classList.add('red-alert-active'); 
-                } else { 
-                    tcolor = (tl === 'medium') ? '#ffd700' : '#2ecc71'; 
-                    isAlertState = false; 
-                    document.querySelector('.main-terminal').classList.remove('red-alert-active'); 
+                if (tl === 'critical' || tl === 'high') {
+                    tcolor = (tl === 'critical') ? '#ff3333' : '#ff884d';
+                    isAlertState = true;
+                    document.querySelector('.main-terminal').classList.add('red-alert-active');
+                } else {
+                    tcolor = (tl === 'medium') ? '#ffd700' : '#2ecc71';
+                    isAlertState = false;
+                    document.querySelector('.main-terminal').classList.remove('red-alert-active');
                 }
                 el.style.color = tcolor;
             }
         }
 
-        if(event.demo_log) {
+        if (event.demo_log) {
             const div = document.createElement('div');
             div.className = 'log-entry';
             div.style.color = '#88ccff';
@@ -1002,17 +1178,17 @@
         c.classList.toggle('chat-expanded');
     }
 
-    function appendBubble(html, type, id=null) {
+    function appendBubble(html, type, id = null) {
         const div = document.createElement('div');
         div.className = type === 'system-alert' ? 'system-alert-bubble' : `bubble ${type}-bubble`;
-        div.innerHTML = html; if(id) div.id = id;
+        div.innerHTML = html; if (id) div.id = id;
         const container = document.getElementById('chat-container');
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
     }
 
-    function openScheduler(){
-        if(document.getElementById('scheduler-modal')) return document.getElementById('scheduler-modal').style.display='block';
+    function openScheduler() {
+        if (document.getElementById('scheduler-modal')) return document.getElementById('scheduler-modal').style.display = 'block';
         const div = document.createElement('div');
         div.id = 'scheduler-modal';
         div.style.cssText = 'position:fixed;left:50%;top:40%;transform:translate(-50%,-40%);background:#070707;padding:16px;border:1px solid #333;z-index:20000;border-radius:8px;width:420px;color:#ddd;';
@@ -1026,45 +1202,45 @@
         document.body.appendChild(div);
     }
 
-    async function submitSchedule(){
+    async function submitSchedule() {
         const summary = document.getElementById('sched-summary').value || 'Meeting';
         const start = document.getElementById('sched-start').value || new Date().toISOString();
-        const end = document.getElementById('sched-end').value || new Date(Date.now()+3600000).toISOString();
+        const end = document.getElementById('sched-end').value || new Date(Date.now() + 3600000).toISOString();
         const event = { summary: summary, start: { 'dateTime': start }, end: { 'dateTime': end }, description: 'Scheduled from Sandbox' };
-        try{
-            const res = await fetch('/admin/calendar/create', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ event: event }) });
+        try {
+            const res = await fetch('/admin/calendar/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: event }) });
             const j = await res.json();
-            if(j.error) { alert('Create failed: '+j.error); return; }
-            document.getElementById('scheduler-modal').style.display='none';
-            appendBubble('<b>Calendar:</b> Scheduled '+summary, 'ai');
-        }catch(err){ alert('Error: '+err.message); }
+            if (j.error) { alert('Create failed: ' + j.error); return; }
+            document.getElementById('scheduler-modal').style.display = 'none';
+            appendBubble('<b>Calendar:</b> Scheduled ' + summary, 'ai');
+        } catch (err) { alert('Error: ' + err.message); }
     }
 
     // --- 6. INITIALIZATION ---
     document.addEventListener('DOMContentLoaded', () => {
         initThreeJS();
-        document.getElementById('sandbox-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendDirective(); });
-        
+        document.getElementById('sandbox-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendDirective(); });
+
         // Start Logging Loop
         setInterval(() => {
             const logData = generateForensicLog();
             const div = document.createElement('div');
             div.className = 'log-entry';
             // Simplified flex layout structure
-            div.innerHTML = `<div class="log-ts">${logData.text.split('] ')[0]}]</div><div style="flex:1;"><span class="badge" style="background:rgba(255,255,255,0.05); color:#aaa; margin-right:6px;">${backendDemoId}</span>${logData.text.split('] ')[1] || logData.text}</div>`;
+            div.innerHTML = `<div class="log-ts">${logData.text.split(' ')[0]}</div><div style="flex:1;"><span class="badge" style="background:rgba(255,255,255,0.05); color:#aaa; margin-right:6px;">${backendDemoId}</span>${logData.text.split(' ').slice(1).join(' ')}</div>`;
             div.style.color = logData.isCrit ? '#ff5555' : '#888';
-            
+
             const logArea = document.getElementById('activity-log');
             logArea.prepend(div);
-            if(logArea.childNodes.length > 50) logArea.removeChild(logArea.lastChild);
+            if (logArea.childNodes.length > 50) logArea.removeChild(logArea.lastChild);
 
             logBuffer.push(logData.text);
-            if(logBuffer.length > 25) logBuffer.shift();
+            if (logBuffer.length > 25) logBuffer.shift();
 
-            if(logData.isCrit && logData.severity === "CRITICAL" && !isAlertState) {
+            if (logData.isCrit && logData.severity === "CRITICAL" && !isAlertState) {
                 isAlertState = true;
                 document.querySelector('.main-terminal').classList.add('red-alert-active');
-                if(currentMode === 'proactive') sendDirective(`[SYSTEM_ALERT] ${logData.text}`);
+                if (currentMode === 'proactive') sendDirective(`[SYSTEM_ALERT] ${logData.text}`);
             }
         }, 3000);
     });

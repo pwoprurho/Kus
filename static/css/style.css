@@ -502,6 +502,7 @@ nav a:hover {
 .text-gradient {
     background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -543,7 +544,7 @@ nav a:hover {
 
 /* 8. Sections Refined */
 .hero-section {
-    padding: 180px 0 120px;
+    padding: 120px 0 80px;
 }
 
 .hero-section h1 {
@@ -600,7 +601,7 @@ footer {
 
 /* --- CORE SECTIONS --- */
 .hero-section {
-    padding: 150px 0 100px;
+    padding: 120px 0 80px;
     text-align: center;
     position: relative;
     z-index: 10;
