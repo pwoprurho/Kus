@@ -55,9 +55,9 @@ TEMPLATE_PATTERNS = {
 # Pre-built experiment templates with full Three.js code
 PREBUILT_TEMPLATES = {
     "free_fall": {
-        "title": "Free Fall Experiment",
-        "description": "Ball falling under gravity",
-        "concept": "Free Fall",
+        "title": "Gravitational Decay Protocol",
+        "description": "Analysis of mass acceleration within a localized gravitational field.",
+        "concept": "Gravitational Doctrine",
         "threejs_code": '''
 (function() {
     const scene = new THREE.Scene();
@@ -181,9 +181,9 @@ PREBUILT_TEMPLATES = {
         "estimated_runtime": 3000
     },
     "pendulum": {
-        "title": "Simple Pendulum",
-        "description": "Pendulum demonstrating periodic motion",
-        "concept": "Simple Harmonic Motion",
+        "title": "Oscillation Harmonic Protocol",
+        "description": "Periodic motion analysis under constrained tensile force.",
+        "concept": "Harmonic Doctrine",
         "threejs_code": '''
 (function() {
     const scene = new THREE.Scene();
@@ -314,9 +314,9 @@ PREBUILT_TEMPLATES = {
         "estimated_runtime": 5000
     },
     "collision": {
-        "title": "Elastic Collision",
-        "description": "Two balls colliding with equal mass",
-        "concept": "Momentum Conservation",
+        "title": "Kinetic Exchange Protocol",
+        "description": "High-fidelity momentum transfer between symmetrical entities.",
+        "concept": "Kinetic Doctrine",
         "threejs_code": '''
 (function() {
     const scene = new THREE.Scene();
@@ -471,9 +471,9 @@ PREBUILT_TEMPLATES = {
         "estimated_runtime": 4000
     },
     "projectile": {
-        "title": "Projectile Motion",
-        "description": "Ball launched at an angle",
-        "concept": "2D Kinematics",
+        "title": "Ballistic Trajectory Protocol",
+        "description": "Correlation study of parabolic displacement and initial impetus.",
+        "concept": "Ballistic Doctrine",
         "threejs_code": '''
 (function() {
     const scene = new THREE.Scene();

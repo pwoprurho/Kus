@@ -3,99 +3,104 @@
 {% block title %}Home | Engineered Certainty{% endblock %}
 
 {% block content %}
-    <section id="hero" class="hero-section container">
-        <div class="hero-content">
-            <p class="mantra-text">
-                "At Kusmus we are dedicated to."
-            </p>
-            
-            <h1>Transforming Operational Risks into Engineered Certainty.</h1>
-            
-            <p class="subtitle">We deploy bespoke AI agents that eliminate system downtime and reduce customer churn for Nigeria's leading enterprises.</p>
-            
-            <div class="hero-video-container fade-in">
-                <video 
-                    id="hero-video"
-                    autoplay 
-                    muted 
-                    loop 
-                    playsinline 
-                    class="hero-advert-video"
-                    poster="{{ url_for('static', filename='images/advert-poster.png') }}">
-                    
-                    <source src="{{ url_for('static', filename='images/advert1.mp4') }}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
+<section id="hero" class="hero-section container">
+    <div class="hero-content">
+        <p class="mantra-text">
+            "At Kusmus we are dedicated to."
+        </p>
 
-                <button id="unmute-btn" class="unmute-overlay">
-                    <i class="fas fa-volume-mute" id="unmute-icon"></i>
-                    <span id="unmute-text">Tap to Listen</span>
-                </button>
+        <h1>Synthesizing Operational Risk into Engineered Certainty.</h1>
+
+        <p class="subtitle">Deploying bespoke Neural Agents that eliminate systemic downtime and accelerate growth for
+            Tier 1 Enterprises and agile SMEs across the continent.</p>
+
+        <div class="hero-video-container fade-in">
+            <video id="hero-video" autoplay muted loop playsinline class="hero-advert-video"
+                poster="{{ url_for('static', filename='images/advert-poster.png') }}">
+
+                <source src="{{ url_for('static', filename='images/advert1.mp4') }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+
+            <button id="unmute-btn" class="unmute-overlay">
+                <i class="fas fa-volume-mute" id="unmute-icon"></i>
+                <span id="unmute-text">Tap to Listen</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="trust-bar">
+        <p>Advancing Operational Excellence for Africa's Leading Institutions through Rigorous Research Propagation.</p>
+    </div>
+</section>
+
+<section class="expertise-teaser container glass-panel" style="margin-bottom: 80px; text-align: center; padding: 60px;">
+    <h2 class="text-gradient">Scientific Backbone. Enterprise Scale.</h2>
+    <p
+        style="margin-bottom: 30px; color: #a0a0a0; font-size: 1.1rem; max-width: 700px; margin-left: auto; margin-right: auto;">
+        Our methodology is rooted in continuous R&D, ensuring that every deployment propagates intelligence and
+        certainty across your entire operational stack.</p>
+    <div style="display: flex; justify-content: center; gap: 20px;">
+        <a href="{{ url_for('public.audit_request') }}" class="secondary-button">Initiate Diagnostic Audit &rarr;</a>
+        <a href="{{ url_for('public.method') }}" class="secondary-button"
+            style="background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.3);">Explore Our Doctrine
+            &rarr;</a>
+    </div>
+</section>
+
+<section id="research-section" style="margin-bottom: 100px;">
+    <div class="container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+        <div class="research-content" style="text-align: left;">
+            <span class="mantra-text" style="font-size: 0.8rem;">[RESEARCH PROPAGATION]</span>
+            <h2 style="font-size: 2.2rem; margin-top: 10px;">Accelerating Development through Deep Correlation Analysis.
+            </h2>
+            <p style="color: #888; margin-top: 20px;">We go beyond standard automation. Our research division
+                continuously studies systemic failure patterns to build self-healing protocols for the next generation
+                of African infrastructure.</p>
+        </div>
+        <div class="research-stats glass-panel"
+            style="padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="stat-card">
+                <div style="color: var(--accent); font-size: 1.5rem; font-weight: 800;">Tier 1</div>
+                <p style="font-size: 0.8rem; opacity: 0.6;">Enterprise Grade</p>
+            </div>
+            <div class="stat-card">
+                <div style="color: var(--accent); font-size: 1.5rem; font-weight: 800;">SME+</div>
+                <p style="font-size: 0.8rem; opacity: 0.6;">Agile Integration</p>
+            </div>
+            <div class="stat-card"
+                style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+                <p style="font-size: 0.9rem; color: #fff;">Empowering every tier with high-fidelity operational
+                    intelligence.</p>
             </div>
         </div>
-        
-        <div class="trust-bar">
-            <p>Trusted by major Players intrested in improving their services across Africa.</p>
-        </div>
-    </section>
+    </div>
+</section>
 
-    <section class="expertise-teaser container glass-panel" style="margin-bottom: 80px; text-align: center; padding: 60px;">
-        <h2 class="text-gradient">Backed by Enterprise AI Leadership</h2>
-        <p style="margin-bottom: 30px; color: #a0a0a0; font-size: 1.1rem; max-width: 700px; margin-left: auto; margin-right: auto;">Our talent pool is stacked with experts trained to deliver quantifiable ROI for institutions globally with certainty.</p>
-        <a href="{{ url_for('public.audit_request') }}" class="secondary-button">Request Strategic Audit &rarr;</a>
-    </section>
-    
-    <section id="partner-slider-section">
-        <div class="container">
-            <h2 class="partner-title">Trusted Partners & Strategic Clients</h2>
-            
-            <div class="partner-slider-container">
-                <div class="partner-slider" id="partner-slider">
-                    <div class="partner-logo"><img src="{{ url_for('static', filename='images/logo_fictional_a.png') }}" alt="Partner A"></div>
-                    <div class="partner-logo"><img src="{{ url_for('static', filename='images/logo_fictional_b.png') }}" alt="Partner B"></div>
-                    <div class="partner-logo"><img src="{{ url_for('static', filename='images/logo_fictional_c.png') }}" alt="Partner C"></div>
-                    <div class="partner-logo"><img src="{{ url_for('static', filename='images/logo_fictional_d.png') }}" alt="Partner D"></div>
-                    <div class="partner-logo"><img src="{{ url_for('static', filename='images/logo_fictional_e.png') }}" alt="Partner E"></div>
-                    <div class="partner-logo"><img src="{{ url_for('static', filename='images/logo_fictional_f.png') }}" alt="Partner F"></div>
-                    </div>
-            </div>
-        </div>
-    </section>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const video = document.getElementById('hero-video');
+        const btn = document.getElementById('unmute-btn');
+        const icon = document.getElementById('unmute-icon');
+        const text = document.getElementById('unmute-text');
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const video = document.getElementById('hero-video');
-            const btn = document.getElementById('unmute-btn');
-            const icon = document.getElementById('unmute-icon');
-            const text = document.getElementById('unmute-text');
+        if (btn && video) {
+            btn.addEventListener('click', function () {
+                if (video.muted) {
+                    // Unmute
+                    video.muted = false;
+                    icon.className = 'fas fa-volume-up';
+                    text.textContent = 'Mute Audio';
+                    video.volume = 1.0;
+                } else {
+                    // Mute
+                    video.muted = true;
+                    icon.className = 'fas fa-volume-mute';
+                    text.textContent = 'Tap to Listen';
+                }
+            });
+        }
 
-            if(btn && video) {
-                btn.addEventListener('click', function() {
-                    if (video.muted) {
-                        // Unmute
-                        video.muted = false;
-                        icon.className = 'fas fa-volume-up';
-                        text.textContent = 'Mute Audio';
-                        video.volume = 1.0; 
-                    } else {
-                        // Mute
-                        video.muted = true;
-                        icon.className = 'fas fa-volume-mute';
-                        text.textContent = 'Tap to Listen';
-                    }
-                });
-            }
-
-            // Partner Slider JS (Simple endless scroll)
-            const slider = document.getElementById('partner-slider');
-            if (slider) {
-                // Duplicate items to ensure smooth, endless looping
-                const items = Array.from(slider.children);
-                items.forEach(item => {
-                    const clone = item.cloneNode(true);
-                    slider.appendChild(clone);
-                });
-            }
-        });
-    </script>
+    });
+</script>
 {% endblock %}

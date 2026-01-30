@@ -8,10 +8,12 @@
 <style>
     :root {
         --accent: #2ecc71;
+        --accent-glow: rgba(46, 204, 113, 0.4);
+        --accent-gradient: linear-gradient(135deg, #2ecc71 0%, #00d2ff 100%);
         --bg: #050505;
-        --glass: rgba(10, 10, 15, 0.75);
-        --border: rgba(255, 255, 255, 0.08);
-        --panel-width: 320px;
+        --glass: rgba(10, 10, 15, 0.85);
+        --border: rgba(255, 255, 255, 0.05);
+        --panel-width: 340px;
     }
 
     header,
@@ -491,12 +493,12 @@
             <i class="fas fa-chevron-left"></i> EXIT
         </a>
 
-        <div class="section-title">Simulation Templates</div>
+        <div class="section-title">Scientific Protocols</div>
         <div class="template-grid">
-            <button class="template-btn" onclick="loadTemplate('free_fall')">Free Fall</button>
-            <button class="template-btn" onclick="loadTemplate('pendulum')">Pendulum</button>
-            <button class="template-btn" onclick="loadTemplate('collision')">Collision</button>
-            <button class="template-btn" onclick="loadTemplate('projectile')">Projectile</button>
+            <button class="template-btn" onclick="loadTemplate('free_fall')">Gravitational Decay</button>
+            <button class="template-btn" onclick="loadTemplate('pendulum')">Oscillation Harmonic</button>
+            <button class="template-btn" onclick="loadTemplate('collision')">Kinetic Exchange</button>
+            <button class="template-btn" onclick="loadTemplate('projectile')">Ballistic Trajectory</button>
         </div>
 
         <div class="section-title" style="margin-top: 15px;">Environment Settings</div>
@@ -518,7 +520,7 @@
                 onchange="updateTimeScale(this.value)">
         </div>
 
-        <div class="section-title" id="objects-title" style="display: none; margin-top: 15px;">Object Parameters</div>
+        <div class="section-title" id="objects-title" style="display: none; margin-top: 25px;">Entity Parameters</div>
         <div class="object-params" id="object-params">
             <!-- Dynamic object parameters will be added here -->
         </div>
@@ -562,12 +564,27 @@
         <div class="tab-content">
             <div class="tab-pane active" id="info-tab">
                 <div class="info-card">
-                    <div class="info-label">Experiment</div>
+                    <div class="info-label">Current Protocol</div>
                     <div class="info-value" id="exp-title">-</div>
                 </div>
                 <div class="info-card">
-                    <div class="info-label">Concept</div>
+                    <div class="info-label">Active Doctrine</div>
                     <div class="info-value" id="exp-concept">-</div>
+                </div>
+                <!-- Research Propagation Module -->
+                <div class="info-card research-module"
+                    style="border-color: rgba(46,204,113,0.2); background: linear-gradient(to bottom right, rgba(46,204,113,0.05), transparent);">
+                    <div class="info-label" style="color: var(--accent);">Research Propagation</div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.8rem; font-weight: 700;">ALPHA</div>
+                            <div style="font-size: 0.6rem; opacity: 0.5;">Status</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.8rem; font-weight: 700;">99.8%</div>
+                            <div style="font-size: 0.6rem; opacity: 0.5;">Fidelity</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="info-card">
                     <div class="info-label">Objects</div>
@@ -1017,7 +1034,7 @@
 
             if (template) {
                 document.getElementById('main-prompt').value =
-                    `Use the ${template.name} template: ${template.description}`;
+                    `Execute research protocol: ${template.name}. Aim: ${template.description}`;
 
                 // Adjust textarea height
                 const promptEl = document.getElementById('main-prompt');
