@@ -290,6 +290,7 @@ def live_chat():
 
 @admin_bp.route('/api/chat/<string:client_id>')
 @login_required
+@role_required('supa_admin', 'admin')
 def get_chat_history(client_id):
     """Fetches history, DECRYPTS text, and SIGNS file URLs for viewing."""
     audit_context = {'original_challenge': 'N/A', 'date_filed': 'N/A'}
@@ -320,6 +321,7 @@ def get_chat_history(client_id):
 
 @admin_bp.route('/api/chat/send', methods=['POST'])
 @login_required
+@role_required('supa_admin', 'admin')
 def send_admin_message():
     """Handles Admin Text AND File Uploads."""
     from services.mailer import send_notification_email
@@ -442,6 +444,7 @@ def delete_post(post_id):
 
 @admin_bp.route('/api/generate', methods=['POST'])
 @login_required
+@role_required('supa_admin', 'admin', 'editor')
 def generate_content():
     """Restored AI content generator for blog posts."""
     data = request.get_json()

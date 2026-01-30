@@ -113,17 +113,10 @@ def api_sentinel_analyze(ticker):
 
 @sandbox_bp.route("/sandbox")
 def sandbox_view():
-
     """
     Handles the transition from select_demo to the actual sandbox.
-    Includes Phase 4 Mobile Gate and Session Initialization.
+    [LIBERALIZED] Mobile gate and session restrictions removed.
     """
-    # 1. MOBILE GATE
-    user_agent = request.headers.get('User-Agent', '').lower()
-    is_mobile = any(x in user_agent for x in ['iphone', 'android', 'blackberry', 'windowsphone'])
-    if is_mobile:
-        return render_template('demo_mobile.html')
-
     # 2. DEMO VALIDATION & RESOLUTION
     short_map = {
         'sentinel': 'sentinel_monitor',

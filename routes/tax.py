@@ -199,12 +199,7 @@ def tax_chat():
 def tax_chat_stream():
     try:
         # Auth check
-        # Auth check
         client_id = get_auth_context()
-        print(f"DEBUG: tax_chat_stream auth check. Is Authenticated: {current_user.is_authenticated if not current_user.is_anonymous else 'False'}")
-        print(f"DEBUG: Session keys: {list(session.keys())}")
-        print(f"DEBUG: Resolved client_id: {client_id}")
-        
         if not client_id:
             return jsonify({'error': 'Authentication required'}), 401
         
