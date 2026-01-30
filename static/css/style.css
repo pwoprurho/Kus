@@ -409,9 +409,9 @@ nav ul {
     right: 0;
     bottom: 0;
     height: 100vh;
-    width: 320px;
+    width: 350px;
     margin: 0;
-    padding: 80px 20px;
+    padding: 60px 40px;
     background: rgba(0, 0, 0, 0.95);
     backdrop-filter: blur(15px);
     border-left: 1px solid #0072ff;
@@ -421,6 +421,7 @@ nav ul {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.8);
     list-style: none;
+    overflow-y: auto;
 }
 
 /* Active State for Menu */
@@ -443,12 +444,12 @@ nav a {
     display: block;
     color: #cbd5e1;
     font-family: var(--font-body);
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 500;
     transition: all 0.2s ease;
     text-transform: none;
     letter-spacing: -0.01em;
-    padding: 15px 0;
+    padding: 20px 0;
 }
 
 nav a:hover {

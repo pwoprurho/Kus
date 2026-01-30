@@ -6,6 +6,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Kusmus AI{% endblock %} - Engineering Certainty</title>
 
+    <!-- SEO & Meta Tags -->
+    <meta name="description"
+        content="{% block meta_description %}Kusmus AI builds advanced AI Agents for Nigerian and African enterprises. We engineer certainty through bespoke neural agents that automate operations and eliminate downtime.{% endblock %}">
+    <meta name="keywords"
+        content="{% block meta_keywords %}AI Agents, Artificial Intelligence Nigeria, Neural Agents, Enterprise AI, Automation, Kusmus AI, Intelligence, African Tech{% endblock %}">
+    <meta name="author" content="Kusmus AI">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:title" content="{% block og_title %}Kusmus AI - Engineering Certainty{% endblock %}">
+    <meta property="og:description"
+        content="{% block og_description %}Deploying bespoke AI Agents to accelerate growth for Tier 1 Enterprises and agile SMEs in Nigeria and across Africa.{% endblock %}">
+    <meta property="og:image"
+        content="{% block og_image %}{{ url_for('static', filename='images/pic01.jpg', _external=True) }}{% endblock %}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ request.url }}">
+    <meta property="twitter:title" content="{% block twitter_title %}Kusmus AI - Engineering Certainty{% endblock %}">
+    <meta property="twitter:description"
+        content="{% block twitter_description %}Deploying bespoke AI Agents to accelerate growth for Tier 1 Enterprises and agile SMEs in Nigeria and across Africa.{% endblock %}">
+    <meta property="twitter:image"
+        content="{% block twitter_image %}{{ url_for('static', filename='images/pic01.jpg', _external=True) }}{% endblock %}">
+
+    <!-- JSON-LD Structured Data: Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Kusmus AI",
+      "url": "{{ request.url_root }}",
+      "logo": "{{ url_for('static', filename='images/pic01.jpg', _external=True) }}",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+234-800-KUSMUS",
+        "contactType": "customer service",
+        "areaServed": "NG"
+      },
+      "sameAs": [
+        "https://twitter.com/kusmusai",
+        "https://linkedin.com/company/kusmusai"
+      ]
+    }
+    </script>
+
+    {% block head_meta %}{% endblock %}
+
     <!-- Favicon Configuration -->
     <link rel="icon" href="{{ url_for('static', filename='images/pic01.jpg') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/pic01.jpg') }}">
@@ -225,6 +274,11 @@
 
         <nav>
             <ul id="primary-navigation" data-visible="false">
+                <li style="border:none; margin-bottom: 20px; text-align: right;">
+                    <button class="nav-toggle" style="display:inline-block; position:static;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </li>
                 <li><a href="{{ url_for('public.solutions') }}">Solutions</a></li>
                 <li><a href="{{ url_for('public.method') }}">Methodology</a></li>
                 <li><a href="{{ url_for('public.ceo_profile') }}">CEO Profile</a></li>

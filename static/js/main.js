@@ -106,19 +106,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // =================================================================
     // --- 2. MOBILE NAVIGATION TOGGLE ---
     // =================================================================
-    const navToggle = document.querySelector('.nav-toggle'); 
+    const navToggles = document.querySelectorAll('.nav-toggle'); 
     const navList = document.getElementById('primary-navigation'); 
 
-    if (navToggle && navList) {
-        navToggle.addEventListener('click', () => {
-            const isVisible = navList.getAttribute('data-visible') === "true";
-            const newState = (!isVisible).toString();
+    if (navToggles.length > 0 && navList) {
+        navToggles.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const isVisible = navList.getAttribute('data-visible') === "true";
+                const newState = (!isVisible).toString();
 
-            // Toggle the data-visible attribute (Triggers CSS sliding)
-            navList.setAttribute('data-visible', newState);
-            
-            // Toggle aria-expanded for accessibility
-            navToggle.setAttribute('aria-expanded', newState);
+                // Toggle the data-visible attribute (Triggers CSS sliding)
+                navList.setAttribute('data-visible', newState);
+                
+                // Toggle aria-expanded for accessibility on all toggles
+                navToggles.forEach(t => t.setAttribute('aria-expanded', newState));
+            });
         });
     }
 });

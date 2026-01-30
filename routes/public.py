@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from flask import Blueprint, request, jsonify, session, render_template, redirect, url_for, flash
+from flask import Blueprint, request, jsonify, session, render_template, redirect, url_for, flash, Response, make_response
 from core.engine import KusmusAIEngine
 from services.personas import MAIN_ASSISTANT, DEMO_REGISTRY
 from db import supabase_admin
@@ -270,3 +270,59 @@ def crypto_wallet_action():
         with open(f"tx_{user_id}.json", "w") as f:
             json.dump(transactions, f)
     return render_template('client/crypto_wallet_dashboard.html', btc_address=btc_address, eth_address=eth_address, btc_balance=btc_balance, result=result, transactions=transactions)
+
+# =========================================================
+# === SEO ROUTES (Sitemap & Robots) ===
+# =========================================================
+
+@public_bp.route('/sitemap.xml', methods=['GET'])
+def sitemap():
+    """Generates a dynamic sitemap for SEO."""
+    host_url = request.url_root.rstrip('/')
+    pages = [
+        'public.home', 
+        'public.solutions', 
+        'public.method', 
+        'public.ceo_profile', 
+        'public.team', 
+        'public.chairman', 
+        'public.blog',
+        'public.audit_request'
+    ]
+    
+    xml_sitemap = ['<?xml version="1.0" encoding="UTF-8"?>']
+    xml_sitemap.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+
+    # 1. Static Pages
+    for page in pages:
+        try:
+            url = url_for(page, _external=True)
+            xml_sitemap.append(f'<url><loc>{url}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>')
+        except: continue
+
+    # 2. Dynamic Blog Posts
+    if supabase_admin:
+        try:
+            response = supabase_admin.table('blog_posts').select("id, published_at").eq('status', 'Published').execute()
+            if response.data:
+                for post in response.data:
+                    url = url_for('public.blog_post', post_id=post['id'], _external=True)
+                    date = post['published_at'].split('T')[0] if post.get('published_at') else datetime.now().strftime('%Y-%m-%d')
+                    xml_sitemap.append(f'<url><loc>{url}</loc><lastmod>{date}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>')
+        except: pass
+
+    xml_sitemap.append('</urlset>')
+    return Response('\\n'.join(xml_sitemap), mimetype='application/xml')
+
+@public_bp.route('/robots.txt', methods=['GET'])
+def robots():
+    """Generates robots.txt for crawlers."""
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /client-dashboard",
+        "Disallow: /client-chat",
+        "Disallow: /crypto-wallet",
+        f"Sitemap: {url_for('public.sitemap', _external=True)}"
+    ]
+    return Response('\\n'.join(lines), mimetype='text/plain')
