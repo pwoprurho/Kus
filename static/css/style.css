@@ -1496,6 +1496,30 @@ footer {
     .roi-metrics {
         grid-template-columns: 1fr;
     }
+
+    /* Standard Grid Collapsing for Mobile */
+    .metrics-dashboard,
+    .team-grid,
+    .blog-grid,
+    .video-grid {
+        grid-template-columns: 1fr !important;
+        gap: 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    .partner-logo {
+        min-width: 140px;
+    }
+
+    .partner-logo img {
+        max-height: 40px;
+    }
+
+    /* Collapsing additional grids */
+    .research-section .container {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1514,6 +1538,42 @@ footer {
 
     .hero-section {
         padding-top: 50px;
+    }
+
+    /* Mobile Typography Scaling */
+    h1 {
+        font-size: 2.1rem !important;
+    }
+
+    h2 {
+        font-size: 1.8rem !important;
+    }
+
+    h3 {
+        font-size: 1.5rem !important;
+    }
+
+    .text-gradient {
+        font-size: 2.2rem !important;
+    }
+
+    .hero-section h1 {
+        font-size: 2.1rem;
+        line-height: 1.2;
+    }
+
+    /* Adjust Section Padding */
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    section {
+        margin-bottom: 60px !important;
+    }
+
+    .expertise-teaser {
+        padding: 40px 20px !important;
     }
 }
 
