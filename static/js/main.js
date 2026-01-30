@@ -1,20 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
-    
+
     // =================================================================
     // --- 1. CHAT WIDGET LOGIC ---
     // =================================================================
-    const chatToggle = document.getElementById('chat-toggle-btn'); 
+    const chatToggle = document.getElementById('chat-toggle-btn');
     const chatWindow = document.getElementById('chat-window');
-    const chatInput = document.getElementById('chat-input-text'); 
-    const chatSend = document.getElementById('chat-send-btn'); 
-    const chatMessages = document.getElementById('chat-body'); 
+    const chatInput = document.getElementById('chat-input-text');
+    const chatSend = document.getElementById('chat-send-btn');
+    const chatMessages = document.getElementById('chat-body');
 
     // Helper: Reset Chat Session
     async function resetChat() {
         try {
             // 1. Clear Backend Session
             await fetch('/chat/reset', { method: 'POST' });
-            
+
             // 2. Clear Frontend UI
             if (chatMessages) {
                 chatMessages.innerHTML = '';
@@ -102,12 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter') sendMessage();
         });
     }
-    
+
     // =================================================================
     // --- 2. MOBILE NAVIGATION TOGGLE ---
     // =================================================================
-    const navToggles = document.querySelectorAll('.nav-toggle'); 
-    const navList = document.getElementById('primary-navigation'); 
+    const navToggles = document.querySelectorAll('.nav-toggle');
+    const navList = document.getElementById('primary-navigation');
 
     if (navToggles.length > 0 && navList) {
         navToggles.forEach(toggle => {
@@ -117,9 +117,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Toggle the data-visible attribute (Triggers CSS sliding)
                 navList.setAttribute('data-visible', newState);
-                
+
                 // Toggle aria-expanded for accessibility on all toggles
-                navToggles.forEach(t => t.setAttribute('aria-expanded', newState));
+                navToggles.forEach(t => {
+                    t.setAttribute('aria-expanded', newState);
+                    // Dynamic Icon Switching
+                    const icon = t.querySelector('i');
+                    if (icon) {
+                        if (newState === "true") {
+                            icon.classList.remove('fa-bars');
+                            icon.classList.add('fa-times');
+                        } else {
+                            icon.classList.remove('fa-times');
+                            icon.classList.add('fa-bars');
+                        }
+                    }
+                });
             });
         });
     }
