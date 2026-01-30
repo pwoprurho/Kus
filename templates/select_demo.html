@@ -510,7 +510,7 @@
 
                 {% for key in sorted_keys %}
                 {% set info = demos[key] %}
-                {% set is_coming_soon = false %}
+                {% set is_coming_soon = (key in ['deep_research', 'electoral_integrity']) %}
 
                 <a href="{{ url_for('sandbox.sandbox_view') }}?demo={{ key }}"
                     class="demo-card {{ 'coming-soon' if is_coming_soon else '' }}" {{ 'onclick="return false;"' if
