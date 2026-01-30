@@ -429,6 +429,37 @@
             transform: rotate(360deg);
         }
     }
+
+    /* Full Screen Styles */
+    body.full-screen .template-grid,
+    body.full-screen .section-title,
+    body.full-screen .param-group,
+    body.full-screen .info-panel,
+    body.full-screen .sidebar,
+    body.full-screen .btn-back,
+    body.full-screen .input-area {
+        display: none !important;
+    }
+
+    body.full-screen .canvas-area {
+        width: 100vw;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+    }
+
+    body.full-screen .canvas-overlay {
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(10, 10, 15, 0.8);
+        backdrop-filter: blur(10px);
+        padding: 10px 20px;
+        border-radius: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
 </style>
 
 <div id="canvas-container">
@@ -485,6 +516,9 @@
             </button>
             <button class="overlay-btn" onclick="stepFrame()">
                 <span>▶</span> Step
+            </button>
+            <button class="overlay-btn" onclick="toggleFullScreen()" id="fullscreen-btn">
+                <span>⛶</span> Full Screen
             </button>
         </div>
 
@@ -783,28 +817,70 @@
         // Update code display
         document.getElementById('code-display').textContent = experiment.threejs_code || '// No code generated';
 
-        // Update object parameters
+        // Update parameters
+        updateExperimentParams(experiment.parameters || {});
         updateObjectParams(experiment.objects || []);
+    }
+
+    function updateExperimentParams(params) {
+        // This handles experiment-wide parameters like restitution
+        // For now, we reuse the gravity logic or add them to the main settings side
+        // But to keep it dynamic, let's append them to the object-params container too
+        // or a new template-params container.
+        const container = document.getElementById('object-params');
+
+        // We add them at the top
+        let html = '';
+        Object.entries(params).forEach(([name, config]) => {
+            if (name === 'gravity') return; // Handled separately
+            html += `
+                <div class="object-card">
+                    <div class="object-name">Global Setting</div>
+                    <div class="object-type">${name}</div>
+                    <div class="param-group" style="margin-top: 8px;">
+                        <div class="param-label">
+                            <span>${name}</span>
+                            <span class="param-value" id="global-${name}-value">${config.value}</span>
+                        </div>
+                        <input type="range" class="param-slider" 
+                               min="${config.min}" max="${config.max}" step="${config.step || 0.1}" 
+                               value="${config.value}"
+                               onchange="updateGlobalParam('${name}', this.value)">
+                    </div>
+                </div>
+            `;
+        });
+        window._globalParamsHtml = html;
+    }
+
+    function updateGlobalParam(name, value) {
+        value = parseFloat(value);
+        document.getElementById(`global-${name}-value`).textContent = value;
+        if (window.physicsControls?.updateObjectParameter) {
+            window.physicsControls.updateObjectParameter(null, name, value);
+        }
     }
 
     function updateObjectParams(objects) {
         const container = document.getElementById('object-params');
         const title = document.getElementById('objects-title');
 
-        if (objects.length === 0) {
+        if (objects.length === 0 && !window._globalParamsHtml) {
             title.style.display = 'none';
             container.innerHTML = '';
             return;
         }
 
         title.style.display = 'block';
-        container.innerHTML = objects.map((obj, index) => `
+        let html = window._globalParamsHtml || '';
+        html += objects.map((obj, index) => `
             <div class="object-card">
                 <div class="object-name">${obj.name || 'Object ' + (index + 1)}</div>
                 <div class="object-type">${obj.type}</div>
                 ${obj.adjustable ? renderAdjustableParams(obj.adjustable, index) : ''}
             </div>
         `).join('');
+        container.innerHTML = html;
     }
 
     function renderAdjustableParams(adjustable, index) {
@@ -816,7 +892,8 @@
                 </div>
                 <input type="range" class="param-slider" 
                        id="obj-${index}-${param}"
-                       min="${config.min}" max="${config.max}" step="${config.step}"
+                       min="${config.min}" max="${config.max}" step="${config.step || 0.1}" 
+                       value="${config.value}"
                        onchange="updateObjectParam(${index}, '${param}', this.value)">
             </div>
         `).join('');
@@ -826,7 +903,8 @@
         value = parseFloat(value);
 
         // Update display
-        document.getElementById(`obj-${objectIndex}-${paramName}-value`).textContent = value.toFixed(2);
+        const display = document.getElementById(`obj-${objectIndex}-${paramName}-value`);
+        if (display) display.textContent = value.toFixed(2);
 
         // Call renderer control function
         if (window.physicsControls?.updateObjectParameter) {
@@ -848,6 +926,19 @@
         if (window.physicsControls?.updateTimeScale) {
             window.physicsControls.updateTimeScale(parseFloat(value));
         }
+    }
+
+    function toggleFullScreen() {
+        document.body.classList.toggle('full-screen');
+        const btn = document.getElementById('fullscreen-btn');
+        if (document.body.classList.contains('full-screen')) {
+            btn.innerHTML = '<span>❐</span> Exit Full Screen';
+        } else {
+            btn.innerHTML = '<span>⛶</span> Full Screen';
+        }
+
+        // Trigger resize to fix canvas
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
     }
 
     function togglePlay() {
