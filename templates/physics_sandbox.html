@@ -451,20 +451,30 @@
     }
 
     body.full-screen .canvas-overlay {
-        bottom: 40px;
+        bottom: 25px;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(10, 10, 15, 0.8);
+        background: rgba(10, 10, 15, 0.6);
         backdrop-filter: blur(10px);
-        padding: 10px 20px;
-        border-radius: 30px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: opacity 0.3s ease, transform 0.3s ease;
+        padding: 8px 15px;
+        border-radius: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    body.full-screen .overlay-btn {
+        padding: 8px 16px;
+        font-size: 0.65rem;
+        background: transparent;
+        border: none;
     }
 
     body.full-screen .canvas-overlay.hidden {
         opacity: 0;
-        transform: translateX(-50%) translateY(20px);
+        transform: translateX(-50%) translateY(30px);
         pointer-events: none;
     }
 </style>
@@ -967,7 +977,7 @@
             if (document.body.classList.contains('full-screen')) {
                 overlay.classList.add('hidden');
             }
-        }, 3000);
+        }, 1500);
     }
 
     document.addEventListener('mousemove', resetOverlayTimeout);
