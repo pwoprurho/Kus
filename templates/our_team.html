@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Our Team | Engineering Excellence{% endblock %}
+
+{% block content %}
+<style>
+    .team-section {
+        padding: 150px 0 100px;
+    }
+
+    .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 30px;
+        margin-top: 50px;
+    }
+
+    .team-card {
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .team-card:hover {
+        transform: translateY(-8px);
+        border-color: var(--accent);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .team-photo-wrapper {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 2px solid var(--border);
+        transition: border-color 0.3s ease;
+    }
+
+    .team-card:hover .team-photo-wrapper {
+        border-color: var(--accent);
+    }
+
+    .team-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: grayscale(100%);
+        transition: filter 0.3s ease;
+    }
+
+    .team-card:hover .team-photo {
+        filter: grayscale(0%);
+    }
+
+    .team-info h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+        color: #fff;
+    }
+
+    .team-role {
+        font-size: 0.85rem;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: 700;
+    }
+
+    .team-bio {
+        font-size: 0.95rem;
+        color: #aaa;
+        line-height: 1.6;
+    }
+
+    .team-badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 0.7rem;
+        background: rgba(46, 204, 113, 0.1);
+        color: var(--accent);
+        padding: 5px 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(46, 204, 113, 0.2);
+        font-weight: 700;
+    }
+</style>
+
+<div class="team-section container">
+    <div class="page-header" style="text-align: left; margin-bottom: 60px;">
+        <span class="mantra-text" style="font-size: 0.8rem; margin-bottom: 15px; display: block;">[ENGINEERING
+            SQUAD]</span>
+        <h2 style="font-size: 3rem; margin-bottom: 20px;">The Architects of Certainty</h2>
+        <p style="color: #888; max-width: 600px; font-size: 1.1rem;">Our premium is justified by our people. Meet the
+            enterprise-grade engineers driving high-fidelity research propagation.</p>
+    </div>
+
+    <div class="team-grid">
+        <!-- Lucky - Team Lead Delta -->
+        <div class="team-card">
+            <div class="team-badge">DELTA COMMAND</div>
+            <div class="team-photo-wrapper">
+                <img src="{{ url_for('static', filename='images/lucky.png') }}" alt="Oghoro Emmanuel Lucky"
+                    class="team-photo">
+            </div>
+            <div class="team-info">
+                <h3>Oghoro Emmanuel Lucky</h3>
+                <div class="team-role">Team Lead Delta</div>
+            </div>
+            <p class="team-bio">
+                Certified PMP & SCRUM Master. Track record of delivering 100% of large-scale projects on-time and under
+                budget for Fortune 500 clients across four continents.
+            </p>
+            <a href="https://www.linkedin.com/in/ewomaoghene-ogoro-ab70222a0" class="linkedin-btn"><i
+                    class="fab fa-linkedin"></i> Verified Credentials</a>
+        </div>
+
+        <!-- Other Engineers (Simplified for the new Premium look) -->
+        <div class="team-card">
+            <div class="team-photo-wrapper">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Engineer" class="team-photo">
+            </div>
+            <div class="team-info">
+                <h3>[Tunmise Ayeni]</h3>
+                <div class="team-role">Lead AI/ML Engineer</div>
+            </div>
+            <p class="team-bio">
+                Specializes in proprietary deep-learning models and computational mathematics for global institutions.
+            </p>
+            <a href="#" class="linkedin-btn"><i class="fab fa-linkedin"></i> View Profile</a>
+        </div>
+
+        <div class="team-card">
+            <div class="team-photo-wrapper">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Engineer" class="team-photo">
+            </div>
+            <div class="team-info">
+                <h3>[Infrastructure Lead]</h3>
+                <div class="team-role">Head of Security</div>
+            </div>
+            <p class="team-bio">
+                Expert in securing telecom-grade infrastructure and ensuring ISO 27001 compliance for national
+                endpoints.
+            </p>
+            <a href="#" class="linkedin-btn"><i class="fab fa-linkedin"></i> View Profile</a>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border);">
+        <p style="color: #666; margin-bottom: 20px;">Every deployment is handled by an in-house expert. We do not
+            outsource intelligence.</p>
+        <a href="{{ url_for('public.ceo_profile') }}" class="secondary-button"
+            style="border-radius: 30px; padding: 12px 30px;">View Executive Vision &rarr;</a>
+    </div>
+</div>
+{% endblock %}

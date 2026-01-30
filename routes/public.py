@@ -111,6 +111,10 @@ def method():
 def ceo_profile():
     return render_template("ceo_profile.html")
 
+@public_bp.route("/team")
+def team():
+    return render_template("our_team.html")
+
 @public_bp.route("/chairman")
 def chairman():
     return render_template("chairmans_mandate.html")
