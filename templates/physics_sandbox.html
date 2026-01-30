@@ -874,26 +874,33 @@
 
     async function loadTemplate(templateId) {
         showLoading(true);
+        hideError();
 
         try {
-            const response = await fetch('/api/physics/quick-templates');
-            const templates = await response.json();
-            const template = templates[templateId];
+            // Call the generate API with the template name as description
+            const response = await fetch('/api/physics/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    description: templateId,
+                    options: { show_code: true }
+                })
+            });
 
-            if (template) {
-                document.getElementById('main-prompt').value =
-                    `Use the ${template.name} template: ${template.description}`;
+            const result = await response.json();
 
-                // Adjust textarea height
-                const promptEl = document.getElementById('main-prompt');
-                promptEl.style.height = 'auto';
-                promptEl.style.height = (promptEl.scrollHeight) + 'px';
+            if (result.success) {
+                currentExperiment = result.experiment;
+                executeGeneratedCode(result.experiment.threejs_code);
+                updateUI(result.experiment);
 
-                // Apply template configuration
-                applyTemplateConfig(template.config);
+                // Update prompt field to show what was loaded
+                document.getElementById('main-prompt').value = result.experiment.description || templateId;
+            } else {
+                showError(result.error || 'Failed to load template');
             }
         } catch (error) {
-            showError('Error loading template');
+            showError('Error loading template: ' + error.message);
         } finally {
             showLoading(false);
         }
