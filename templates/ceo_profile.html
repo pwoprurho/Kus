@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}CEO Profile | Kusmus AI Leadership{% endblock %}
+
+{% block content %}
+<style>
+    .ceo-section {
+        padding: 180px 0 100px;
+        position: relative;
+    }
+
+    .ceo-container {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 60px;
+        align-items: start;
+    }
+
+    .ceo-visual {
+        position: sticky;
+        top: 120px;
+    }
+
+    .ceo-image-wrapper {
+        position: relative;
+        border-radius: 24px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .ceo-image {
+        width: 100%;
+        display: block;
+        filter: grayscale(20%);
+        transition: filter 0.5s ease;
+    }
+
+    .ceo-image-wrapper:hover .ceo-image {
+        filter: grayscale(0%);
+    }
+
+    .ceo-glow {
+        position: absolute;
+        top: -10%;
+        left: -10%;
+        width: 120%;
+        height: 120%;
+        background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+        z-index: -1;
+        opacity: 0.3;
+    }
+
+    .ceo-details {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .ceo-title-group {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 30px;
+    }
+
+    .ceo-name {
+        font-size: 3.5rem;
+        font-weight: 800;
+        letter-spacing: -2px;
+        margin-bottom: 10px;
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .ceo-role {
+        font-size: 1.2rem;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        font-weight: 700;
+    }
+
+    .ceo-vision {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.25rem;
+        line-height: 1.8;
+        color: #e0e0e0;
+        font-style: italic;
+    }
+
+    .ceo-bio-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .bio-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        padding: 25px;
+        border-radius: 16px;
+    }
+
+    .bio-card h4 {
+        color: var(--accent);
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .bio-card p {
+        font-size: 0.95rem;
+        color: #aaa;
+    }
+
+    .ceo-credential-btn {
+        margin-top: 20px;
+        align-self: start;
+    }
+
+    @media (max-width: 900px) {
+        .ceo-container {
+            grid-template-columns: 1fr;
+        }
+
+        .ceo-visual {
+            position: static;
+        }
+
+        .ceo-name {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+
+<div class="ceo-section container">
+    <div class="ceo-container">
+        <!-- Visual Column -->
+        <div class="ceo-visual">
+            <div class="ceo-image-wrapper">
+                <div class="ceo-glow"></div>
+                <img src="{{ url_for('static', filename='images/rurho.jpg') }}" alt="Akpojotor Oghenerurho"
+                    class="ceo-image">
+            </div>
+
+            <div style="margin-top: 40px; display: flex; gap: 15px; justify-content: center;">
+                <a href="https://ng.linkedin.com/in/oghenerurho-akpojotor-819246289" class="linkedin-btn"
+                    style="padding: 12px 25px;">
+                    <i class="fab fa-linkedin"></i> Verified Credentials
+                </a>
+            </div>
+        </div>
+
+        <!-- Content Column -->
+        <div class="ceo-details">
+            <div class="ceo-title-group">
+                <span class="mantra-text" style="font-size: 0.8rem; margin-bottom: 15px; display: block;">[EXECUTIVE
+                    LEADERSHIP]</span>
+                <h2 class="ceo-name">Akpojotor Oghenerurho</h2>
+                <div class="ceo-role">Chief Executive Officer</div>
+            </div>
+
+            <p class="ceo-vision">
+                "Our mission at Kusmus AI is to bridge the gap between speculative technology and engineered certainty.
+                We don't just build agents; we architect the scientific doctrines that will define African enterprise
+                for the next century."
+            </p>
+
+            <div class="ceo-bio-section">
+                <div class="bio-card">
+                    <h4>Scientific Strategy</h4>
+                    <p>Over 8 years of experience in deep-tech architecture and AI strategy. Specialized in synthesizing
+                        complex operational risks into automated, high-fidelity protocols.</p>
+                </div>
+                <div class="bio-card">
+                    <h4>Visionary Integration</h4>
+                    <p>Pioneer in deploying Neural Agents across West African enterprises, focusing on systemic
+                        resilience and quantifiable ROI propagation.</p>
+                </div>
+                <div class="bio-card" style="grid-column: span 2;">
+                    <h4>Professional Doctrine</h4>
+                    <p>Expert in architecting scalable AI solutions that drive measurable business outcomes. Committed
+                        to ethical, high-performance computing that empowers both Tier 1 institutions and agile SMEs.
+                    </p>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <h3 style="font-size: 1.5rem; margin-bottom: 20px;">Propagating Certainty Globally</h3>
+                <p style="color: #888; margin-bottom: 30px;">
+                    Under Oghenerurho's leadership, Kusmus AI has transitioned from a development lab into a strategic
+                    research powerhouse, delivering intelligence as a service to Africa's most critical sectors.
+                </p>
+                <a href="{{ url_for('public.audit_request') }}" class="cta-button">Initiate Executive Consultation</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
