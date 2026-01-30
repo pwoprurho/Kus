@@ -772,6 +772,25 @@ def get_quick_templates():
                     "timeScale": 1.0
                 }
             }
+        },
+        "projectile": {
+            "name": "Projectile Motion",
+            "description": "Ball launched at an angle",
+            "config": {
+                "objects": [
+                    {
+                        "type": "sphere",
+                        "name": "ball",
+                        "position": [0, 0.5, 0],
+                        "params": {"radius": 0.5},
+                        "physics": {"mass": 1, "velocity": [10.6, 10.6, 0]}
+                    }
+                ],
+                "simulation": {
+                    "gravity": [0, -9.81, 0],
+                    "timeScale": 1.0
+                }
+            }
         }
     }
     
