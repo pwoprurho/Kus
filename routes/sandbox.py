@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 import datetime
 from db import supabase_admin
+from services.research_agent import ResearchAgentService
 
 sandbox_bp = Blueprint('sandbox', __name__)
 
@@ -144,6 +145,14 @@ def sandbox_view():
     if 'market' in selected_demo.lower() or 'investor' in selected_demo.lower() or 'sentinel_equity' in selected_demo.lower():
         # Render the investor template in Sandbox/Demo mode
         return render_template('client/investor.html', is_sandbox_demo=True)
+
+    # SPECIAL CASE: Deep Research Agent
+    if 'research' in selected_demo.lower() or 'planner' in selected_demo.lower():
+        return render_template('client/research_agent.html', user=session.get('user', {}))
+
+    # SPECIAL CASE: Physics Sandbox
+    if 'physics' in selected_demo.lower():
+        return render_template('physics_sandbox.html', is_sandbox_demo=True)
 
     def resolve_demo_key(raw):
         if not raw:
@@ -525,3 +534,34 @@ def invoke_mcp_tool():
 
 
 # Calendar admin endpoints moved to routes/admin.py
+
+# --- DEEP RESEARCH AGENT API ---
+@sandbox_bp.route('/api/research/plan', methods=['POST'])
+def research_plan():
+    data = request.get_json() or {}
+    goal = data.get('goal')
+    if not goal: return jsonify({'error': 'Goal required'}), 400
+    
+    result = ResearchAgentService.create_plan(goal)
+    return jsonify(result)
+
+@sandbox_bp.route('/api/research/execute', methods=['POST'])
+def research_execute():
+    data = request.get_json() or {}
+    plan_id = data.get('plan_id')
+    tasks = data.get('tasks', []) # List of strings
+    if not plan_id or not tasks: return jsonify({'error': 'Plan ID and Tasks required'}), 400
+    
+    result = ResearchAgentService.execute_research(plan_id, tasks)
+    return jsonify(result)
+
+@sandbox_bp.route('/api/research/report', methods=['POST'])
+def research_report():
+    data = request.get_json() or {}
+    research_id = data.get('research_id')
+    # research_text provided by client if they polled it, OR backend fetches it.
+    # Service implementation handles fetching if we pass ID.
+    if not research_id: return jsonify({'error': 'Research ID required'}), 400
+    
+    result = ResearchAgentService.generate_report(research_id, "")
+    return jsonify(result)

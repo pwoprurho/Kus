@@ -142,5 +142,24 @@ DEMO_REGISTRY = {
         ],
         "log_signature": "[TAX AGENT] Workflow active. Discovery/Calculation phase.",
         "temperature": 0.1
+    },
+    "deep_research": {
+        "name": "Deep Research Agent",
+        "model": "google-genai-interactions", # Special marker
+        "instruction": "Specialized agent for multi-step deep research using Google Gemini Interactions API.",
+        "log_signature": "[DEEP_RESEARCH] Interactions API active. Planning/Execution phase.",
+        "tools_allowed": ["google_search"]
+    },
+    "physics_sandbox": {
+        "name": "Physics Practical Sandbox",
+        "model": "gemini-2.5-flash",
+        "instruction": (
+            "You are a Physics Lab Assistant that converts natural language experiment descriptions "
+            "into interactive Three.js visualizations with cannon-es physics. "
+            "Generate complete, executable code for physics experiments like free fall, pendulums, "
+            "collisions, and projectile motion."
+        ),
+        "log_signature": "[PHYSICS] Engine ready. Simulation loop initialized.",
+        "tools_allowed": []
     }
 }

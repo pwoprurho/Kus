@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-screen flex flex-col bg-[#0f1115] text-gray-200 overflow-hidden font-sans">
+
+    <!-- HEADER -->
+    <header class="h-16 border-b border-gray-800 flex items-center justify-between px-6 bg-[#161b22]">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-purple-900/30 rounded-lg border border-purple-500/30 text-purple-400">
+                <i class="fas fa-microscope text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg tracking-wide">Deep Research Agent</h1>
+                <p class="text-xs text-gray-500 uppercase tracking-widest">Gemini Interactions API</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="status-indicator" class="flex items-center gap-2 text-xs font-mono text-gray-500">
+                <span class="w-2 h-2 rounded-full bg-gray-600"></span>
+                READY
+            </div>
+            <a href="/sandbox" class="text-xs hover:text-white transition-colors">
+                <i class="fas fa-times"></i> EXIT
+            </a>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-4xl mx-auto space-y-8">
+
+            <!-- PHASE 1: PLANNING -->
+            <section id="phase-plan" class="border border-gray-800 bg-[#161b22] rounded-xl p-6 shadow-xl">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-white mb-1">1. Research Strategy</h2>
+                        <p class="text-sm text-gray-400">Define your objective. The agent will generate a structured
+                            plan.</p>
+                    </div>
+                    <span class="px-2 py-1 bg-blue-900/20 text-blue-400 text-xs rounded border border-blue-800/50">Phase
+                        1</span>
+                </div>
+
+                <div class="space-y-4">
+                    <textarea id="goal-input" rows="3"
+                        class="w-full bg-[#0d1117] border border-gray-700 rounded-lg p-4 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm placeholder-gray-600 transition-all resize-none"
+                        placeholder="e.g., Analyze the competitive landscape of B2B AI agents in the legal sector..."></textarea>
+
+                    <div class="flex justify-end">
+                        <button onclick="generatePlan()" id="btn-plan"
+                            class="px-5 py-2 bg-white text-black font-semibold rounded-lg text-sm hover:bg-gray-200 transition-transform active:scale-95 flex items-center gap-2">
+                            <span>Generate Plan</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PHASE 2: EXECUTION (Initially Hidden) -->
+            <section id="phase-execute"
+                class="hidden border border-gray-800 bg-[#161b22] rounded-xl p-6 shadow-xl relative overflow-hidden">
+                <!-- Loading Overlay -->
+                <div id="research-loader"
+                    class="hidden absolute inset-0 bg-[#161b22]/90 z-20 flex flex-col items-center justify-center">
+                    <div
+                        class="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4">
+                    </div>
+                    <p class="text-purple-400 font-mono animate-pulse">Deep Researching... (This takes 2-5 mins)</p>
+                    <p id="research-timer" class="text-gray-500 text-xs mt-2 font-mono">00:00</p>
+                </div>
+
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-white mb-1">2. Execution Plan</h2>
+                        <p class="text-sm text-gray-400">Select tasks to investigate. Deep Research runs in the
+                            background.</p>
+                    </div>
+                    <span
+                        class="px-2 py-1 bg-amber-900/20 text-amber-400 text-xs rounded border border-amber-800/50">Phase
+                        2</span>
+                </div>
+
+                <div id="tasks-container" class="space-y-2 mb-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    <!-- Tasks injected here -->
+                </div>
+
+                <div class="flex justify-end border-t border-gray-800 pt-4">
+                    <button onclick="startResearch()" id="btn-research"
+                        class="px-5 py-2 bg-purple-600 text-white font-semibold rounded-lg text-sm hover:bg-purple-500 transition-transform active:scale-95 flex items-center gap-2">
+                        <i class="fas fa-robot"></i>
+                        <span>Start Deep Research</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- PHASE 3: RESULTS (Initially Hidden) -->
+            <section id="phase-results" class="hidden space-y-6">
+
+                <!-- Report Card -->
+                <div class="border border-gray-800 bg-[#161b22] rounded-xl p-8 shadow-xl">
+                    <div class="flex items-center justify-between mb-6 pb-6 border-b border-gray-800">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white mb-1">Executive Report</h2>
+                            <p class="text-sm text-gray-400">Synthesized Findings & Recommendations</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <span
+                                class="px-2 py-1 bg-green-900/20 text-green-400 text-xs rounded border border-green-800/50">Completed</span>
+                            <button class="p-2 hover:bg-gray-800 rounded text-gray-400"><i
+                                    class="fas fa-download"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Infographic Area -->
+                    <div id="infographic-area" class="mb-8 hidden">
+                        <div class="border border-gray-700 rounded-lg overflow-hidden bg-white/5">
+                            <img id="infographic-img" src="" class="w-full h-auto object-cover" alt="TL;DR Infographic">
+                        </div>
+                    </div>
+
+                    <div id="report-content" class="prose prose-invert prose-sm max-w-none text-gray-300">
+                        <!-- Markdown Report Injected Here -->
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    let PLAN_ID = null;
+    let TASKS = [];
+
+    async function generatePlan() {
+        const goal = document.getElementById('goal-input').value.trim();
+        if (!goal) return;
+
+        setLoading('btn-plan', true);
+
+        try {
+            const res = await fetch('/api/research/plan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ goal })
+            });
+
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            PLAN_ID = data.plan_id;
+            TASKS = data.tasks;
+
+            if (!TASKS || TASKS.length === 0) {
+                throw new Error("No tasks were generated for this goal. Please try a more specific goal.");
+            }
+
+            renderTasks(TASKS);
+            document.getElementById('phase-execute').classList.remove('hidden');
+
+            // Smooth scroll
+            setTimeout(() => document.getElementById('phase-execute').scrollIntoView({ behavior: 'smooth' }), 100);
+
+        } catch (e) {
+            console.error("Plan Gen Error:", e);
+            alert("Error generating plan: " + e.message);
+        } finally {
+            setLoading('btn-plan', false);
+        }
+    }
+
+    function renderTasks(tasks) {
+        const container = document.getElementById('tasks-container');
+        container.innerHTML = tasks.map(t => `
+            <label class="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 cursor-pointer border border-transparent hover:border-gray-700 transition-colors group">
+                <input type="checkbox" checked value="${t.num}" class="mt-1 w-4 h-4 rounded border-gray-600 text-purple-600 focus:ring-purple-500/50 bg-[#0d1117]">
+                <div class="text-sm">
+                    <span class="font-mono text-purple-400 font-bold mr-2">${t.num}.</span>
+                    <span class="text-gray-300 group-hover:text-white">${t.text}</span>
+                </div>
+            </label>
+        `).join('');
+    }
+
+    async function startResearch() {
+        const selected = Array.from(document.querySelectorAll('#tasks-container input:checked')).map(cb => {
+            const t = TASKS.find(x => x.num === cb.value);
+            return `${t.num}. ${t.text}`;
+        });
+
+        if (selected.length === 0) return alert("Select at least one task.");
+
+        // Show Loader
+        document.getElementById('research-loader').classList.remove('hidden');
+        startTimer();
+
+        try {
+            // 1. Execute Research
+            const res = await fetch('/api/research/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan_id: PLAN_ID, tasks: selected })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            const researchId = data.research_id;
+
+            // 2. Poll for Completion (Simulated for demo if needed, but Interactions API is sync unless background=True)
+            // Our backend service currently does sync for simplicity, or returns immediately.
+            // If it returns immediately, we render results.
+
+            // 3. Generate Report
+            const reportRes = await fetch('/api/research/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ research_id: researchId, research_text: "" }) // Text is handled by backend state or fetched
+            });
+            const reportData = await reportRes.json();
+
+            if (reportData.error) throw new Error(reportData.error);
+
+            // Render Results
+            document.getElementById('report-content').innerHTML = marked.parse(reportData.report_text);
+
+            if (reportData.infographic) {
+                document.getElementById('infographic-img').src = "data:image/png;base64," + reportData.infographic;
+                document.getElementById('infographic-area').classList.remove('hidden');
+            }
+
+            document.getElementById('phase-results').classList.remove('hidden');
+            setTimeout(() => document.getElementById('phase-results').scrollIntoView({ behavior: 'smooth' }), 100);
+
+        } catch (e) {
+            alert("Research Execution Failed: " + e.message);
+        } finally {
+            document.getElementById('research-loader').classList.add('hidden');
+            stopTimer();
+        }
+    }
+
+    // UI Helpers
+    function setLoading(btnId, isLoading) {
+        const btn = document.getElementById(btnId);
+        if (isLoading) {
+            btn.dataset.original = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
+            btn.disabled = true;
+        } else {
+            btn.innerHTML = btn.dataset.original;
+            btn.disabled = false;
+        }
+    }
+
+    let timerInterval;
+    function startTimer() {
+        let sec = 0;
+        const el = document.getElementById('research-timer');
+        el.innerText = "00:00";
+        timerInterval = setInterval(() => {
+            sec++;
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            el.innerText = `${m}:${s}`;
+        }, 1000);
+    }
+    function stopTimer() {
+        clearInterval(timerInterval);
+    }
+</script>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #0d1117;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 3px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #444;
+    }
+</style>
+{% endblock %}

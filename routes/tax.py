@@ -1,6 +1,7 @@
 # routes/tax.py
 """Authenticated client route for secure tax agent chat."""
 from flask import Blueprint, request, jsonify, session, render_template, Response, stream_with_context
+from flask_login import current_user
 from core.engine import KusmusAIEngine
 from services.personas import DEMO_REGISTRY
 from rag_tax_law import search_tax_law
@@ -20,17 +21,24 @@ tax_bp = Blueprint('tax', __name__)
 CLIENT_TABLES = {}
 @tax_bp.route('/tax')
 def tax_agent_ui():
-    # Use client session keys for authentication
-    if not session.get('client_access') or not session.get('client_id'):
+    # Authenticate: Allow Admin (Flask-Login) OR Client (Session)
+    if not (current_user.is_authenticated or (session.get('client_access') and session.get('client_id'))):
         return render_template('403.html')
     return render_template('client/tax_agent.html')
 
+def get_auth_context():
+    """Helper to get client_id and ensure auth for Tax routes."""
+    if current_user.is_authenticated:
+        return f"admin_{current_user.id}"
+    if session.get('client_access') and session.get('client_id'):
+        return session.get('client_id')
+    return None
+
 @tax_bp.route('/api/tax/upload', methods=['POST'])
 def tax_upload():
-    # Use client session keys for authentication
-    if not session.get('client_access') or not session.get('client_id'):
+    client_id = get_auth_context()
+    if not client_id:
         return jsonify({'error': 'Authentication required'}), 401
-    client_id = session.get('client_id')
     statement_file = request.files.get('statementFile')
     receipts_file = request.files.get('receiptsFile')
     
@@ -77,8 +85,8 @@ from rag_tax_law import search_tax_law
 @tax_bp.route('/api/tax/chat', methods=['POST'])
 def tax_chat():
     try:
-        # Use client session keys for authentication
-        if not session.get('client_access') or not session.get('client_id'):
+        client_id = get_auth_context()
+        if not client_id:
             return jsonify({'error': 'Authentication required'}), 401
         
         data = request.get_json() or {}
@@ -111,7 +119,7 @@ def tax_chat():
                 
                 # 3. Construct a new prompt that includes the RAG context
                 # Retrieve from server-side cache
-                client_id = session.get('client_id')
+                # client_id already fetched above
                 user_docs = ""
                 try:
                     if client_id and os.path.exists(f"data/tax_ctx_{client_id}.txt"):
@@ -144,7 +152,7 @@ def tax_chat():
             except Exception as e:
                 print(f"RAG search failed: {e}")
                 # Fallback: still inject doc context if RAG fails
-                client_id = session.get('client_id')
+                # client_id already fetched
                 user_docs = ""
                 try:
                     if client_id and os.path.exists(f"data/tax_ctx_{client_id}.txt"):
@@ -191,7 +199,13 @@ def tax_chat():
 def tax_chat_stream():
     try:
         # Auth check
-        if not session.get('client_access') or not session.get('client_id'):
+        # Auth check
+        client_id = get_auth_context()
+        print(f"DEBUG: tax_chat_stream auth check. Is Authenticated: {current_user.is_authenticated if not current_user.is_anonymous else 'False'}")
+        print(f"DEBUG: Session keys: {list(session.keys())}")
+        print(f"DEBUG: Resolved client_id: {client_id}")
+        
+        if not client_id:
             return jsonify({'error': 'Authentication required'}), 401
         
         data = request.get_json() or {}
@@ -214,7 +228,7 @@ def tax_chat_stream():
             rag_context = "\n\n---\n".join(context_chunks)
         except: pass
 
-        client_id = session.get('client_id')
+        # client_id fetched above
         user_docs = ""
         try:
             if client_id and os.path.exists(f"data/tax_ctx_{client_id}.txt"):
@@ -256,9 +270,9 @@ def tax_chat_stream():
 @tax_bp.route('/client/chat/sync')
 def client_chat_sync():
     """Fetches decrypted chat history for the logged-in client."""
-    if not session.get('client_access') or not session.get('client_id'):
+    client_id = get_auth_context()
+    if not client_id:
         return jsonify({'error': 'Authentication required'}), 401
-    client_id = session['client_id']
     
     try:
         res = supabase_admin.table('secure_chat_messages').select('*').eq('client_id', client_id).order('created_at', desc=False).execute()
@@ -278,10 +292,9 @@ def client_chat_sync():
 @tax_bp.route('/client/chat/send', methods=['POST'])
 def client_chat_send():
     """Handles Client Text AND File Uploads, saving them encrypted."""
-    if not session.get('client_access') or not session.get('client_id'):
+    client_id = get_auth_context()
+    if not client_id:
         return jsonify({'error': 'Authentication required'}), 401
-    
-    client_id = session['client_id']
     text = request.form.get('message')
     uploaded_file = request.files.get('file')
 
