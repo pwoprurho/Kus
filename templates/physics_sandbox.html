@@ -1,0 +1,964 @@
+{% extends 'base.html' %}
+{% block title %}Physics Sandbox | Kusmus AI{% endblock %}
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+
+<style>
+    :root {
+        --accent: #2ecc71;
+        --bg: #050505;
+        --glass: rgba(10, 10, 15, 0.75);
+        --border: rgba(255, 255, 255, 0.08);
+        --panel-width: 320px;
+    }
+
+    header,
+    footer,
+    #chat-widget-container {
+        display: none !important;
+    }
+
+    body {
+        background-color: var(--bg);
+        color: #e0e0e0;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        height: 100vh;
+        margin: 0;
+    }
+
+    #canvas-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        background: radial-gradient(circle at 50% 50%, #151520 0%, #000000 80%);
+    }
+
+    .physics-grid {
+        position: relative;
+        z-index: 10;
+        display: grid;
+        grid-template-columns: var(--panel-width) 1fr var(--panel-width);
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        pointer-events: none;
+        padding: 25px;
+        box-sizing: border-box;
+    }
+
+    .glass-panel {
+        background: var(--glass);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        height: min-content;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+        pointer-events: auto;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Left Panel - Controls */
+    .control-panel {
+        padding: 25px;
+        gap: 20px;
+    }
+
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #888;
+        text-decoration: none;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        padding-bottom: 20px;
+        transition: all 0.2s ease;
+        opacity: 0.7;
+    }
+
+    .btn-back:hover {
+        color: var(--accent);
+        opacity: 1;
+        transform: translateX(-3px);
+    }
+
+    .section-title {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 12px;
+        margin-top: 5px;
+    }
+
+    .experiment-input {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 15px;
+        transition: border-color 0.3s;
+    }
+
+    .experiment-input:focus-within {
+        border-color: var(--accent);
+    }
+
+    .experiment-input textarea {
+        width: 100%;
+        height: 70px;
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-size: 0.9rem;
+        resize: none;
+        outline: none;
+        font-family: inherit;
+        line-height: 1.4;
+    }
+
+    .btn-generate {
+        width: 100%;
+        padding: 14px;
+        background: var(--accent);
+        border: none;
+        border-radius: 10px;
+        color: #000;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        margin-top: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.75rem;
+    }
+
+    .btn-generate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(46, 204, 113, 0.3);
+        filter: brightness(1.1);
+    }
+
+    .btn-generate:active {
+        transform: translateY(0);
+    }
+
+    /* Quick Templates */
+    .template-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .template-btn {
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: #aaa;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .template-btn:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--accent);
+        border-color: var(--accent);
+    }
+
+    /* Sliders */
+    .param-group {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border: 1px solid transparent;
+    }
+
+    .param-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #888;
+    }
+
+    .param-value {
+        color: var(--accent);
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .param-slider {
+        width: 100%;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        -webkit-appearance: none;
+        outline: none;
+    }
+
+    .param-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        background: var(--accent);
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+    }
+
+    /* Right Panel */
+    .info-panel {
+        padding: 0;
+    }
+
+    .info-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        gap: 15px;
+    }
+
+    .tab-btn {
+        padding: 8px 0;
+        background: transparent;
+        border: none;
+        color: #666;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+    }
+
+    .info-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+
+    .info-label {
+        font-size: 0.65rem;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .info-value {
+        font-size: 0.9rem;
+        color: #fff;
+        font-weight: 500;
+    }
+
+    .code-display {
+        background: #08080a;
+        border-radius: 8px;
+        padding: 15px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        color: #9cdcfe;
+    }
+
+    /* Floating Canvas Controls */
+    .canvas-area {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        pointer-events: none;
+    }
+
+    .canvas-overlay {
+        position: absolute;
+        top: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 12px;
+        z-index: 20;
+        pointer-events: auto;
+    }
+
+    .overlay-btn {
+        padding: 12px 24px;
+        background: rgba(10, 10, 15, 0.8);
+        backdrop-filter: blur(15px);
+        border: 1px solid var(--border);
+        border-radius: 30px;
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .overlay-btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    /* MVP-style Prompt Bar */
+    .input-area {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 700px;
+        pointer-events: auto;
+    }
+
+    .search-box {
+        display: flex;
+        background: var(--glass);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border: 1px solid var(--border);
+        border-radius: 30px;
+        padding: 12px 12px 12px 25px;
+        gap: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        align-items: flex-end;
+    }
+
+    .search-box textarea {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-size: 1rem;
+        outline: none;
+        resize: none;
+        height: 24px;
+        max-height: 120px;
+        font-family: inherit;
+        padding-top: 4px;
+    }
+
+    .search-box button {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--accent);
+        border: none;
+        color: #000;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        margin-bottom: -2px;
+    }
+
+    .search-box button:hover {
+        transform: scale(1.1);
+        filter: brightness(1.1);
+    }
+
+    /* Loaders & Errors */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(15px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        z-index: 100;
+        gap: 25px;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(46, 204, 113, 0.1);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .loading-text {
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+<div id="canvas-container">
+</div>
+
+<div class="physics-grid">
+    <!-- Left Panel: Controls -->
+    <aside class="control-panel glass-panel">
+        <a href="{{ url_for('sandbox.sandbox_view') }}" class="btn-back">
+            <i class="fas fa-chevron-left"></i> EXIT
+        </a>
+
+        <div class="section-title">Simulation Templates</div>
+        <div class="template-grid">
+            <button class="template-btn" onclick="loadTemplate('free_fall')">Free Fall</button>
+            <button class="template-btn" onclick="loadTemplate('pendulum')">Pendulum</button>
+            <button class="template-btn" onclick="loadTemplate('collision')">Collision</button>
+            <button class="template-btn" onclick="loadTemplate('projectile')">Projectile</button>
+        </div>
+
+        <div class="section-title" style="margin-top: 15px;">Environment Settings</div>
+        <div class="param-group">
+            <div class="param-label">
+                <span>Gravity</span>
+                <span class="param-value" id="gravity-value">9.81 m/s²</span>
+            </div>
+            <input type="range" class="param-slider" id="gravity-slider" min="1" max="20" step="0.1" value="9.81"
+                onchange="updateGravity(this.value)">
+        </div>
+
+        <div class="param-group">
+            <div class="param-label">
+                <span>Time Scale</span>
+                <span class="param-value" id="timescale-value">1.0x</span>
+            </div>
+            <input type="range" class="param-slider" id="timescale-slider" min="0.1" max="5" step="0.1" value="1"
+                onchange="updateTimeScale(this.value)">
+        </div>
+
+        <div class="section-title" id="objects-title" style="display: none; margin-top: 15px;">Object Parameters</div>
+        <div class="object-params" id="object-params">
+            <!-- Dynamic object parameters will be added here -->
+        </div>
+    </aside>
+
+    <!-- Center: Canvas -->
+    <div class="canvas-area">
+        <div class="canvas-overlay">
+            <button class="overlay-btn" onclick="togglePlay()" id="play-btn">
+                <span>⏸</span> Pause
+            </button>
+            <button class="overlay-btn" onclick="resetExperiment()">
+                <span>↺</span> Reset
+            </button>
+            <button class="overlay-btn" onclick="stepFrame()">
+                <span>▶</span> Step
+            </button>
+        </div>
+
+        <div class="input-area">
+            <div class="search-box">
+                <textarea id="main-prompt" placeholder="Experiment prompt (e.g., 'a ball falling onto a grid')..."
+                    onkeypress="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); generateExperiment(); }"></textarea>
+                <button onclick="generateExperiment()">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Info -->
+    <aside class="info-panel glass-panel">
+        <div class="info-header">
+            <button class="tab-btn active" onclick="switchTab('info')">Info</button>
+            <button class="tab-btn" onclick="switchTab('code')">Code</button>
+        </div>
+
+        <div class="tab-content">
+            <div class="tab-pane active" id="info-tab">
+                <div class="info-card">
+                    <div class="info-label">Experiment</div>
+                    <div class="info-value" id="exp-title">-</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Concept</div>
+                    <div class="info-value" id="exp-concept">-</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Objects</div>
+                    <div class="info-value" id="exp-objects">0</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Runtime</div>
+                    <div class="info-value" id="exp-runtime">-</div>
+                </div>
+            </div>
+
+            <div class="tab-pane" id="code-tab">
+                <pre class="code-display" id="code-display">
+// Generated code will appear here
+// Click "Generate Experiment" to start
+                </pre>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Generating experiment...</div>
+</div>
+
+<!-- Error Toast -->
+<div class="error-toast" id="error-toast"></div>
+
+<script>
+    // Global state
+    let currentExperiment = null;
+    let currentRenderer = null;
+    let animationId = null;
+    let isPlaying = true;
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+        initPhysicsRenderer();
+        loadExamplePrompts();
+    });
+
+    function initPhysicsRenderer() {
+        const container = document.getElementById('canvas-container');
+
+        // Check if Three.js is loaded
+        if (typeof THREE === 'undefined') {
+            showError('Three.js not loaded. Please refresh the page.');
+            return;
+        }
+
+        // Create basic scene
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0f);
+
+        const camera = new THREE.PerspectiveCamera(
+            60,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        camera.position.set(10, 8, 15);
+        camera.lookAt(0, 2, 0);
+
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            preserveDrawingBuffer: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(10, 20, 10);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+
+        // Ground
+        const groundGeometry = new THREE.PlaneGeometry(30, 30);
+        const groundMaterial = new THREE.MeshStandardMaterial({
+            color: 0x1a1a2e,
+            metalness: 0.1,
+            roughness: 0.8
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initial objects array
+        const objects = [];
+
+        // Animation loop
+        function animate() {
+            if (window._animationCanceled) return;
+            animationId = requestAnimationFrame(animate);
+            if (isPlaying) {
+                renderer.render(scene, camera);
+            }
+        }
+        animate();
+
+        window.physicsControls = {
+            getScene: () => scene,
+            getCamera: () => camera,
+            updateGravity: (x, y, z) => { }, // Placeholder for initial state
+            updateObjectParameter: (idx, p, v) => { },
+            reset: () => { }
+        };
+        currentRenderer = renderer;
+    }
+
+    async function generateExperiment() {
+        const promptEl = document.getElementById('main-prompt');
+        const description = promptEl.value.trim();
+
+        if (!description) {
+            showError('Please describe an experiment first');
+            return;
+        }
+
+        showLoading(true);
+        hideError();
+
+        try {
+            const response = await fetch('/api/physics/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    description: description,
+                    options: { show_code: true }
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                currentExperiment = result.experiment;
+                executeGeneratedCode(result.experiment.threejs_code);
+                updateUI(result.experiment);
+            } else {
+                showError(result.error || 'Failed to generate experiment');
+            }
+        } catch (error) {
+            showError('Error generating experiment: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function executeGeneratedCode(code) {
+        if (!code) {
+            console.warn('No code provided to execute');
+            return;
+        }
+
+        // Cleanup previous
+        window._animationCanceled = true;
+        if (animationId) cancelAnimationFrame(animationId);
+
+        if (currentRenderer) {
+            currentRenderer.dispose();
+            // currentRenderer.forceContextLoss(); // Avoid this for persistent context if possible
+            if (currentRenderer.domElement && currentRenderer.domElement.parentNode) {
+                currentRenderer.domElement.parentNode.removeChild(currentRenderer.domElement);
+            }
+        }
+
+        const container = document.getElementById('canvas-container');
+        // Do NOT clear container innerHTML if we want to preserve things, 
+        // but here we want a fresh start for the new renderer.
+        container.innerHTML = '';
+
+        try {
+            let cleanCode = code.trim();
+
+            // Extract code from IIFE if present
+            const iifeMatch = cleanCode.match(/^\(\s*function\s*\(\s*\)\s*\{([\s\S]*)\}\s*\)\s*\(\s*\)\s*;?$/);
+            if (iifeMatch) {
+                cleanCode = iifeMatch[1];
+            }
+
+            // Wrap to inject dependencies and capture renderer/loop
+            const wrapper = `
+                (function() {
+                    const THREE = window.THREE;
+                    const CANNON = window.CANNON;
+                    const container = document.getElementById('canvas-container');
+                    
+                    // Override renderer creation to ensure it goes into our container
+                    const OriginalRenderer = THREE.WebGLRenderer;
+                    THREE.WebGLRenderer = function(params) {
+                        const r = new OriginalRenderer({
+                            ...params,
+                            antialias: true,
+                            preserveDrawingBuffer: true
+                        });
+                        r.setSize(window.innerWidth, window.innerHeight);
+                        r.setPixelRatio(window.devicePixelRatio);
+                        container.appendChild(r.domElement);
+                        window._currentRenderer = r;
+                        return r;
+                    };
+
+                    // Capture animation loop
+                    const OriginalRAF = window.requestAnimationFrame;
+                    window.requestAnimationFrame = function(cb) {
+                        return OriginalRAF((time) => {
+                            if (window._animationCanceled) return;
+                            cb(time);
+                        });
+                    };
+
+                    const result = (function() {
+                        ${cleanCode}
+                    })();
+
+                    // Revert overrides
+                    THREE.WebGLRenderer = OriginalRenderer;
+                    
+                    return result;
+                })()
+            `;
+
+            setTimeout(() => {
+                window._animationCanceled = false;
+                try {
+                    const result = eval(wrapper);
+                    currentRenderer = window._currentRenderer;
+
+                    if (result && typeof result === 'object') {
+                        window.physicsControls = result;
+                    }
+                } catch (e) {
+                    console.error('Eval error:', e);
+                    showError('Error executing code: ' + e.message);
+                }
+            }, 50);
+
+        } catch (error) {
+            console.error('Code preparation error:', error);
+            showError('Error preparing generated code: ' + error.message);
+        }
+    }
+
+    function updateUI(experiment) {
+        // Update info panel
+        document.getElementById('exp-title').textContent = experiment.title || 'Physics Experiment';
+        document.getElementById('exp-concept').textContent = experiment.concept || 'Physics';
+        document.getElementById('exp-objects').textContent = experiment.objects?.length || 0;
+        document.getElementById('exp-runtime').textContent = (experiment.estimated_runtime / 1000).toFixed(1) + 's';
+
+        // Update code display
+        document.getElementById('code-display').textContent = experiment.threejs_code || '// No code generated';
+
+        // Update object parameters
+        updateObjectParams(experiment.objects || []);
+    }
+
+    function updateObjectParams(objects) {
+        const container = document.getElementById('object-params');
+        const title = document.getElementById('objects-title');
+
+        if (objects.length === 0) {
+            title.style.display = 'none';
+            container.innerHTML = '';
+            return;
+        }
+
+        title.style.display = 'block';
+        container.innerHTML = objects.map((obj, index) => `
+            <div class="object-card">
+                <div class="object-name">${obj.name || 'Object ' + (index + 1)}</div>
+                <div class="object-type">${obj.type}</div>
+                ${obj.adjustable ? renderAdjustableParams(obj.adjustable, index) : ''}
+            </div>
+        `).join('');
+    }
+
+    function renderAdjustableParams(adjustable, index) {
+        return Object.entries(adjustable).map(([param, config]) => `
+            <div class="param-group" style="margin-top: 8px;">
+                <div class="param-label">
+                    <span>${param}</span>
+                    <span class="param-value" id="obj-${index}-${param}-value">${config.value || config.min}</span>
+                </div>
+                <input type="range" class="param-slider" 
+                       id="obj-${index}-${param}"
+                       min="${config.min}" max="${config.max}" step="${config.step}"
+                       onchange="updateObjectParam(${index}, '${param}', this.value)">
+            </div>
+        `).join('');
+    }
+
+    function updateObjectParam(objectIndex, paramName, value) {
+        value = parseFloat(value);
+
+        // Update display
+        document.getElementById(`obj-${objectIndex}-${paramName}-value`).textContent = value.toFixed(2);
+
+        // Call renderer control function
+        if (window.physicsControls?.updateObjectParameter) {
+            window.physicsControls.updateObjectParameter(objectIndex, paramName, value);
+        }
+    }
+
+    function updateGravity(value) {
+        document.getElementById('gravity-value').textContent = value + ' m/s²';
+
+        if (window.physicsControls?.updateGravity) {
+            window.physicsControls.updateGravity(0, -parseFloat(value), 0);
+        }
+    }
+
+    function updateTimeScale(value) {
+        document.getElementById('timescale-value').textContent = value + 'x';
+
+        if (window.physicsControls?.updateTimeScale) {
+            window.physicsControls.updateTimeScale(parseFloat(value));
+        }
+    }
+
+    function togglePlay() {
+        isPlaying = !isPlaying;
+        const btn = document.getElementById('play-btn');
+        btn.innerHTML = isPlaying ? '<span>⏸</span> Pause' : '<span>▶</span> Play';
+    }
+
+    function resetExperiment() {
+        if (currentExperiment?.threejs_code) {
+            executeGeneratedCode(currentExperiment.threejs_code);
+        }
+    }
+
+    function stepFrame() {
+        // Single step implementation
+        isPlaying = false;
+        if (currentRenderer && window.physicsControls?.getScene) {
+            const scene = window.physicsControls.getScene();
+            const camera = window.physicsControls.getCamera();
+            currentRenderer.render(scene, camera);
+        }
+    }
+
+    async function loadTemplate(templateId) {
+        showLoading(true);
+
+        try {
+            const response = await fetch('/api/physics/quick-templates');
+            const templates = await response.json();
+            const template = templates[templateId];
+
+            if (template) {
+                document.getElementById('main-prompt').value =
+                    `Use the ${template.name} template: ${template.description}`;
+
+                // Adjust textarea height
+                const promptEl = document.getElementById('main-prompt');
+                promptEl.style.height = 'auto';
+                promptEl.style.height = (promptEl.scrollHeight) + 'px';
+
+                // Apply template configuration
+                applyTemplateConfig(template.config);
+            }
+        } catch (error) {
+            showError('Error loading template');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function applyTemplateConfig(config) {
+        // Apply global parameters
+        if (config.simulation?.gravity) {
+            const g = Math.abs(config.simulation.gravity[1]);
+            document.getElementById('gravity-slider').value = g;
+            updateGravity(g);
+        }
+    }
+
+    async function modifyExperiment() {
+        const modification = document.getElementById('quick-input').value.trim();
+        if (!modification || !currentExperiment) return;
+
+        // For now, just clear the input
+        // In full implementation, this would use AI to modify the experiment
+        document.getElementById('quick-input').value = '';
+    }
+
+    function switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+
+        // Update tab content
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+        });
+        document.getElementById(tabName + '-tab').classList.add('active');
+    }
+
+    async function loadExamplePrompts() {
+        try {
+            const response = await fetch('/api/physics/examples');
+            const examples = await response.json();
+
+            // Store for autocomplete/suggestions
+            window.physicsExamples = examples;
+        } catch (error) {
+            console.error('Error loading examples:', error);
+        }
+    }
+
+    function showLoading(show) {
+        document.getElementById('loading-overlay').classList.toggle('active', show);
+    }
+
+    function showError(message) {
+        const toast = document.getElementById('error-toast');
+        toast.textContent = message;
+        toast.classList.add('active');
+
+        setTimeout(() => {
+            toast.classList.remove('active');
+        }, 5000);
+    }
+
+    function hideError() {
+        document.getElementById('error-toast').classList.remove('active');
+    }
+</script>
+{% endblock %}
