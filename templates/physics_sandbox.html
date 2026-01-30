@@ -459,6 +459,13 @@
         padding: 10px 20px;
         border-radius: 30px;
         border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    body.full-screen .canvas-overlay.hidden {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+        pointer-events: none;
     }
 </style>
 
@@ -931,15 +938,40 @@
     function toggleFullScreen() {
         document.body.classList.toggle('full-screen');
         const btn = document.getElementById('fullscreen-btn');
+        const overlay = document.querySelector('.canvas-overlay');
+
         if (document.body.classList.contains('full-screen')) {
             btn.innerHTML = '<span>❐</span> Exit Full Screen';
+            resetOverlayTimeout();
         } else {
             btn.innerHTML = '<span>⛶</span> Full Screen';
+            overlay.classList.remove('hidden');
+            clearTimeout(overlayTimeout);
         }
 
         // Trigger resize to fix canvas
         setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
     }
+
+    let overlayTimeout = null;
+    function resetOverlayTimeout() {
+        if (!document.body.classList.contains('full-screen')) return;
+
+        const overlay = document.querySelector('.canvas-overlay');
+        if (!overlay) return;
+
+        overlay.classList.remove('hidden');
+
+        clearTimeout(overlayTimeout);
+        overlayTimeout = setTimeout(() => {
+            if (document.body.classList.contains('full-screen')) {
+                overlay.classList.add('hidden');
+            }
+        }, 3000);
+    }
+
+    document.addEventListener('mousemove', resetOverlayTimeout);
+    document.addEventListener('click', resetOverlayTimeout);
 
     function togglePlay() {
         isPlaying = !isPlaying;
