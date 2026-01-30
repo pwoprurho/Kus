@@ -1655,4 +1655,10 @@ footer {
     .partner-logo img {
         max-height: 40px;
     }
+
+    /* Fixed mobile grid overflow for Research Section */
+    #research-section .container {
+        grid-template-columns: 1fr !important;
+        gap: 30px;
+    }
 }
