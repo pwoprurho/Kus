@@ -613,10 +613,6 @@ def match_template(description: str):
     return None, None
 
 
-@physics_bp.route("/physics-mvp")
-def physics_mvp_view():
-    """Renders the Physics Sandbox MVP interface."""
-    return render_template('physics_mvp.html')
 
 @physics_bp.route("/physics-sandbox")
 def physics_sandbox_view():
