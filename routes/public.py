@@ -312,7 +312,7 @@ def sitemap():
         except: pass
 
     xml_sitemap.append('</urlset>')
-    return Response('\\n'.join(xml_sitemap), mimetype='application/xml')
+    return Response('\n'.join(xml_sitemap), mimetype='application/xml')
 
 @public_bp.route('/robots.txt', methods=['GET'])
 def robots():
@@ -325,4 +325,4 @@ def robots():
         "Disallow: /crypto-wallet",
         f"Sitemap: {url_for('public.sitemap', _external=True)}"
     ]
-    return Response('\\n'.join(lines), mimetype='text/plain')
+    return Response('\n'.join(lines), mimetype='text/plain')
