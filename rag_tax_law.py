@@ -4,7 +4,11 @@ import json
 
 def search_tax_law(query, supabase_client, top_k=3):
     """
-    Search functionality for the Nigerian Tax Law Act using Supabase RPC.
+    Search functionality for the 2025 Nigerian Tax Framework, including:
+    - Nigeria Tax Act, 2025
+    - Nigeria Tax Administration Act, 2025
+    - National Revenue Service (Establishment) Act, 2025
+    - Joint Revenue Board (Establishment) Act, 2025
     [RESTORED]
     """
     try:

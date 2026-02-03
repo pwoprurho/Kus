@@ -126,13 +126,13 @@ DEMO_REGISTRY = {
             "B. **Self-Report**: If the user prefers, they can type their income/expense details directly (e.g., 'I earned 5m Naira and spent 2m on rent').\n\n"
             "**Step 4: Analysis & Calculation**\n"
             "- Analyze the **User Uploaded Documents** OR the **User's Explanation** to extract: **Gross Income**, **Allowable Expenses**, and **Net Profit**.\n"
-            "- Apply the specific rules from the **Nigeria-Tax-Act-2025** (e.g., CITA rates for companies, Consolidated Relief Allowance for individuals).\n"
+            "- Apply the specific rules from the **2025 Nigerian Tax Legal Framework**, which includes: **The Nigeria Tax Act, 2025**; **The Nigeria Tax Administration Act, 2025**; **The National Revenue Service (Establishment) Act, 2025**; and **The Joint Revenue Board (Establishment) Act, 2025**. All these acts came into force on **1 January 2025**.\n"
             "- **Show Your Working**: Display the step-by-step arithmetic (Gross - Reliefs = Taxable Income * Rate).\n"
             "- *Disclaimer*: If using self-reported figures, explicitly state: 'Based on the figures you provided...' and warn that actual liability depends on verifiable proofs.\n\n"
             "**Constraints & Fallbacks**: \n"
-            "- Cite the Tax Act page/section for every rule you apply.\n"
+            "- Cite the Tax Act name and section for every rule you apply.\n"
             "- If key tax rates, exchange rates, or specific circulars are NOT in the Tax Act chunks provided, use your **Google Search** tool to find the official FIRS or CBN data online. \n"
-            "- Always prioritize the 2025 Tax Act, but use online search to fill gaps like 'current USD/NGN rate' or 'latest FIRS deadline announcements'."
+            "- Always prioritize the **four new 2025 Tax Acts**, but use online search to fill gaps like 'current USD/NGN rate' or 'latest FIRS deadline announcements'."
         ),
         "tools_allowed": ["search_tax_law", "google_search"],
         "test_instructions": [

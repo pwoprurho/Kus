@@ -51,7 +51,13 @@ class KusmusAIEngine:
         forensic_context = [l.strip() for l in forensic_context if l.strip()]
 
         # 3. CONTEXT INJECTION: Combine context_logs and forensic_context
-        live_telemetry = "\n".join(context_logs[-20:] if context_logs else [])
+        # Handle context_logs being either list of strings or list of dicts
+        def format_log(item):
+            if isinstance(item, dict):
+                return f"{item.get('role', 'user')}: {item.get('content', '')}"
+            return str(item)
+        
+        live_telemetry = "\n".join(format_log(log) for log in (context_logs[-20:] if context_logs else []))
         forensic_block = "\n".join(forensic_context)
         full_instruction = f"{self.system_instruction}\n\nLIVE_TELEMETRY:\n{live_telemetry}\n\nFORENSIC_MEMORY:\n{forensic_block}"
 
@@ -63,13 +69,16 @@ class KusmusAIEngine:
         )
 
         # Retry logic with key rotation
-        max_retries = len(key_manager.get_all_keys()) * 2 # Try each key twice effectively
-        if max_retries == 0: max_retries = 1
+        max_retries = len(key_manager.get_all_keys()) * 2  # Try each key twice
+        if max_retries == 0: 
+            max_retries = 1
         
         last_exc = None
         
         for attempt in range(max_retries):
             current_key = key_manager.get_current_key()
+            key_index = key_manager.current_index
+            
             try:
                 client = genai.Client(api_key=current_key)
                 response = client.models.generate_content(
@@ -77,6 +86,22 @@ class KusmusAIEngine:
                     contents=message,
                     config=config
                 )
+                
+                # Check if response contains rate limit error text (sometimes returned in response)
+                response_text = ""
+                try:
+                    response_text = response.text if hasattr(response, 'text') else ""
+                except:
+                    pass
+                
+                if response_text and any(x in response_text.lower() for x in ["429", "quota", "resource_exhausted"]):
+                    # Response contains rate limit info - rotate and retry
+                    import time
+                    print(f"[Key {key_index}] Rate limit detected in response, rotating...")
+                    time.sleep(3)
+                    key_manager.rotate_key()
+                    continue
+                
                 # 5. EXTRACT NATIVE THOUGHTS for Cognitive Trace HUD
                 for part in response.candidates[0].content.parts:
                     if hasattr(part, 'thought') and part.thought:
@@ -88,28 +113,41 @@ class KusmusAIEngine:
                         final_text += part.text
                 if not final_text:
                     final_text = response.text
+                    
+                # Success - return the response
                 return final_text, thought_trace
+                
             except Exception as e:
                 last_exc = e
                 error_str = str(e)
                 
-                # Stop on 400 Bad Request (Configuration/Validation Error) to avoid wasting retries
+                # Stop on 400 Bad Request (Configuration/Validation Error)
                 if "400" in error_str and not any(x in error_str for x in ["429", "quota", "403", "expired"]):
-                     final_text = f"System Configuration Error: {error_str}"
-                     thought_trace.append(f"Critical Error: {error_str}")
-                     return final_text, thought_trace
+                    final_text = f"System Configuration Error: {error_str}"
+                    thought_trace.append(f"Critical Error: {error_str}")
+                    return final_text, thought_trace
 
                 # Check for rate limit or auth errors
-                if any(x in error_str.lower() for x in ["429", "quota", "403", "leaked", "expired", "invalid"]):
+                if any(x in error_str.lower() for x in ["429", "quota", "resource_exhausted", "403", "leaked", "expired", "invalid"]):
+                    import time
+                    import re
+                    
+                    # Try to parse retry delay from error message
+                    delay_match = re.search(r'retry\s*(?:in|after)?\s*(\d+(?:\.\d+)?)\s*s', error_str.lower())
+                    wait_time = float(delay_match.group(1)) if delay_match else 3.0
+                    wait_time = min(wait_time, 10.0)  # Cap at 10 seconds
+                    
+                    print(f"[Key {key_index}] Rate limit hit, waiting {wait_time:.1f}s before rotating...")
+                    time.sleep(wait_time)
                     key_manager.rotate_key()
                     continue
                 else:
-                    # For other errors, maybe don't rotate immediately, but we will for robustness
+                    # For other errors, rotate and retry
                     key_manager.rotate_key()
                     continue
 
         final_text = f"Sovereign System Error: {str(last_exc)}"
-        thought_trace.append(f"Error connecting to Gemini 2.5 Flash. Last error: {str(last_exc)}")
+        thought_trace.append(f"Error connecting to Gemini. All {len(key_manager.get_all_keys())} keys exhausted. Last error: {str(last_exc)}")
         return final_text, thought_trace
 
     def generate_response_stream(self, message, history=[], context_logs=[]):

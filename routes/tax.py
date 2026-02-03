@@ -136,7 +136,7 @@ def tax_chat():
                 {user_docs}
                 ---
 
-                **Relevant Excerpts from the Nigerian Tax Act 2025:**
+                **Relevant Excerpts from the 2025 Nigerian Tax Framework (Nigeria Tax Act, Nigeria Tax Administration Act, NRS Act, JRB Act):**
                 ---
                 {rag_context}
                 ---
@@ -234,7 +234,7 @@ def tax_chat_stream():
         final_prompt = f"""
         **User Question:** {user_message}
         **User Uploaded Financial Documents:** {user_docs}
-        **Relevant Excerpts from Tax Act:** {rag_context}
+        **Relevant Excerpts from 2025 Tax Acts (Tax Act, Admin Act, NRS, JRB):** {rag_context}
         **Instruction:** You are an expert tax consultant... [Same instructions as main route]
         """
         
