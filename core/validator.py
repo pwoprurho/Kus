@@ -60,7 +60,7 @@ class PhysicsCodeValidator:
     ]
     
     # Resource limits
-    MAX_OBJECT_CREATIONS = 20
+    MAX_OBJECT_CREATIONS = float('inf')
     MAX_LINE_LENGTH = 1000
     MAX_NESTING_DEPTH = 5
     
