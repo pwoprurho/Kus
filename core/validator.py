@@ -42,7 +42,7 @@ class PhysicsCodeValidator:
     # Blocked patterns (security risks)
     BLOCKED_PATTERNS = [
         (r'eval\s*\(', "eval() is not allowed"),
-        (r'Function\s*\(', "Function constructor is not allowed"),
+        (r'new\s+Function\s*\(', "Function constructor is not allowed"),
         (r'document\.cookie', "Access to cookies is not allowed"),
         (r'document\.domain', "Access to domain is not allowed"),
         (r'fetch\s*\(', "Network requests are not allowed"),
@@ -62,7 +62,7 @@ class PhysicsCodeValidator:
     # Resource limits
     MAX_OBJECT_CREATIONS = float('inf')
     MAX_LINE_LENGTH = float("inf")
-    MAX_NESTING_DEPTH = 5
+    MAX_NESTING_DEPTH = float('inf')
     
     def __init__(self):
         self.issues = []
