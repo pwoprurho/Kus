@@ -1,9 +1,0 @@
-﻿
->>> Testing: A simple ball falling from 10 meters height using gravity.
-SUCCESS: Parsed JSON from block.
-
->>> Testing: A complex double pendulum simulation with energy graphs.
-SUCCESS: Parsed JSON from block.
-
->>> Testing: Solar system simulation with all planets.
-SUCCESS: Parsed JSON from block.

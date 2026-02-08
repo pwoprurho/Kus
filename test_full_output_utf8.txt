@@ -1,4 +1,0 @@
-﻿Testing full pipeline with design doc: A simple ball falling from 10 meters height using gravity.
-Success in generation. Validating code...
-Validation FAILED!
-Issues: ['Too many object creations (21 > 20)']
