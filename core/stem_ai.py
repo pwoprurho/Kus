@@ -36,11 +36,14 @@ Convert the following research design into 100% executable Three.js + Cannon-es 
 CODE GUIDELINES:
 1.  **Premium Aesthetics**: Use lights, shadows, and refined materials (MeshStandardMaterial).
 2.  **Cannon-es Math**: Use Cannon.js for all physical calculations.
-3.  **Interactivity**: The code MUST return an object with:
+3.  **Environment Awareness**: The 3D scene is a "Graph Environment". 
+    - **Distance**: 1 unit = 1 meter. Use the grid (1m squares) for positioning.
+    - **Time**: A built-in timer HUD is available. Ensure simulations reflect real-world time.
+4.  **Interactivity**: The code MUST return an object with:
     - `updateGravity(x, y, z)`
     - `updateObjectParameter(index, param, value)`
     - `reset()`
-4.  **Visual Aids**: Include force vectors, paths, or labels to aid understanding.
+5.  **Visual Aids**: Include force vectors, paths, or labels to aid understanding.
 
 JSON OUTPUT FORMAT:
 ```json
@@ -62,7 +65,8 @@ class StemAIEngine:
     """
     
     def __init__(self, model_name=None):
-        self.planning_model = "gemini-2.5-flash-lite"
+        # gemini-2.0-flash has 1500 req/min vs gemini-2.5-flash-lite's 20 req/day
+        self.planning_model = "gemini-2.0-flash"
         self.generation_model = "gemini-3.0-flash"
     
     def chat_interact(self, message: str, context_logs=None) -> dict:
@@ -103,6 +107,7 @@ class StemAIEngine:
         
         result = self._parse_json(response_text)
         result["thought_trace"] = thought_trace
+        result["model_used"] = self.generation_model
         return result
 
     def _parse_state(self, text: str) -> dict:

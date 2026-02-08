@@ -335,3 +335,164 @@ def client_chat_send():
     except Exception as e:
         print(f"Client Chat Send Error: {e}")
         return jsonify({'error': str(e)}), 500
+
+@tax_bp.route('/api/tax/generate_filing', methods=['POST'])
+def generate_tax_filing():
+    """Generate professional PDF tax filing document"""
+    try:
+        client_id = get_auth_context()
+        if not client_id:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json() or {}
+        tax_year = data.get('tax_year', 2025)
+        
+        # Import services
+        from services.tax_calculator import TaxCalculator
+        from services.pdf_generator import TaxFilingPDFGenerator
+        
+        # Get user's uploaded document context
+        user_docs = ""
+        try:
+            if os.path.exists(f"data/tax_ctx_{client_id}.txt"):
+                with open(f"data/tax_ctx_{client_id}.txt", "r", encoding="utf-8") as f:
+                    user_docs = f.read()
+        except Exception as e:
+            print(f"Error reading user docs: {e}")
+        
+        # If no manual income data provided, use AI to extract from documents
+        income_data = data.get('income_data')
+        if not income_data and user_docs:
+            # Use Gemini to extract financial data from uploaded documents
+            persona = DEMO_REGISTRY.get('tax_compliance_agent')
+            engine = KusmusAIEngine(
+                system_instruction=persona['instruction'],
+                model_name=persona.get('model', 'gemini-2.0-flash-exp')
+            )
+            
+            extraction_prompt = f"""
+            Extract the following financial information from these documents:
+            
+            {user_docs}
+            
+            Return ONLY a JSON object with this structure:
+            {{
+                "employment_income": <number>,
+                "business_income": <number>,
+                "rental_income": <number>,
+                "other_income": <number>,
+                "pension_contribution": <number>,
+                "nhf_contribution": <number>,
+                "nhis_contribution": <number>
+            }}
+            
+            If a value is not found, use 0. Return ONLY the JSON, no explanation.
+            """
+            
+            response_text, _ = engine.generate_response(extraction_prompt)
+            
+            # Parse JSON from response
+            try:
+                import re
+                json_match = re.search(r'\{[^{}]*\}', response_text, re.DOTALL)
+                if json_match:
+                    income_data = json.loads(json_match.group())
+                else:
+                    income_data = {}
+            except:
+                income_data = {}
+        
+        # Default income data if extraction failed
+        if not income_data:
+            income_data = {
+                "employment_income": 0,
+                "business_income": 0,
+                "rental_income": 0,
+                "other_income": 0,
+                "pension_contribution": 0,
+                "nhf_contribution": 0,
+                "nhis_contribution": 0
+            }
+        
+        # Calculate tax
+        calculator = TaxCalculator()
+        tax_result = calculator.calculate_personal_income_tax(income_data)
+        
+        # Prepare PDF data
+        pdf_data = {
+            "tax_year": tax_year,
+            "taxpayer_info": {
+                "name": data.get('taxpayer_name', 'N/A'),
+                "tin": data.get('taxpayer_tin', 'N/A'),
+                "address": data.get('taxpayer_address', 'N/A'),
+                "email": data.get('taxpayer_email', 'N/A'),
+                "phone": data.get('taxpayer_phone', 'N/A')
+            },
+            "income_sources": [
+                {"name": "Employment Income", "amount": income_data.get("employment_income", 0)},
+                {"name": "Business Income", "amount": income_data.get("business_income", 0)},
+                {"name": "Rental Income", "amount": income_data.get("rental_income", 0)},
+                {"name": "Other Income", "amount": income_data.get("other_income", 0)}
+            ],
+            "reliefs": tax_result.get('reliefs', []),
+            "tax_calculation": {
+                "gross_income": tax_result['gross_income'],
+                "total_reliefs": tax_result['total_reliefs'],
+                "taxable_income": tax_result['taxable_income'],
+                "tax_due": tax_result['tax_due'],
+                "wht_paid": data.get('wht_paid', 0),
+                "balance_due": tax_result['tax_due'] - data.get('wht_paid', 0)
+            },
+            "citations": tax_result.get('citations', [])
+        }
+        
+        # Generate PDF
+        os.makedirs('data/tax_filings/temp', exist_ok=True)
+        filename = f"tax_filing_{tax_year}_{client_id}_{secrets.token_hex(4)}.pdf"
+        output_path = f"data/tax_filings/temp/{filename}"
+        
+        generator = TaxFilingPDFGenerator()
+        generator.generate_tax_filing(output_path, pdf_data)
+        
+        # Return success with download URL
+        return jsonify({
+            'success': True,
+            'pdf_url': f"/downloads/tax_filings/{filename}",
+            'summary': {
+                'gross_income': tax_result['gross_income'],
+                'total_reliefs': tax_result['total_reliefs'],
+                'taxable_income': tax_result['taxable_income'],
+                'tax_due': tax_result['tax_due'],
+                'balance_due': tax_result['tax_due'] - data.get('wht_paid', 0)
+            },
+            'citations': tax_result.get('citations', [])
+        })
+        
+    except Exception as e:
+        print(f"Tax Filing Generation Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to generate tax filing: {str(e)}'}), 500
+
+@tax_bp.route('/downloads/tax_filings/<filename>')
+def download_tax_filing(filename):
+    """Serve generated tax filing PDFs"""
+    try:
+        client_id = get_auth_context()
+        if not client_id:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Security: Verify filename belongs to this client
+        if client_id not in filename:
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        file_path = f"data/tax_filings/temp/{filename}"
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'File not found'}), 404
+        
+        from flask import send_file
+        return send_file(file_path, as_attachment=True, download_name=filename)
+        
+    except Exception as e:
+        print(f"Download Error: {e}")
+        return jsonify({'error': str(e)}), 500

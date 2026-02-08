@@ -67,6 +67,27 @@
         overflow-y: auto;
         pointer-events: auto;
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        scroll-behavior: smooth;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent) rgba(255, 255, 255, 0.05);
+    }
+
+    .glass-panel::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .glass-panel::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+    }
+
+    .glass-panel::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: 10px;
+    }
+
+    .glass-panel::-webkit-scrollbar-thumb:hover {
+        background: #ffd700;
     }
 
     /* Left Panel - Controls */
@@ -638,9 +659,103 @@
         transform: translateX(-50%) translateY(-20px);
         pointer-events: none;
     }
+
+    /* Simulation Timer HUD */
+    .simulation-timer {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.2rem;
+        z-index: 1000;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 0 20px rgba(46, 204, 113, 0.2);
+    }
+
+    .simulation-timer i {
+        font-size: 1rem;
+    }
+
+    /* Full-Screen Theater Mode */
+    body.full-screen .physics-grid {
+        display: none;
+    }
+
+    body.full-screen #canvas-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+    }
+
+    /* Countdown Overlay */
+    .countdown-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.95);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        backdrop-filter: blur(10px);
+    }
+
+    .countdown-overlay.active {
+        display: flex;
+    }
+
+    .countdown-number {
+        font-size: 10rem;
+        font-weight: 900;
+        color: var(--accent);
+        font-family: 'JetBrains Mono', monospace;
+        text-shadow: 0 0 40px var(--accent-glow);
+        animation: countdownPulse 1s ease-in-out;
+    }
+
+    @keyframes countdownPulse {
+        0% {
+            transform: scale(0.5);
+            opacity: 0;
+        }
+
+        50% {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
 </style>
 
 <div id="canvas-container">
+    <!-- Simulation Timer HUD -->
+    <div class="simulation-timer" id="simulation-timer" style="display: none;">
+        <i class="fas fa-stopwatch"></i>
+        <span id="timer-display">0.00s</span>
+    </div>
+</div>
+
+<!-- Countdown Overlay -->
+<div class="countdown-overlay" id="countdown-overlay">
+    <div class="countdown-number" id="countdown-number">5</div>
 </div>
 
 <div class="physics-grid">
@@ -773,12 +888,82 @@
     let isPlaying = true;
     let sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
     let isProcessing = false;
+    let simulationStartTime = null;
+    let timerInterval = null;
 
     // Initialize on load
     document.addEventListener('DOMContentLoaded', () => {
         initPhysicsRenderer();
         autoResizeTextarea();
     });
+
+    // ESC key to exit theater mode
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.body.classList.contains('full-screen')) {
+            exitTheaterMode();
+            addChatMessage('ai', 'Exited theater mode. You can start a new experiment anytime!');
+        }
+    });
+
+    // ===== COUNTDOWN & TIMER FUNCTIONS =====
+    async function startCountdown() {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('countdown-overlay');
+            const numberEl = document.getElementById('countdown-number');
+            let count = 5;
+
+            overlay.classList.add('active');
+            numberEl.textContent = count;
+
+            const countdownInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    numberEl.textContent = count;
+                    // Trigger animation restart
+                    numberEl.style.animation = 'none';
+                    setTimeout(() => numberEl.style.animation = '', 10);
+                } else {
+                    numberEl.textContent = 'START!';
+                    setTimeout(() => {
+                        overlay.classList.remove('active');
+                        clearInterval(countdownInterval);
+                        resolve();
+                    }, 800);
+                }
+            }, 1000);
+        });
+    }
+
+    function startSimulationTimer() {
+        const timerDisplay = document.getElementById('timer-display');
+        const timerHUD = document.getElementById('simulation-timer');
+
+        timerHUD.style.display = 'flex';
+        simulationStartTime = Date.now();
+
+        timerInterval = setInterval(() => {
+            const elapsed = (Date.now() - simulationStartTime) / 1000;
+            timerDisplay.textContent = elapsed.toFixed(2) + 's';
+        }, 10);
+    }
+
+    function stopSimulationTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        document.getElementById('simulation-timer').style.display = 'none';
+        document.getElementById('timer-display').textContent = '0.00s';
+    }
+
+    function enterTheaterMode() {
+        document.body.classList.add('full-screen');
+    }
+
+    function exitTheaterMode() {
+        document.body.classList.remove('full-screen');
+        stopSimulationTimer();
+    }
 
     // ===== CHAT FUNCTIONS =====
     function handleChatKey(e) {
@@ -857,11 +1042,20 @@
                     codeDisplay.textContent = result.experiment.threejs_code;
                 }
 
-                // Execute the simulation
+                showLoading(false);
+                addChatMessage('ai', 'Simulation ready! Entering theater mode...');
+
+                // Enter theater mode
+                enterTheaterMode();
+
+                // Run countdown
+                await startCountdown();
+
+                // Execute simulation and start timer
                 executeGeneratedCode(result.experiment.threejs_code);
                 updateUI(result.experiment);
+                startSimulationTimer();
 
-                addChatMessage('ai', 'Simulation generated! You can view the code in the "Code" tab on the right and interact with the simulation in the canvas.');
                 setStatus('SIMULATION ACTIVE');
             } else {
                 addChatMessage('ai', 'Generation failed: ' + (result.error || 'Unknown error'));
@@ -950,6 +1144,15 @@
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
         scene.add(ground);
+
+        // Grid Helper (1 unit = 1 meter)
+        const gridHelper = new THREE.GridHelper(50, 50, 0x00ff88, 0x222222);
+        gridHelper.position.y = 0.01; // Slightly above ground to prevent z-fighting
+        scene.add(gridHelper);
+
+        // Axes Helper (X=red, Y=green, Z=blue)
+        const axesHelper = new THREE.AxesHelper(10);
+        scene.add(axesHelper);
 
         // Handle resize
         window.addEventListener('resize', () => {

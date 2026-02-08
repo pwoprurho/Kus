@@ -1,44 +1,44 @@
 // static/js/tax_agent.js
 
-document.addEventListener('DOMContentLoaded', function() {
-  // Handle file uploads
-  const uploadForm = document.getElementById('upload-form');
-  const uploadStatus = document.getElementById('upload-status');
-  const miniTableContainer = document.getElementById('mini-table-container');
+document.addEventListener('DOMContentLoaded', function () {
+    // Handle file uploads
+    const uploadForm = document.getElementById('upload-form');
+    const uploadStatus = document.getElementById('upload-status');
+    const miniTableContainer = document.getElementById('mini-table-container');
 
-  uploadForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const formData = new FormData(uploadForm);
-    uploadStatus.textContent = 'Uploading...';
-    try {
-      const res = await fetch('/api/tax/upload', {
-        method: 'POST',
-        body: formData
-      });
-      const data = await res.json();
-      if (data.success) {
-        uploadStatus.textContent = 'Files uploaded successfully!';
-        renderFileList(data.files);
-      } else {
-        uploadStatus.textContent = data.error || 'Upload failed.';
-      }
-    } catch (err) {
-      uploadStatus.textContent = 'Error uploading files.';
-    }
-  });
+    uploadForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const formData = new FormData(uploadForm);
+        uploadStatus.textContent = 'Uploading...';
+        try {
+            const res = await fetch('/api/tax/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                uploadStatus.textContent = 'Files uploaded successfully!';
+                renderFileList(data.files);
+            } else {
+                uploadStatus.textContent = data.error || 'Upload failed.';
+            }
+        } catch (err) {
+            uploadStatus.textContent = 'Error uploading files.';
+        }
+    });
 
-  function renderFileList(files) {
-    if (!files || files.length === 0) {
-      miniTableContainer.innerHTML = '<em class="text-muted">No documents uploaded yet.</em>';
-      return;
-    }
-    let html = '<div class="list-group">';
-    files.forEach(f => {
-      let icon = 'fa-file';
-      if (f.name.endsWith('.pdf')) icon = 'fa-file-pdf';
-      else if (f.name.match(/\.(jpg|jpeg|png)$/i)) icon = 'fa-file-image';
-      
-      html += `
+    function renderFileList(files) {
+        if (!files || files.length === 0) {
+            miniTableContainer.innerHTML = '<em class="text-muted">No documents uploaded yet.</em>';
+            return;
+        }
+        let html = '<div class="list-group">';
+        files.forEach(f => {
+            let icon = 'fa-file';
+            if (f.name.endsWith('.pdf')) icon = 'fa-file-pdf';
+            else if (f.name.match(/\.(jpg|jpeg|png)$/i)) icon = 'fa-file-image';
+
+            html += `
         <div class="list-group-item bg-transparent border-secondary text-light d-flex align-items-center">
             <i class="fas ${icon} fa-lg me-3 text-primary"></i>
             <div>
@@ -48,25 +48,25 @@ document.addEventListener('DOMContentLoaded', function() {
             <i class="fas fa-check-circle text-success ms-auto"></i>
         </div>
       `;
-    });
-    html += '</div>';
-    miniTableContainer.innerHTML = html;
-  }
+        });
+        html += '</div>';
+        miniTableContainer.innerHTML = html;
+    }
 
-  // Chat logic
-  const chatForm = document.getElementById('chat-form');
-  const chatInput = document.getElementById('chat-input');
-  const chatBox = document.getElementById('chat-box');
-  const cognitiveTrace = document.getElementById('cognitive-trace');
+    // Chat logic
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const chatBox = document.getElementById('chat-box');
+    const cognitiveTrace = document.getElementById('cognitive-trace');
 
-  chatForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const msg = chatInput.value.trim();
-    if (!msg) return;
-    
-    // Updated UI for User Message
-    const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-    chatBox.innerHTML += `
+    chatForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const msg = chatInput.value.trim();
+        if (!msg) return;
+
+        // Updated UI for User Message
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        chatBox.innerHTML += `
         <div class="message user" style="margin-bottom: 2rem;">
             <div class="d-flex justify-content-between align-items-center mb-1">
                  <div style="display:flex; align-items:center; gap:8px;">
@@ -81,61 +81,61 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${msg}
             </div>
         </div>`;
-    chatInput.value = '';
-    chatBox.scrollTop = chatBox.scrollHeight;
+        chatInput.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
 
-    // Add processing bubble
-    const processingId = 'proc-' + Date.now();
-    const processingHTML = `
+        // Add processing bubble
+        const processingId = 'proc-' + Date.now();
+        const processingHTML = `
         <div id="${processingId}" class="message processing">
             <div class="processing-spinner"></div>
             <span>Agent is thinking...</span>
         </div>
     `;
-    chatBox.insertAdjacentHTML('beforeend', processingHTML);
-    chatBox.scrollTop = chatBox.scrollHeight;
+        chatBox.insertAdjacentHTML('beforeend', processingHTML);
+        chatBox.scrollTop = chatBox.scrollHeight;
 
-    try {
-      // Collect visible history for context
-      const history = [];
-      document.querySelectorAll('.message').forEach(el => {
-         // rudimentary reconstruction of history
-         if (el.classList.contains('user')) {
-             // Logic to get text content without the You/Time header?
-             // Since we changed structure, el.innerText might include time.
-             // Let's rely on finding the last text node or clean it.
-             // Simplest: Just grab the whole text and strip "You:" and time pattern if needed,
-             // OR store raw content in a data attribute.
-             // For now, let's just use a simpler parsing or just the text that isn't the header.
-             let clone = el.cloneNode(true);
-             let header = clone.querySelector('.d-flex');
-             if(header) header.remove();
-             history.push({role: 'user', content: clone.innerText.trim()});
-         } else if (el.classList.contains('agent')) {
-            let clone = el.cloneNode(true);
-            let header = clone.querySelector('.d-flex');
-            if(header) header.remove();
-            // remove thoughts
-            let details = clone.querySelector('details');
-            if(details) details.remove();
-            let loader = clone.querySelector('.agent-loader');
-            if(loader) loader.remove();
-            
-            history.push({role: 'model', content: clone.innerText.trim()});
-         }
-      });
+        try {
+            // Collect visible history for context
+            const history = [];
+            document.querySelectorAll('.message').forEach(el => {
+                // rudimentary reconstruction of history
+                if (el.classList.contains('user')) {
+                    // Logic to get text content without the You/Time header?
+                    // Since we changed structure, el.innerText might include time.
+                    // Let's rely on finding the last text node or clean it.
+                    // Simplest: Just grab the whole text and strip "You:" and time pattern if needed,
+                    // OR store raw content in a data attribute.
+                    // For now, let's just use a simpler parsing or just the text that isn't the header.
+                    let clone = el.cloneNode(true);
+                    let header = clone.querySelector('.d-flex');
+                    if (header) header.remove();
+                    history.push({ role: 'user', content: clone.innerText.trim() });
+                } else if (el.classList.contains('agent')) {
+                    let clone = el.cloneNode(true);
+                    let header = clone.querySelector('.d-flex');
+                    if (header) header.remove();
+                    // remove thoughts
+                    let details = clone.querySelector('details');
+                    if (details) details.remove();
+                    let loader = clone.querySelector('.agent-loader');
+                    if (loader) loader.remove();
 
-      // Prepare UI for Streaming Response
-      const msgId = 'msg-' + Date.now();
-      
-      // Removed: generic processing bubble removal here to keep it until we init stream or replace it.
-      // Better: Replace the "processing" bubble with the Agent message logic directly.
-      const processingEl = document.getElementById(processingId);
-      if (processingEl) processingEl.remove();
+                    history.push({ role: 'model', content: clone.innerText.trim() });
+                }
+            });
 
-      // NEW: Added back the spinner INSIDE the agent message initially
-      const agentTimeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-      const agentMsgHTML = `
+            // Prepare UI for Streaming Response
+            const msgId = 'msg-' + Date.now();
+
+            // Removed: generic processing bubble removal here to keep it until we init stream or replace it.
+            // Better: Replace the "processing" bubble with the Agent message logic directly.
+            const processingEl = document.getElementById(processingId);
+            if (processingEl) processingEl.remove();
+
+            // NEW: Added back the spinner INSIDE the agent message initially
+            const agentTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const agentMsgHTML = `
           <div id="${msgId}" class="message agent" style="display:flex; flex-direction:column;">
               <div class="d-flex justify-content-between align-items-center mb-1">
                   <div style="display:flex; align-items:center; gap:8px;">
@@ -163,130 +163,238 @@ document.addEventListener('DOMContentLoaded', function() {
               <div class="agent-content" style="margin-left: 32px; font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; line-height: 1.6; color: #e6edf3;"></div>
           </div>
       `;
-      
-      chatBox.insertAdjacentHTML('beforeend', agentMsgHTML);
-      
-      const msgContainer = document.getElementById(msgId);
-      const loaderDiv = msgContainer.querySelector('.agent-loader');
-      const contentDiv = msgContainer.querySelector('.agent-content');
-      const thoughtBubble = msgContainer.querySelector('.thought-bubble');
-      const thoughtContent = msgContainer.querySelector('.thought-content');
-      const thoughtSummaryText = msgContainer.querySelector('.thought-summary .status-text');
-      const thoughtStatusIcon = msgContainer.querySelector('.thought-summary .status-icon');
-      const toggleIcon = msgContainer.querySelector('.thought-summary .toggle-icon');
 
-      // Add click listener to toggle icon rotation
-      msgContainer.querySelector('summary').addEventListener('click', function() {
-          if (thoughtBubble.open) {
-              toggleIcon.style.transform = 'rotate(-90deg)';
-          } else {
-              toggleIcon.style.transform = 'rotate(0deg)';
-          }
-      });
+            chatBox.insertAdjacentHTML('beforeend', agentMsgHTML);
 
-      // Initiate Stream
-      try {
-        const response = await fetch('/api/tax/chat_stream', {
+            const msgContainer = document.getElementById(msgId);
+            const loaderDiv = msgContainer.querySelector('.agent-loader');
+            const contentDiv = msgContainer.querySelector('.agent-content');
+            const thoughtBubble = msgContainer.querySelector('.thought-bubble');
+            const thoughtContent = msgContainer.querySelector('.thought-content');
+            const thoughtSummaryText = msgContainer.querySelector('.thought-summary .status-text');
+            const thoughtStatusIcon = msgContainer.querySelector('.thought-summary .status-icon');
+            const toggleIcon = msgContainer.querySelector('.thought-summary .toggle-icon');
+
+            // Add click listener to toggle icon rotation
+            msgContainer.querySelector('summary').addEventListener('click', function () {
+                if (thoughtBubble.open) {
+                    toggleIcon.style.transform = 'rotate(-90deg)';
+                } else {
+                    toggleIcon.style.transform = 'rotate(0deg)';
+                }
+            });
+
+            // Initiate Stream
+            try {
+                const response = await fetch('/api/tax/chat_stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg, history: history })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server Error: ${response.status}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let accumulatedMarkdown = '';
+                let hasReceivedData = false;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    hasReceivedData = true;
+                    const chunk = decoder.decode(value, { stream: true });
+                    buffer += chunk;
+
+                    // Process SSE lines (data: {...})
+                    const lines = buffer.split('\n\n');
+                    buffer = lines.pop(); // Keep partial line in buffer
+
+                    for (const line of lines) {
+                        if (line.trim().startsWith('data: ')) {
+                            const dataStr = line.replace('data: ', '').trim();
+                            if (dataStr === '[DONE]') break;
+
+                            try {
+                                const event = JSON.parse(dataStr);
+
+                                // Hide loader on first data packet
+                                if (loaderDiv.style.display !== 'none') {
+                                    loaderDiv.style.display = 'none';
+                                }
+
+                                if (event.type === 'thought') {
+                                    // Reveal thought bubble
+                                    if (thoughtBubble.style.display === 'none') {
+                                        thoughtBubble.style.display = 'block';
+                                    }
+                                    // Update text
+                                    thoughtContent.innerText += event.content + '\n';
+                                    thoughtSummaryText.innerText = "Thinking Process...";
+                                    // Auto-scroll thought box
+                                    thoughtContent.scrollTop = thoughtContent.scrollHeight;
+
+                                } else if (event.type === 'content') {
+                                    // Once we get content, maybe collapse thoughts or change icon?
+                                    if (thoughtStatusIcon.classList.contains('fa-pulse')) {
+                                        thoughtStatusIcon.classList.remove('fa-pulse');
+                                        thoughtSummaryText.innerText = "Reasoning Complete";
+                                        // Optional: Auto-collapse when done?
+                                        // thoughtBubble.removeAttribute('open'); 
+                                        // toggleIcon.style.transform = 'rotate(-90deg)';
+                                    }
+
+                                    accumulatedMarkdown += event.content;
+
+                                    // Safe render
+                                    if (typeof marked !== 'undefined' && marked.parse) {
+                                        contentDiv.innerHTML = marked.parse(accumulatedMarkdown);
+                                    } else {
+                                        // Fallback if library missing
+                                        contentDiv.innerText = accumulatedMarkdown;
+                                    }
+
+                                } else if (event.type === 'error') {
+                                    if (loaderDiv.style.display !== 'none') loaderDiv.style.display = 'none';
+                                    contentDiv.innerHTML += `<div class="alert alert-danger mt-2"><strong>Error:</strong> ${event.content}</div>`;
+                                }
+                            } catch (e) {
+                                console.error('JSON Parse Error', e);
+                                contentDiv.innerHTML += `<div class="text-danger small">Parsing error: ${e.message}</div>`;
+                            }
+                        }
+                    }
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+
+                if (!hasReceivedData && !accumulatedMarkdown) {
+                    if (loaderDiv.style.display !== 'none') loaderDiv.style.display = 'none';
+                    contentDiv.innerHTML = '<span class="text-warning">Server sent no data. Please try again.</span>';
+                }
+
+            } catch (fetchErr) {
+                if (loaderDiv) loaderDiv.style.display = 'none';
+                contentDiv.innerHTML = `<span class="text-danger">Network Connection Error: ${fetchErr.message}</span>`;
+            }
+
+        } catch (err) {
+            console.error(err);
+            // Remove processing bubble if still there
+            const processingEl = document.getElementById(processingId);
+            if (processingEl) processingEl.remove();
+            chatBox.innerHTML += '<div class="message agent text-danger">Connection Failed (Client Logic).</div>';
+        }
+    });
+});
+
+// Tax Filing Generation Function
+async function generateTaxFiling() {
+    const btn = document.getElementById('generate-filing-btn');
+    const originalHTML = btn.innerHTML;
+
+    try {
+        // Show loading state
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Generating...';
+
+        // Get taxpayer info (you can add a form for this or use session data)
+        const taxpayerInfo = {
+            taxpayer_name: prompt('Enter your full name:') || 'N/A',
+            taxpayer_tin: prompt('Enter your TIN (Tax Identification Number):') || 'N/A',
+            taxpayer_address: prompt('Enter your address:') || 'N/A',
+            taxpayer_email: prompt('Enter your email:') || 'N/A',
+            taxpayer_phone: prompt('Enter your phone:') || 'N/A',
+            tax_year: 2025,
+            wht_paid: parseFloat(prompt('Enter WHT (Withholding Tax) already paid (₦):') || '0')
+        };
+
+        // Call API
+        const response = await fetch('/api/tax/generate_filing', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: msg, history: history })
+            body: JSON.stringify(taxpayerInfo)
         });
-        
-        if (!response.ok) {
-            throw new Error(`Server Error: ${response.status}`);
-        }
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let accumulatedMarkdown = '';
-        let hasReceivedData = false;
+        const data = await response.json();
 
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            hasReceivedData = true;
-            const chunk = decoder.decode(value, { stream: true });
-            buffer += chunk;
-            
-            // Process SSE lines (data: {...})
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop(); // Keep partial line in buffer
+        if (data.success) {
+            // Show success message with summary
+            const summary = data.summary;
+            const summaryHTML = `
+        <div class="alert alert-success mt-3">
+          <h6><i class="fas fa-check-circle me-2"></i>Tax Filing Generated Successfully!</h6>
+          <hr>
+          <div class="row">
+            <div class="col-6"><strong>Gross Income:</strong></div>
+            <div class="col-6 text-end">₦ ${summary.gross_income.toLocaleString()}</div>
+          </div>
+          <div class="row">
+            <div class="col-6"><strong>Total Reliefs:</strong></div>
+            <div class="col-6 text-end">₦ ${summary.total_reliefs.toLocaleString()}</div>
+          </div>
+          <div class="row">
+            <div class="col-6"><strong>Taxable Income:</strong></div>
+            <div class="col-6 text-end">₦ ${summary.taxable_income.toLocaleString()}</div>
+          </div>
+          <div class="row">
+            <div class="col-6"><strong>Tax Due:</strong></div>
+            <div class="col-6 text-end">₦ ${summary.tax_due.toLocaleString()}</div>
+          </div>
+          <div class="row mt-2 pt-2 border-top">
+            <div class="col-6"><strong>Balance Due:</strong></div>
+            <div class="col-6 text-end"><strong>₦ ${summary.balance_due.toLocaleString()}</strong></div>
+          </div>
+          <div class="mt-3">
+            <a href="${data.pdf_url}" class="btn btn-primary btn-sm" download>
+              <i class="fas fa-download me-2"></i>Download PDF
+            </a>
+          </div>
+        </div>
+      `;
 
-            for (const line of lines) {
-                if (line.trim().startsWith('data: ')) {
-                    const dataStr = line.replace('data: ', '').trim();
-                    if (dataStr === '[DONE]') break;
-                    
-                    try {
-                        const event = JSON.parse(dataStr);
-                        
-                        // Hide loader on first data packet
-                        if (loaderDiv.style.display !== 'none') {
-                            loaderDiv.style.display = 'none';
-                        }
+            document.getElementById('upload-status').innerHTML = summaryHTML;
 
-                        if (event.type === 'thought') {
-                            // Reveal thought bubble
-                            if (thoughtBubble.style.display === 'none') {
-                                thoughtBubble.style.display = 'block';
-                            }
-                            // Update text
-                            thoughtContent.innerText += event.content + '\n'; 
-                            thoughtSummaryText.innerText = "Thinking Process...";
-                            // Auto-scroll thought box
-                            thoughtContent.scrollTop = thoughtContent.scrollHeight;
-                            
-                        } else if (event.type === 'content') {
-                            // Once we get content, maybe collapse thoughts or change icon?
-                            if (thoughtStatusIcon.classList.contains('fa-pulse')) {
-                                thoughtStatusIcon.classList.remove('fa-pulse');
-                                thoughtSummaryText.innerText = "Reasoning Complete";
-                                // Optional: Auto-collapse when done?
-                                // thoughtBubble.removeAttribute('open'); 
-                                // toggleIcon.style.transform = 'rotate(-90deg)';
-                            }
-                            
-                            accumulatedMarkdown += event.content;
-                            
-                            // Safe render
-                            if (typeof marked !== 'undefined' && marked.parse) {
-                                contentDiv.innerHTML = marked.parse(accumulatedMarkdown);
-                            } else {
-                                // Fallback if library missing
-                                contentDiv.innerText = accumulatedMarkdown;
-                            }
-                            
-                        } else if (event.type === 'error') {
-                            if (loaderDiv.style.display !== 'none') loaderDiv.style.display = 'none';
-                            contentDiv.innerHTML += `<div class="alert alert-danger mt-2"><strong>Error:</strong> ${event.content}</div>`;
-                        }
-                    } catch (e) {
-                        console.error('JSON Parse Error', e);
-                        contentDiv.innerHTML += `<div class="text-danger small">Parsing error: ${e.message}</div>`;
-                    }
-                }
+            // Optionally auto-download
+            if (confirm('Would you like to download the PDF now?')) {
+                window.location.href = data.pdf_url;
             }
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-        
-        if (!hasReceivedData && !accumulatedMarkdown) {
-             if (loaderDiv.style.display !== 'none') loaderDiv.style.display = 'none';
-             contentDiv.innerHTML = '<span class="text-warning">Server sent no data. Please try again.</span>';
+
+        } else {
+            document.getElementById('upload-status').innerHTML = `
+        <div class="alert alert-danger mt-3">
+          <i class="fas fa-exclamation-triangle me-2"></i>${data.error || 'Failed to generate tax filing'}
+        </div>
+      `;
         }
 
-      } catch (fetchErr) {
-          if (loaderDiv) loaderDiv.style.display = 'none';
-          contentDiv.innerHTML = `<span class="text-danger">Network Connection Error: ${fetchErr.message}</span>`;
-      }
-      
-    } catch (err) {
-      console.error(err);
-      // Remove processing bubble if still there
-      const processingEl = document.getElementById(processingId);
-      if (processingEl) processingEl.remove();
-      chatBox.innerHTML += '<div class="message agent text-danger">Connection Failed (Client Logic).</div>';
+    } catch (error) {
+        console.error('Tax Filing Error:', error);
+        document.getElementById('upload-status').innerHTML = `
+      <div class="alert alert-danger mt-3">
+        <i class="fas fa-exclamation-triangle me-2"></i>Error: ${error.message}
+      </div>
+    `;
+    } finally {
+        // Restore button
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
     }
-  });
+}
+
+// Show Generate Filing button after successful upload
+document.addEventListener('DOMContentLoaded', function () {
+    const uploadForm = document.getElementById('upload-form');
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', function () {
+            // Show the Generate Filing button after upload
+            setTimeout(() => {
+                const btn = document.getElementById('generate-filing-btn');
+                if (btn) btn.style.display = 'block';
+            }, 2000); // Show after 2 seconds (after upload completes)
+        });
+    }
 });
