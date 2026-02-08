@@ -1,0 +1,427 @@
+﻿
+>>> Testing: A simple ball falling from 10 meters height using gravity.
+[Key 0] Rate limit hit, waiting 3.0s before rotating...
+SUCCESS: Parsed JSON from block.
+
+>>> Testing: A complex double pendulum simulation with energy graphs.
+FAILURE: Json block found but malformed: Invalid control character at: line 5 column 25 (char 865)
+--- RAW BLOCK ---
+{
+    "title": "Complex Double Pendulum with Energy Analysis",
+    "description": "This simulation models a classic double pendulum system, showcasing chaotic motion governed by physics principles. It visually represents the kinetic, potential, and total energy of the system over time, providing insights into energy conservation and transfer within the system.",
+    "concept": "A double pendulum is a simple pendulum with another pendulum attached to its end, resulting in complex and chaotic motion. This simulation uses Cannon-es for accurate physics and Three.js for a visually rich 3D environment, allowing for real-time adjustments of physical parameters and visualization of energy dynamics. The energy graphs (Kinetic, Potential, and Total) demonstrate the principles of energy conservation and transformation within the system.",
+    "threejs_code": "'''
+import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+let scene, camera, renderer, world;
+let controls;
+let time = 0;
+let pendulumBodies = [];
+let pendulumMeshes = [];
+let rodMeshes = [];
+let pathMeshes = [];
+const pathPoints1 = [];
+const pathPoints2 = [];
+const pathLength = 500; // Number of points in the path
+
+const params = {
+    mass1: 1.0,
+    length1: 2.0,
+    mass2: 1.0,
+    length2: 2.0,
+    initialAngle1: Math.PI / 2, // Start nearly horizontal
+    initialAngle2: Math.PI / 2, // Start nearly horizontal
+    damping: 0.05
+};
+
+const energyData = {
+    time: [],
+    kineticEnergy: [],
+    potentialEnergy: [],
+    totalEnergy: []
+};
+const MAX_ENERGY_POINTS = 500; // Limit for energy graph data points
+
+function init() {
+    // Scene setup
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1a1a);
+
+    // Camera
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 5, 10);
+
+    // Renderer
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    // Orbit Controls
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.screenSpacePanning = false;
+    controls.maxPolarAngle = Math.PI / 2;
+
+    // Cannon-es World
+    world = new CANNON.World();
+    world.gravity.set(0, -9.81, 0);
+    world.broadphase = new CANNON.SAPBroadphase(world);
+    world.solver.iterations = 10;
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 10, 7);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 1024;
+    directionalLight.shadow.mapSize.height = 1024;
+    directionalLight.shadow.camera.near = 0.5;
+    directionalLight.shadow.camera.far = 50;
+    directionalLight.shadow.camera.left = -10;
+    directionalLight.shadow.camera.right = 10;
+    directionalLight.shadow.camera.top = 10;
+    directionalLight.shadow.camera.bottom = -10;
+    scene.add(directionalLight);
+
+    // Ground Plane
+    const groundShape = new CANNON.Plane();
+    const groundBody = new CANNON.Body({ mass: 0 });
+    groundBody.addShape(groundShape);
+    groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+    world.addBody(groundBody);
+
+    const groundMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(20, 20),
+        new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.8, metalness: 0.1 })
+    );
+    groundMesh.receiveShadow = true;
+    groundMesh.rotation.x = -Math.PI / 2;
+    scene.add(groundMesh);
+
+    // Grid Helper
+    const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x888888);
+    scene.add(gridHelper);
+
+    createPendulum();
+    window.addEventListener('resize', onWindowResize);
+}
+
+function createPendulum() {
+    // Clear existing pendulum if any
+    pendulumBodies.forEach(body => world.removeBody(body));
+    pendulumMeshes.forEach(mesh => scene.remove(mesh));
+    rodMeshes.forEach(mesh => scene.remove(mesh));
+    pathMeshes.forEach(mesh => scene.remove(mesh));
+    world.constraints = []; // Clear constraints
+    pendulumBodies = [];
+    pendulumMeshes = [];
+    rodMeshes = [];
+    pathMeshes = [];
+    pathPoints1.length = 0;
+    pathPoints2.length = 0;
+    energyData.time = [];
+    energyData.kineticEnergy = [];
+    energyData.potentialEnergy = [];
+    energyData.totalEnergy = [];
+
+    const sphereRadius = 0.2;
+    const rodRadius = 0.05;
+
+    // Fixed point (pivot)
+    const pivotBody = new CANNON.Body({ mass: 0 });
+    pivotBody.position.set(0, params.length1 + params.length2 + 1, 0); // Elevated pivot
+    world.addBody(pivotBody);
+    const pivotMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(sphereRadius / 2, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: 0.5, metalness: 0.2 })
+    );
+    pivotMesh.position.copy(pivotBody.position);
+    scene.add(pivotMesh);
+
+    // Pendulum 1
+    const initialPos1 = new CANNON.Vec3(
+        pivotBody.position.x + params.length1 * Math.sin(params.initialAngle1),
+        pivotBody.position.y - params.length1 * Math.cos(params.initialAngle1),
+        pivotBody.position.z
+    );
+
+    const body1 = new CANNON.Body({ mass: params.mass1, linearDamping: params.damping, angularDamping: params.damping });
+    body1.addShape(new CANNON.Sphere(sphereRadius));
+    body1.position.copy(initialPos1);
+    world.addBody(body1);
+    pendulumBodies.push(body1);
+
+    const mesh1 = new THREE.Mesh(
+        new THREE.SphereGeometry(sphereRadius, 32, 32),
+        new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.6, metalness: 0.3 })
+    );
+    mesh1.castShadow = true;
+    mesh1.receiveShadow = true;
+    scene.add(mesh1);
+    pendulumMeshes.push(mesh1);
+
+    const rodMesh1 = new THREE.Mesh(
+        new THREE.CylinderGeometry(rodRadius, rodRadius, params.length1, 16),
+        new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.5, metalness: 0.3 })
+    );
+    rodMesh1.castShadow = true;
+    rodMesh1.receiveShadow = true;
+    scene.add(rodMesh1);
+    rodMeshes.push(rodMesh1);
+
+    // Constraint 1 (pivot to body1)
+    const constraint1 = new CANNON.PointToPointConstraint(
+        pivotBody, new CANNON.Vec3(0, 0, 0),
+        body1, new CANNON.Vec3(0, params.length1 / 2, 0) // Attach point on sphere, relative to its center
+    );
+
+    // This is a common way to set up pendulum constraints in Cannon-es.
+    // However, PointToPointConstraint directly between pivot and body1's center
+    // means the pendulum's effective length is the distance from pivot to body1's center.
+    // If the rod is a visual element, the constraint is often simplified to this.
+    // For a double pendulum, we often model it with a fixed point and then another constraint.
+    // A better approach for a rigid rod: create a cylinder body and constrain its ends.
+    // Let's simplify for now to sphere-sphere constraints, where 'length' is center-to-center.
+    //
+    // For a more physically accurate pendulum *rod*, we'd make the rod itself a body.
+    // Given the 'length' parameters, it implies center-to-center distance.
+    const constraint_rod1 = new CANNON.DistanceConstraint(
+        pivotBody, body1, params.length1
+    );
+    world.addConstraint(constraint_rod1);
+
+    // Pendulum 2
+    const initialPos2 = new CANNON.Vec3(
+        body1.position.x + params.length2 * Math.sin(params.initialAngle2),
+        body1.position.y - params.length2 * Math.cos(params.initialAngle2),
+        body1.position.z
+    );
+
+    const body2 = new CANNON.Body({ mass: params.mass2, linearDamping: params.damping, angularDamping: params.damping });
+    body2.addShape(new CANNON.Sphere(sphereRadius));
+    body2.position.copy(initialPos2);
+    world.addBody(body2);
+    pendulumBodies.push(body2);
+
+    const mesh2 = new THREE.Mesh(
+        new THREE.SphereGeometry(sphereRadius, 32, 32),
+        new THREE.MeshStandardMaterial({ color: 0x0099ff, roughness: 0.6, metalness: 0.3 })
+    );
+    mesh2.castShadow = true;
+    mesh2.receiveShadow = true;
+    scene.add(mesh2);
+    pendulumMeshes.push(mesh2);
+
+    const rodMesh2 = new THREE.Mesh(
+        new THREE.CylinderGeometry(rodRadius, rodRadius, params.length2, 16),
+        new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.5, metalness: 0.3 })
+    );
+    rodMesh2.castShadow = true;
+    rodMesh2.receiveShadow = true;
+    scene.add(rodMesh2);
+    rodMeshes.push(rodMesh2);
+
+    // Constraint 2 (body1 to body2)
+    const constraint_rod2 = new CANNON.DistanceConstraint(
+        body1, body2, params.length2
+    );
+    world.addConstraint(constraint_rod2);
+
+    // Path lines
+    const material1 = new THREE.LineBasicMaterial({ color: 0xff0000 });
+    const geometry1 = new THREE.BufferGeometry();
+    const line1 = new THREE.Line(geometry1, material1);
+    scene.add(line1);
+    pathMeshes.push(line1);
+
+    const material2 = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+    const geometry2 = new THREE.BufferGeometry();
+    const line2 = new THREE.Line(geometry2, material2);
+    scene.add(line2);
+    pathMeshes.push(line2);
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+let lastTimestamp = 0;
+const fixedTimeStep = 1 / 60; // seconds
+let maxSubSteps = 10;
+
+function animate(timestamp) {
+    requestAnimationFrame(animate);
+
+    const deltaTime = (timestamp - lastTimestamp) / 1000;
+    lastTimestamp = timestamp;
+
+    world.step(fixedTimeStep, deltaTime, maxSubSteps);
+    time += deltaTime;
+
+    // Update pendulum meshes
+    if (pendulumMeshes.length > 0 && pendulumBodies.length > 0) {
+        pendulumMeshes[0].position.copy(pendulumBodies[0].position);
+        pendulumMeshes[0].quaternion.copy(pendulumBodies[0].quaternion);
+
+        pendulumMeshes[1].position.copy(pendulumBodies[1].position);
+        pendulumMeshes[1].quaternion.copy(pendulumBodies[1].quaternion);
+
+        // Update rod meshes
+        const pivotPos = new THREE.Vector3(0, params.length1 + params.length2 + 1, 0); // Correct pivot position for visualization
+        const pos1 = new THREE.Vector3().copy(pendulumBodies[0].position);
+        const pos2 = new THREE.Vector3().copy(pendulumBodies[1].position);
+
+        updateRodMesh(rodMeshes[0], pivotPos, pos1, params.length1);
+        updateRodMesh(rodMeshes[1], pos1, pos2, params.length2);
+
+        // Update path
+        pathPoints1.push(pos1.clone());
+        if (pathPoints1.length > pathLength) {
+            pathPoints1.shift();
+        }
+        pathMeshes[0].geometry.setFromPoints(pathPoints1);
+
+        pathPoints2.push(pos2.clone());
+        if (pathPoints2.length > pathLength) {
+            pathPoints2.shift();
+        }
+        pathMeshes[1].geometry.setFromPoints(pathPoints2);
+
+        // Calculate and store energy
+        calculateEnergy();
+    }
+
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+function updateRodMesh(rodMesh, startPoint, endPoint, length) {
+    rodMesh.position.lerpVectors(startPoint, endPoint, 0.5);
+    rodMesh.lookAt(startPoint);
+    rodMesh.rotation.x += Math.PI / 2; // Adjust for cylinder geometry orientation
+}
+
+function calculateEnergy() {
+    if (pendulumBodies.length < 2) return;
+
+    const body1 = pendulumBodies[0];
+    const body2 = pendulumBodies[1];
+
+    const gravity = world.gravity.y; // Y-component of gravity
+
+    // Kinetic Energy (KE = 0.5 * m * v^2)
+    const ke1 = 0.5 * body1.mass * body1.velocity.lengthSq();
+    const ke2 = 0.5 * body2.mass * body2.velocity.lengthSq();
+    const kineticEnergy = ke1 + ke2;
+
+    // Potential Energy (PE = m * g * h)
+    // The fixed pivot is at height `params.length1 + params.length2 + 1`
+    // We can define h relative to the ground (y=0) or relative to the pivot.
+    // Relative to the ground is usually simpler for absolute PE.
+    const pivotHeight = params.length1 + params.length2 + 1;
+    const pe1 = body1.mass * -gravity * (body1.position.y - pivotHeight); // PE relative to pivot
+    const pe2 = body2.mass * -gravity * (body2.position.y - pivotHeight); // PE relative to pivot
+    const potentialEnergy = pe1 + pe2;
+
+    const totalEnergy = kineticEnergy + potentialEnergy;
+
+    energyData.time.push(time);
+    energyData.kineticEnergy.push(kineticEnergy);
+    energyData.potentialEnergy.push(potentialEnergy);
+    energyData.totalEnergy.push(totalEnergy);
+
+    if (energyData.time.length > MAX_ENERGY_POINTS) {
+        energyData.time.shift();
+        energyData.kineticEnergy.shift();
+        energyData.potentialEnergy.shift();
+        energyData.totalEnergy.shift();
+    }
+}
+
+init();
+animate(0);
+
+// Expose API for external control
+return {
+    updateGravity: function(x, y, z) {
+        world.gravity.set(x, y, z);
+        console.log(`Gravity updated to: (${x}, ${y}, ${z})`);
+    },
+    updateObjectParameter: function(index, param, value) {
+        if (index === 0) { // Pendulum 1
+            if (param === 'mass') {
+                params.mass1 = value;
+            } else if (param === 'length') {
+                params.length1 = value;
+            } else if (param === 'initialAngle') {
+                params.initialAngle1 = value;
+            }
+        } else if (index === 1) { // Pendulum 2
+            if (param === 'mass') {
+                params.mass2 = value;
+            } else if (param === 'length') {
+                params.length2 = value;
+            } else if (param === 'initialAngle') {
+                params.initialAngle2 = value;
+            }
+        }
+        // Recreate pendulum to apply changes
+        createPendulum();
+        console.log(`Object ${index} parameter '${param}' updated to ${value}. Pendulum recreated.`);
+    },
+    reset: function() {
+        time = 0;
+        createPendulum();
+        console.log('Simulation reset.');
+    },
+    getEnergyData: function() {
+        return {
+            time: [...energyData.time],
+            kineticEnergy: [...energyData.kineticEnergy],
+            potentialEnergy: [...energyData.potentialEnergy],
+            totalEnergy: [...energyData.totalEnergy]
+        };
+    }
+};
+'''",
+    "config": {
+        "gravity": [0, -9.81, 0],
+        "timeScale": 1.0
+    },
+    "objects": [
+        {
+            "name": "Pendulum 1",
+            "adjustable": {
+                "mass": { "min": 0.1, "max": 5.0, "value": 1.0, "step": 0.1, "label": "Mass (kg)" },
+                "length": { "min": 0.5, "max": 5.0, "value": 2.0, "step": 0.1, "label": "Length (m)" },
+                "initialAngle": { "min": 0, "max": 3.14159, "value": 1.5708, "step": 0.01, "label": "Initial Angle (rad)" }
+            }
+        },
+        {
+            "name": "Pendulum 2",
+            "adjustable": {
+                "mass": { "min": 0.1, "max": 5.0, "value": 1.0, "step": 0.1, "label": "Mass (kg)" },
+                "length": { "min": 0.5, "max": 5.0, "value": 2.0, "step": 0.1, "label": "Length (m)" },
+                "initialAngle": { "min": 0, "max": 3.14159, "value": 1.5708, "step": 0.01, "label": "Initial Angle (rad)" }
+            }
+        }
+    ],
+    "parameters": {
+        "global": {
+            "damping": { "min": 0.0, "max": 0.5, "value": 0.05, "step": 0.01, "label": "Damping" }
+        }
+    }
+}
+
+>>> Testing: Solar system simulation with all planets.
+SUCCESS: Parsed JSON from block.

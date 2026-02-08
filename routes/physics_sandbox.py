@@ -110,6 +110,9 @@ def generate_stem_experiment():
         })
         
     except Exception as e:
+        import traceback
+        print(f"CRITICAL [STEM] Generation Endpoint Error: {str(e)}")
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
 

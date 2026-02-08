@@ -57,6 +57,10 @@ JSON OUTPUT FORMAT:
     "parameters": { "global": { "min": 0, "max": 1, "value": 0.5 } }
 }
 ```
+**CRITICAL**: You MUST return valid JSON. The `threejs_code` MUST be a single JSON-escaped string. 
+- DO NOT use Python triple quotes (''' or \"\"\"). 
+- Escape all newlines as \\n. 
+- Escape all double quotes as \\".
 """
 
 class StemAIEngine:
@@ -92,23 +96,36 @@ class StemAIEngine:
             "thought_trace": thought_trace
         }
 
-    def generate_simulation(self, design_doc: str) -> dict:
+    def generate_simulation(self, design_doc: str, retries: int = 2) -> dict:
         """
         Phase 2: Generate high-fidelity code using Gemini 2.5 Flash.
+        Includes a retry mechanism for robust JSON parsing.
         """
         engine = KusmusAIEngine(
             system_instruction=STEM_GENERATION_PROMPT,
             model_name=self.generation_model
         )
         
-        response_text, thought_trace = engine.generate_response(
-            f"Generate the full STEM simulation code for this design: {design_doc}"
-        )
+        last_error = None
+        for attempt in range(retries + 1):
+            try:
+                response_text, thought_trace = engine.generate_response(
+                    f"Generate the full STEM simulation code for this design: {design_doc}"
+                )
+                
+                result = self._parse_json(response_text)
+                if "errors" not in result:
+                    result["thought_trace"] = thought_trace
+                    result["model_used"] = self.generation_model
+                    return result
+                
+                last_error = result["errors"][0]
+                print(f"[StemAIEngine] Attempt {attempt + 1} failed: {last_error}")
+            except Exception as e:
+                last_error = str(e)
+                print(f"[StemAIEngine] Attempt {attempt + 1} exception: {last_error}")
         
-        result = self._parse_json(response_text)
-        result["thought_trace"] = thought_trace
-        result["model_used"] = self.generation_model
-        return result
+        return {"errors": [f"Deep Generation Failed after {retries + 1} attempts. Last error: {last_error}"]}
 
     def _parse_state(self, text: str) -> dict:
         match = re.search(r'\[STATE:\s*({.*?})\s*\]', text)
@@ -120,11 +137,30 @@ class StemAIEngine:
         return {"subject": "physics", "ready": False, "missing": []}
 
     def _parse_json(self, text: str) -> dict:
+        """
+        Robust JSON parser that handles common AI formatting anomalies.
+        """
+        # Pre-process: AI often uses python triple quotes inside JSON blocks
+        # We try to convert them to standard escaped strings before parsing
+        processed_text = text
+        if "'''" in text or '"""' in text:
+            # Simple heuristic: find "threejs_code": '''...''' and replace delimiters
+            # This is safer than a global replace which might break code
+            processed_text = re.sub(r'("threejs_code":\s*)(\'\'\'|""")(.*?)(\'\'\'|""")', 
+                                    lambda m: m.group(1) + '"' + m.group(3).replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + '"', 
+                                    text, flags=re.DOTALL)
+
         try:
+            # 1. Try to find a JSON block in the (optionally processed) text
             json_pattern = r'```json\s*({.*?})\s*```'
-            match = re.search(json_pattern, text, flags=re.DOTALL)
-            if match:
-                return json.loads(match.group(1))
-            return json.loads(text)
-        except:
-            return {"errors": ["A.I. failed to produce valid JSON structure"]}
+            match = re.search(json_pattern, processed_text, flags=re.DOTALL)
+            payload = match.group(1) if match else processed_text
+            
+            # 2. Use strict=False to allow literal control characters
+            return json.loads(payload, strict=False)
+        except Exception as e:
+            # 3. Fallback: If it's just raw JSON without blocks, try again
+            try:
+                return json.loads(processed_text, strict=False)
+            except:
+                return {"errors": [f"A.I. failed to produce valid JSON structure: {str(e)}"]}

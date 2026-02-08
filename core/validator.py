@@ -61,7 +61,7 @@ class PhysicsCodeValidator:
     
     # Resource limits
     MAX_OBJECT_CREATIONS = float('inf')
-    MAX_LINE_LENGTH = 1000
+    MAX_LINE_LENGTH = float("inf")
     MAX_NESTING_DEPTH = 5
     
     def __init__(self):

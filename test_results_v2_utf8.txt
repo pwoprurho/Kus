@@ -1,0 +1,14 @@
+﻿
+>>> Testing: A simple ball falling from 10 meters height using gravity.
+[Key 0] Rate limit hit, waiting 3.0s before rotating...
+Generation SUCCESS. Validating code...
+Validation FAILED!
+Issues: ['Missing Animation loop']
+
+>>> Testing: A complex double pendulum simulation with energy graphs.
+Generation SUCCESS. Validating code...
+Validation PASSED!
+Security Level: high
+
+>>> Testing: Solar system simulation with all planets.
+Generation Error: ['A.I. failed to produce valid JSON structure']

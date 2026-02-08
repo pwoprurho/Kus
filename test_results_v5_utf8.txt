@@ -1,0 +1,48 @@
+﻿python : Traceback 
+(most recent call 
+last):
+At line:1 char:1
++ python test_stem_ge
+nerate_v3.py > 
+test_results_v5.txt 
+2>&1
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (Traceba   
+ ck (most recent     
+call last)::Stri    
+ng) [], RemoteEx    
+ception
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+  File "C:\Users\Admi
+nistrator\kus\test_st
+em_generate_v3.py", 
+line 6, in <module>
+    from 
+core.stem_ai import S
+TEM_GENERATION_PROMPT
+  File "C:\Users\Admi
+nistrator\kus\core\st
+em_ai.py", line 150
+    lambda m: f'{m.gr
+oup(1)}"{m.group(3).r
+eplace("\\", "\\\\").
+replace("\"", "\\\"")
+.replace("\n", 
+"\\n")}"', 
+                     
+                     
+                     
+                     
+                     
+   ^
+SyntaxError: 
+f-string expression 
+part cannot include 
+a backslash
