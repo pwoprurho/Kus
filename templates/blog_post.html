@@ -11,7 +11,7 @@
 <meta property="og:title" content="{{ post.title }}">
 <meta property="og:description" content="{{ post.summary | default(post.content[:150] ~ '...') }}">
 <meta property="og:image"
-    content="{{ post.image_url if post.image_url else url_for('static', filename='images/pic01.jpg', _external=True) }}">
+    content="{{ post.image_url if post.image_url else url_for('static', filename='images/pic01.png', _external=True) }}">
 <meta property="article:published_time" content="{{ post.published_at }}">
 <meta property="article:author" content="Kusmus AI Research">
 
@@ -20,7 +20,7 @@
 <meta name="twitter:title" content="{{ post.title }}">
 <meta name="twitter:description" content="{{ post.summary | default(post.content[:150] ~ '...') }}">
 <meta name="twitter:image"
-    content="{{ post.image_url if post.image_url else url_for('static', filename='images/pic01.jpg', _external=True) }}">
+    content="{{ post.image_url if post.image_url else url_for('static', filename='images/pic01.png', _external=True) }}">
 
 <!-- Schema.org for Google News/Discover -->
 <script type="application/ld+json">
@@ -29,7 +29,7 @@
       "@type": "BlogPosting",
       "headline": "{{ post.title }}",
       "image": [
-        "{{ post.image_url if post.image_url else url_for('static', filename='images/pic01.jpg', _external=True) }}"
+        "{{ post.image_url if post.image_url else url_for('static', filename='images/pic01.png', _external=True) }}"
        ],
       "datePublished": "{{ post.published_at }}",
       "dateModified": "{{ post.updated_at if post.updated_at else post.published_at }}",
@@ -42,7 +42,7 @@
         "name": "Kusmus AI",
         "logo": {
           "@type": "ImageObject",
-          "url": "{{ url_for('static', filename='images/pic01.jpg', _external=True) }}"
+          "url": "{{ url_for('static', filename='images/pic01.png', _external=True) }}"
         }
       },
       "description": "{{ post.summary | default(post.content[:150] ~ '...') }}"

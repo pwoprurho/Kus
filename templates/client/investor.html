@@ -875,7 +875,7 @@ ${data.reasoning}`;
         // 2. Texture Loading (User Image for Background Tiles)
         const textureLoader = new THREE.TextureLoader();
         const timestamp = new Date().getTime(); // Cache buster
-        const marketTexture = textureLoader.load(`/static/images/market_pulse.jpeg?v=${timestamp}`,
+        const marketTexture = textureLoader.load(`/static/images/market_pulse.png?v=${timestamp}`,
             (tex) => {
                 tex.wrapS = THREE.RepeatWrapping;
                 tex.wrapT = THREE.RepeatWrapping;
