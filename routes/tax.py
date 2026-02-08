@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify, session, render_template, Respons
 from flask_login import current_user
 from core.engine import KusmusAIEngine
 from services.personas import DEMO_REGISTRY
-from rag_tax_law import search_tax_law
+from rag_tax_law import tax_rag
 from werkzeug.utils import secure_filename
 import os
 import csv
@@ -80,7 +80,7 @@ def tax_upload():
         print(f"Tax Upload Error: {e}")
         return jsonify({'error': str(e)}), 400
 
-from rag_tax_law import search_tax_law
+
 
 @tax_bp.route('/api/tax/chat', methods=['POST'])
 def tax_chat():
@@ -108,12 +108,14 @@ def tax_chat():
         if 'search_tax_law' in tools_allowed:
             try:
                 # 1. Use the user's message to search the tax law DB
-                search_results = search_tax_law(user_message, supabase_admin, top_k=3)
+                # search_results = search_tax_law(user_message, supabase_admin, top_k=3)
+                _, search_results = tax_rag.query(user_message)
                 
                 # 2. Format the results into a context block
                 context_chunks = []
                 for result in search_results:
-                    context_chunks.append(f"Source (Page {result.get('page_num', 'N/A')}):\n{result.get('chunk_text', '')}")
+                    # result is now a RetrievedChunk object
+                    context_chunks.append(f"Source (Page {result.page_num or 'N/A'}):\n{result.text}")
                 
                 rag_context = "\n\n---\n".join(context_chunks)
                 
@@ -215,11 +217,11 @@ def tax_chat_stream():
         # For now, I'll copy the critical prompt construction logic to ensure it works)
         
         # RAG Logic Re-implementation (Quick Inline)
-        from rag_tax_law import search_tax_law
+
         rag_context = ""
         try:
-            search_results = search_tax_law(user_message, supabase_admin, top_k=3)
-            context_chunks = [f"Source (Page {r.get('page_num', '?')}):\n{r.get('chunk_text', '')}" for r in search_results]
+            _, search_results = tax_rag.query(user_message)
+            context_chunks = [f"Source (Page {r.page_num or '?'}):\n{r.text}" for r in search_results]
             rag_context = "\n\n---\n".join(context_chunks)
         except: pass
 
