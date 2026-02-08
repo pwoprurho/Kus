@@ -461,7 +461,7 @@ def generate_content():
             current_key = key_manager.get_current_key()
             try:
                 genai.configure(api_key=current_key)
-                model = genai.GenerativeModel('gemini-2.0-flash-exp')
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
                 return jsonify(json.loads(response.text))
             except Exception as e:

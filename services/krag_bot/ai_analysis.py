@@ -7,7 +7,7 @@ import json
 logger = logging.getLogger(__name__)
 
 class AIAnalyzer:
-    def __init__(self, api_key=None, model_name="gemini-2.5-flash-lite"):
+    def __init__(self, api_key=None, model_name="gemini-2.5-flash"):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not self.api_key:
             logger.warning("GEMINI_API_KEY not found. AI analysis will be disabled.")

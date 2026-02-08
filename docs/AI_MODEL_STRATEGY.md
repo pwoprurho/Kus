@@ -23,7 +23,7 @@ Kusmus AI's STEM Sandbox leverages a **hybrid AI architecture** that balances im
 
 ```mermaid
 graph LR
-    A[Student Input] --> B[Gemini 2.0 Flash]
+    A[Student Input] --> B["Gemini 2.5 Flash (Planning)"]
     B --> C{Planning Phase}
     C --> D[DeepSeek Coder 1.3B - Local CPU]
     D --> E[Three.js Code Generation]
@@ -33,18 +33,19 @@ graph LR
 
 | Component | Model | Purpose | Cost | Performance |
 |-----------|-------|---------|------|-------------|
-| **Planning** | Gemini 2.0 Flash | Conversational design gathering | $0.075/1M tokens | 1500 req/min |
-| **Generation (Current)** | DeepSeek Coder 1.3B (Local) | Physics code synthesis | $0 (runs on CPU) | 5-15 sec/generation |
-| **Generation (Future)** | DeepSeek Coder V2 16B (Local) | High-quality code synthesis | $0 (self-hosted) | 2-5 sec/generation |
+| **Planning (Sandbox)** | Gemini 2.5 Flash | State-of-the-art physics logic | $0.075/1M tokens | ~150 tokens/sec |
+| **Logic (Tax/Finance)**| Gemini 2.5 Flash | Robust reasoning & precision | $0.075/1M tokens | ~150 tokens/sec |
+| **Simple Chat** | Gemini 2.5 Flash Lite | High-speed client care | $0.075/1M tokens | 1500 req/min |
+| **Generation (Current)** | DeepSeek Coder 1.3B (Local) | Physics code synthesis | $0 (runs on CPU) | 5-15 sec/gen |
 | **Validation** | Rule-based (PhysicsCodeValidator) | Security & correctness | $0 | Instant |
 
 ### Why This Architecture?
 
-#### **Gemini 2.0 Flash (Planning)**
+#### **Gemini 2.5 Flash (Planning)**
 1. **Excellent conversational AI** - Natural dialogue with students
-2. **Fast & reliable** - 1500 req/min, no rate limit issues
-3. **Cost-effective** - Planning is cheap (~100 tokens/request)
-4. **Proven** - Already integrated and working
+2. **Fast & reliable** - High throughput across all regions
+3. **Cost-effective** - Optimized token pricing
+4. **Proven** - Standardized across our entire infrastructure
 
 #### **DeepSeek Coder 1.3B (Current Generation)**
 1. **Runs on your HP ZBook** - No GPU needed, CPU-only inference
@@ -96,7 +97,7 @@ Our roadmap involves developing a **fine-tuned DeepSeek Coder V2** model specifi
 ### **Phase 1: Local DeepSeek Coder Deployment** (Current - Month 1)
 **Status**: ✅ In Progress
 
-- [x] Keep Gemini 2.0 Flash for planning
+- [x] Standardize on Gemini 2.5 Flash for planning
 - [ ] Deploy DeepSeek Coder 1.3B locally via Ollama
 - [ ] Integrate local model into `stem_ai.py`
 - [ ] Test performance on HP ZBook hardware

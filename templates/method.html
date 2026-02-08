@@ -3,49 +3,57 @@
 {% block title %}The Kusmus Method | De-Risking Strategy{% endblock %}
 
 {% block content %}
-    <header class="page-header container fade-in">
-        <h2>The Kusmus Method: Clarity Before Commitment</h2>
-        <p>We eliminate risk by separating assessment from commitment. Our two-phase model ensures a guaranteed business case before you deploy a single agent.</p>
-    </header>
+<header class="page-header container fade-in">
+    <h2>The Kusmus Method: Clarity Before Commitment</h2>
+    <p>We eliminate risk by separating assessment from commitment. Our two-phase model ensures a guaranteed business
+        case before you deploy a single solution.</p>
+</header>
 
-    <section class="method-page container">
-        
-        <div class="method-steps">
-            <div class="method-step phase-1 fade-in">
-                <span class="step-number">Phase 1</span>
-                <h3>The Strategic Audit</h3>
-                <p class="step-description">
-                    This is a low-risk, high-value engagement. We integrate with your existing logs and workflows for a deep analysis. 
-                    We do not write a single line of production code. We deliver a comprehensive blueprint.
-                </p>
-                <ul class="deliverables">
-                    <li><i class="fas fa-check-circle" style="color: #ffe600;"></i> In-depth workflow analysis & bottleneck identification.</li>
-                    <li><i class="fas fa-check-circle" style="color: #ffe600;"></i> Guaranteed ROI projection ($ Value).</li>
-                    <li><i class="fas fa-check-circle" style="color: #ffe600;"></i> Bespoke Implementation Roadmap.</li>
-                </ul>
-                <p class="selling-point">
-                    <strong>Zero Risk Guarantee:</strong> The cost of the Phase 1 Strategic Audit is 100% credited towards the Phase 2 Core Deployment.
-                </p>
-            </div>
+<section class="method-page container">
 
-            <div class="method-step phase-2 fade-in">
-                <span class="step-number">Phase 2</span>
-                <h3>The Core Deployment</h3>
-                <p class="step-description">
-                    Upon your approval of the Phase 1 Blueprint, we move to full implementation. 
-                    Our Project Manager (Expert 4) and Lead Engineers execute the plan, integrating the AI Agents directly into your infrastructure.
-                </p>
-                <ul class="deliverables">
-                    <li><i class="fas fa-check-circle" style="color: #0072ff;"></i> Full AI System Integration.</li>
-                    <li><i class="fas fa-check-circle" style="color: #0072ff;"></i> Custom Team Training & Knowledge Transfer.</li>
-                    <li><i class="fas fa-check-circle" style="color: #0072ff;"></i> 24/7 Monitoring (Engineering Certainty).</li>
-                </ul>
-            </div>
+    <div class="method-steps">
+        <div class="method-step phase-1 fade-in">
+            <span class="step-number">Phase 1</span>
+            <h3>The Strategic Audit</h3>
+            <p class="step-description">
+                This is a low-risk, high-value engagement. We integrate with your existing logs and workflows for a deep
+                analysis.
+                We do not write a single line of production code. We deliver a comprehensive blueprint.
+            </p>
+            <ul class="deliverables">
+                <li><i class="fas fa-check-circle" style="color: #ffe600;"></i> In-depth workflow analysis & bottleneck
+                    identification.</li>
+                <li><i class="fas fa-check-circle" style="color: #ffe600;"></i> Guaranteed ROI projection ($ Value).
+                </li>
+                <li><i class="fas fa-check-circle" style="color: #ffe600;"></i> Bespoke Implementation Roadmap.</li>
+            </ul>
+            <p class="selling-point">
+                <strong>Zero Risk Guarantee:</strong> The cost of the Phase 1 Strategic Audit is 100% credited towards
+                the Phase 2 Core Deployment.
+            </p>
         </div>
 
-        <div class="cta-bottom">
-            <h3 style="margin-bottom: 20px;">Stop guessing. Start engineering.</h3>
-            <a href="{{ url_for('public.home') }}#audit-form" class="cta-button">Initiate Your Phase 1 Audit</a>
+        <div class="method-step phase-2 fade-in">
+            <span class="step-number">Phase 2</span>
+            <h3>The Core Deployment</h3>
+            <p class="step-description">
+                Upon your approval of the Phase 1 Blueprint, we move to full implementation.
+                Our Project Manager (Expert 4) and Lead Engineers execute the plan, integrating the AI solutions and
+                custom technologies directly into your infrastructure.
+            </p>
+            <ul class="deliverables">
+                <li><i class="fas fa-check-circle" style="color: #0072ff;"></i> Full AI System Integration.</li>
+                <li><i class="fas fa-check-circle" style="color: #0072ff;"></i> Custom Team Training & Knowledge
+                    Transfer.</li>
+                <li><i class="fas fa-check-circle" style="color: #0072ff;"></i> 24/7 Monitoring (Engineering Certainty).
+                </li>
+            </ul>
         </div>
-    </section>
+    </div>
+
+    <div class="cta-bottom">
+        <h3 style="margin-bottom: 20px;">Stop guessing. Start engineering.</h3>
+        <a href="{{ url_for('public.home') }}#audit-form" class="cta-button">Initiate Your Phase 1 Audit</a>
+    </div>
+</section>
 {% endblock %}

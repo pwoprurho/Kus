@@ -176,7 +176,7 @@ def tax_chat():
         # BUT enable Google Search for dynamic lookups
         engine = KusmusAIEngine(
             system_instruction=persona['instruction'],
-            model_name=persona.get('model', 'gemini-2.0-flash-exp'),
+            model_name=persona.get('model', 'gemini-2.5-flash'),
             tools=[], 
             enable_google_search=True 
         )
@@ -245,7 +245,7 @@ def tax_chat_stream():
         # Initialize Engine with Google Search capability
         engine = KusmusAIEngine(
             system_instruction=persona['instruction'],
-            model_name=persona.get('model', 'gemini-2.0-flash-exp'),
+            model_name=persona.get('model', 'gemini-2.5-flash'),
             tools=[],
             enable_google_search=True
         )
@@ -367,7 +367,7 @@ def generate_tax_filing():
             persona = DEMO_REGISTRY.get('tax_compliance_agent')
             engine = KusmusAIEngine(
                 system_instruction=persona['instruction'],
-                model_name=persona.get('model', 'gemini-2.0-flash-exp')
+                model_name=persona.get('model', 'gemini-2.5-flash')
             )
             
             extraction_prompt = f"""

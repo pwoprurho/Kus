@@ -1,7 +1,7 @@
 # core/stem_ai.py
 """
 STEM AI Engine (Conversational)
-Handles iterative planning and Gemini 3.0 code generation.
+Handles iterative planning and Gemini 2.5 Flash code generation.
 """
 
 import json
@@ -28,9 +28,9 @@ Always include a hidden state at the end of your response in this format:
 [STATE: { "subject": "physics", "ready": false, "missing": ["height", "mass"] }]
 """
 
-# The system prompt for the "Generation" phase (Gemini 3.0 Flash)
+# The system prompt for the "Generation" phase (Gemini 2.5 Flash)
 STEM_GENERATION_PROMPT = """
-You are a STEM Simulation Architect powered by Gemini 3.0 Flash.
+You are a STEM Simulation Architect powered by Gemini 2.5 Flash.
 Convert the following research design into 100% executable Three.js + Cannon-es code.
 
 CODE GUIDELINES:
@@ -65,9 +65,9 @@ class StemAIEngine:
     """
     
     def __init__(self, model_name=None):
-        # gemini-2.0-flash has 1500 req/min vs gemini-2.5-flash-lite's 20 req/day
-        self.planning_model = "gemini-2.0-flash"
-        self.generation_model = "gemini-3.0-flash"
+        # Standardized on gemini-2.5-flash series
+        self.planning_model = "gemini-2.5-flash"
+        self.generation_model = "gemini-2.5-flash"
     
     def chat_interact(self, message: str, context_logs=None) -> dict:
         """
@@ -94,7 +94,7 @@ class StemAIEngine:
 
     def generate_simulation(self, design_doc: str) -> dict:
         """
-        Phase 2: Generate high-fidelity code using Gemini 3.0 Flash.
+        Phase 2: Generate high-fidelity code using Gemini 2.5 Flash.
         """
         engine = KusmusAIEngine(
             system_instruction=STEM_GENERATION_PROMPT,

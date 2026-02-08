@@ -13,7 +13,7 @@ class NewsOracle:
     """
     def __init__(self, config):
         self.config = config
-        self.ai_analyzer = AIAnalyzer(model_name=config.get('ai_model_name', 'gemini-2.5-flash-lite'))
+        self.ai_analyzer = AIAnalyzer(model_name=config.get('ai_model_name', 'gemini-2.5-flash'))
         
         # Real-world crypto/finance RSS feeds
         self.rss_feeds = config.get('news_rss_feeds', [

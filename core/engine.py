@@ -9,7 +9,7 @@ from core.key_manager import key_manager
 
 class KusmusAIEngine:
     def __init__(self, system_instruction, model_name="gemini-2.5-flash", tools=None, enable_google_search=False):
-        # Use the provided model name, defaulting to gemini-2.0-flash-exp
+        # Use the provided model name, defaulting to gemini-2.5-flash
         self.model_id = model_name
         self.system_instruction = system_instruction
         # If tools are explicitly provided (even empty list), use them.
@@ -231,10 +231,10 @@ class KusmusAIEngine:
                     print(f"DEBUG: Primary model failed with: {error_str}")
                     
                     if "404" in error_str or "not found" in error_str or "unsupported" in error_str:
-                        print(f"DEBUG: Model {self.model_id} not found. Fallback to gemini-2.0-flash-lite.")
+                        print(f"DEBUG: Model {self.model_id} not found. Fallback to gemini-2.5-flash-lite.")
                         # Use a model we SAW in the list
                         response_stream = client.models.generate_content_stream(
-                            model="gemini-2.0-flash-lite", 
+                            model="gemini-2.5-flash-lite", 
                             contents=message,
                             config=config_standard # Use standard config for fallback
                         )

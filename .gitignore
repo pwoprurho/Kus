@@ -104,3 +104,8 @@ supabase_service_role_key*
 *~
 # JetBrains
 .idea/
+
+# AI Model Diagnostics
+list_models.py
+models.txt
+models_error.txt

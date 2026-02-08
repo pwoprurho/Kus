@@ -2,7 +2,7 @@
 """
 Physics AI Engine
 Converts natural language experiment descriptions to Three.js + Cannon-es code.
-Uses Gemini 3.0 Flash (with 2.5 Flash fallback).
+Uses Gemini 2.5 Flash (with 2.5 Flash Lite fallback).
 """
 
 import json
@@ -13,7 +13,7 @@ from core.key_manager import key_manager
 
 # System prompt for physics experiments
 PHYSICS_SYSTEM_PROMPT = """
-You are a Physics Lab Assistant powered by Gemini 3.0 Flash (or Gemini 2.5 Flash as fallback) that converts natural language experiment descriptions into Three.js + Cannon-es visualization code.
+You are a Physics Lab Assistant powered by Gemini 2.5 Flash (or Gemini 2.5 Flash Lite as fallback) that converts natural language experiment descriptions into Three.js + Cannon-es visualization code.
 
 Your mission is to create INTERACTIVE, EDUCATIONAL, and BEAUTIFUL physics simulations similar to PhET.
 
@@ -76,7 +76,7 @@ class PhysicsAIEngine:
     """
     
     def __init__(self, model_name=None):
-        self.model_name = model_name or "gemini-2.5-flash-lite"
+        self.model_name = model_name or "gemini-2.5-flash"
         self.system_instruction = PHYSICS_SYSTEM_PROMPT
     
     def generate_experiment_code(self, description: str) -> dict:
@@ -212,6 +212,6 @@ class PhysicsAIEngine:
             # Try with 2.5 Flash fallback
             self.model_name = "gemini-2.5-flash-lite"
             result = self.generate_experiment_code(description)
-            self.model_name = "gemini-3.0-flash-lite"  # Reset
+            self.model_name = "gemini-2.5-flash"  # Reset
         
         return result

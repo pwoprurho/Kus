@@ -31,7 +31,7 @@ class ResearchAgentService:
         try:
             # Phase 1: Planning with Flash
             interaction = client.interactions.create(
-                model="gemini-2.0-flash", # Using 2.0 Flash as 3.0-flash-preview might be restricted
+                model="gemini-2.5-flash", 
                 input=f"Create a numbered research plan for: {goal}\n\nFormat: 1. [Task] - [Details]\n\nInclude 5-8 specific tasks.",
                 tools=[{"google_search": {}}], # Correct tool definition for google_search
                 store=True
@@ -65,7 +65,7 @@ class ResearchAgentService:
             # We try to use the agent/model specified.
             
             interaction = client.interactions.create(
-                model="gemini-2.0-pro-exp-02-05", # Fallback to Pro Exp if specified agent unavailable, or use agent param? 
+                model="gemini-2.5-flash", 
                 # The visual example used `agent="deep-research-pro-preview..."` but `model` is safer for general availability if agent is restricted.
                 # However, for "Deep Research" specifically, we usually need the specialized model.
                 # Let's try the specific model first, or fall back to standard Pro with search.
@@ -114,7 +114,7 @@ class ResearchAgentService:
         try:
             # Phase 3: Synthesis
             interaction = client.interactions.create(
-                model="gemini-2.0-flash",
+                model="gemini-2.5-flash",
                 input=f"Create executive report with Summary, Findings, Recommendations, Risks based on the research.",
                 previous_interaction_id=research_id,
                 store=True

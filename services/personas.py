@@ -16,7 +16,7 @@ MAIN_ASSISTANT = {
 DEMO_REGISTRY = {
     "sentinel_monitor": {
         "name": "Sentinel (O-RAN Defense)",
-        "model": "gemini-2.5-flash-lite",
+        "model": "gemini-2.5-flash",
         "instruction": (
             "You are Sentinel, a Tier-1 Reliability & Security Engineer. "
             "You monitor O-RAN signal integrity and SRE infrastructure.\n\n"
@@ -50,7 +50,7 @@ DEMO_REGISTRY = {
 
     "market_sentinel": {
         "name": "Market Sentinel (Equity Analysis)",
-        "model": "gemini-2.5-flash-lite",
+        "model": "gemini-2.5-flash",
         "instruction": (
             "You are the **Market Sentinel**, a sovereign financial intelligence unit designed to engineer investment certainty. "
             "You do not guess. You do not gamble. You execute only when THE SKELETON (Insider Data) and THE FLESH (News/Narrative) align.\n\n"
@@ -88,7 +88,7 @@ DEMO_REGISTRY = {
 
     "surge_vla": {
         "name": "VLA Robotics",
-        "model": "gemini-2.5-flash-lite", # Updated
+        "model": "gemini-2.5-flash",
         "instruction": (
             "You are VLA Robotics — a hardware-interaction specialist. \n"
             "**AUTONOMOUS MONITORING**: \n"
@@ -145,14 +145,14 @@ DEMO_REGISTRY = {
     },
     "deep_research": {
         "name": "Deep Research Agent",
-        "model": "google-genai-interactions", # Special marker
+        "model": "gemini-2.5-flash", # Special marker
         "instruction": "Specialized agent for multi-step deep research using Google Gemini Interactions API.",
         "log_signature": "[DEEP_RESEARCH] Interactions API active. Planning/Execution phase.",
         "tools_allowed": ["google_search"]
     },
     "physics_sandbox": {
         "name": "Physics Practical Sandbox",
-        "model": "gemini-2.5-flash",
+        "model": "gemini-3-0-pro-preview",
         "instruction": (
             "You are a Physics Lab Assistant that converts natural language experiment descriptions "
             "into interactive Three.js visualizations with cannon-es physics. "

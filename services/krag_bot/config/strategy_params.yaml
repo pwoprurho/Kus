@@ -71,7 +71,7 @@ live_trade_interval_seconds: 90 # How often to check for new bars/signals in sec
 # --- AI Integration Settings ---
 ai_enabled: true
 ai_confidence_threshold: 70
-ai_model_name: "gemini-2.5-flash-lite"
+ai_model_name: "gemini-2.5-flash"
 
 # --- News Oracle Settings ---
 news_rss_feeds:
