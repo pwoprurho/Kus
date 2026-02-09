@@ -9,278 +9,105 @@
 
 <style>
     :root {
-        --bg-color: #0e0e0e;
-        --sidebar-bg: #131313;
-        --border-color: #333;
-        --accent-color: #4facfe;
-        --accent-glow: rgba(79, 172, 254, 0.4);
-        --text-primary: #f0f0f0;
-        --text-secondary: #aaaaaa;
-        --font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        --glass-bg: rgba(20, 20, 20, 0.7);
-        --glass-border: rgba(255, 255, 255, 0.1);
+        --bg: #050505;
+        --accent: #2ecc71;
+        --accent-glow: rgba(46, 204, 113, 0.4);
+        --glass: rgba(15, 15, 20, 0.95);
+        --border: rgba(255, 255, 255, 0.1);
+        --primary-text: #ffffff;
+        --secondary-text: #888888;
+        --thought-bg: rgba(46, 204, 113, 0.08);
     }
 
-    * {
-        box-sizing: border-box;
-    }
-
-    body {
-        margin: 0;
-        padding: 0;
-        background-color: var(--bg-color);
-        color: var(--text-primary);
-        font-family: var(--font-family);
-        height: 100vh;
-        width: 100vw;
-        overflow: hidden;
-        display: flex;
-    }
-
-    /* Hide default header/footer if they exist in base template overlaying this */
+    /* Hide global elements */
+    #chat-widget-container,
     header,
     footer {
         display: none !important;
     }
 
-    /* LAYOUT */
-    .sidebar {
-        width: 350px;
-        background-color: var(--sidebar-bg);
-        border-right: 1px solid var(--border-color);
+    .sandbox-app {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: radial-gradient(circle at 50% 50%, #101018 0%, #000000 100%);
+    }
+
+    /* CHAT CONTAINER */
+    .chat-container {
+        width: 100%;
+        max-width: 800px;
+        height: 90vh;
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: 24px;
         display: flex;
         flex-direction: column;
-        height: 100%;
-        z-index: 10;
-        transition: transform 0.3s ease;
-    }
-
-    .canvas-wrapper {
-        flex: 1;
-        position: relative;
-        background: radial-gradient(circle at 50% 50%, #1a1a24 0%, #000000 100%);
         overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     }
 
-    #canvas-container {
-        width: 100%;
-        height: 100%;
-        display: block;
+    .chat-header {
+        padding: 24px 30px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 
-    /* SIDEBAR CONTENT */
-    .sidebar-header {
-        padding: 20px;
-        border-bottom: 1px solid var(--border-color);
+    .back-link {
+        color: var(--secondary-text);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: color 0.2s;
+    }
+
+    .back-link:hover {
+        color: var(--primary-text);
+    }
+
+    .header-title {
         display: flex;
         align-items: center;
         gap: 12px;
-    }
-
-    .logo-icon {
-        width: 32px;
-        height: 32px;
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-weight: bold;
-    }
-
-    .sidebar-title {
         font-weight: 600;
         font-size: 1.1rem;
-        letter-spacing: -0.5px;
+    }
+
+    .header-title i {
+        color: var(--accent);
     }
 
     .chat-history {
         flex: 1;
         overflow-y: auto;
-        padding: 20px;
+        padding: 30px;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 20px;
     }
 
+    /* BUBBLES */
     .message {
         display: flex;
         flex-direction: column;
-        max-width: 90%;
-        animation: fadeIn 0.3s ease-out;
+        max-width: 85%;
+        animation: slideUp 0.4s ease-out;
     }
 
     .message.user {
         align-self: flex-end;
     }
 
-    .message.ai {
+    .message.ai,
+    .message.thought {
         align-self: flex-start;
     }
 
-    .bubble {
-        padding: 10px 14px;
-        border-radius: 12px;
-        font-size: 0.95rem;
-        line-height: 1.5;
-    }
-
-    .message.user .bubble {
-        background-color: var(--accent-color);
-        color: #fff;
-        border-bottom-right-radius: 2px;
-        box-shadow: 0 4px 15px var(--accent-glow);
-    }
-
-    .message.ai .bubble {
-        background-color: #2a2a2a;
-        color: #e0e0e0;
-        border-bottom-left-radius: 2px;
-        border: 1px solid var(--border-color);
-    }
-
-    .input-area {
-        padding: 20px;
-        border-top: 1px solid var(--border-color);
-        background-color: var(--sidebar-bg);
-    }
-
-    .input-wrapper {
-        position: relative;
-        background: #222;
-        border: 1px solid var(--border-color);
-        border-radius: 24px;
-        padding: 4px 8px;
-        display: flex;
-        align-items: flex-end;
-        transition: border-color 0.2s;
-    }
-
-    .input-wrapper:focus-within {
-        border-color: var(--accent-color);
-    }
-
-    #chat-input {
-        flex: 1;
-        background: transparent;
-        border: none;
-        color: #fff;
-        padding: 10px;
-        resize: none;
-        font-family: inherit;
-        max-height: 150px;
-        outline: none;
-        font-size: 0.95rem;
-    }
-
-    .send-btn {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        border: none;
-        background: var(--accent-color);
-        color: white;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 2px;
-        transition: transform 0.2s;
-    }
-
-    .send-btn:hover {
-        transform: scale(1.1);
-    }
-
-    .send-btn:disabled {
-        background: #444;
-        cursor: not-allowed;
-    }
-
-    /* OVERLAYS & HUD */
-    .controls-overlay {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        display: flex;
-        gap: 10px;
-        z-index: 20;
-    }
-
-    .canvas-btn {
-        background: var(--glass-bg);
-        backdrop-filter: blur(10px);
-        border: 1px solid var(--glass-border);
-        color: #fff;
-        padding: 8px 16px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-size: 0.85rem;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        transition: background 0.2s;
-    }
-
-    .canvas-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    .timer-hud {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: var(--glass-bg);
-        backdrop-filter: blur(10px);
-        padding: 8px 16px;
-        border-radius: 8px;
-        color: var(--accent-color);
-        font-family: 'JetBrains Mono', monospace;
-        font-weight: bold;
-        border: 1px solid var(--glass-border);
-        display: none;
-        /* Shown by JS */
-    }
-
-    /* LOADING & SPINNERS */
-    .loading-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(5px);
-        display: none;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 50;
-    }
-
-    .thinking-spinner {
-        width: 50px;
-        height: 50px;
-        border: 3px solid rgba(255, 255, 255, 0.1);
-        border-top-color: var(--accent-color);
-        border-radius: 50%;
-        animation: spin 1s infinite linear;
-        margin-bottom: 20px;
-    }
-
-    .thinking-text {
-        font-size: 1.2rem;
-        color: #fff;
-        letter-spacing: 0.5px;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    @keyframes fadeIn {
+    @keyframes slideUp {
         from {
             opacity: 0;
             transform: translateY(10px);
@@ -292,501 +119,303 @@
         }
     }
 
-    /* CODE MODAL */
-    #code-modal {
-        backdrop-filter: blur(2px);
+    .bubble {
+        padding: 14px 18px;
+        border-radius: 16px;
+        font-size: 0.95rem;
+        line-height: 1.6;
     }
 
-    #code-preview {
-        background: #111;
-        border: 1px solid #333;
-        border-radius: 8px;
-        padding: 20px;
-        color: #a5d6a7;
+    .message.user .bubble {
+        background: var(--accent);
+        color: #000;
+        border-bottom-right-radius: 4px;
+    }
+
+    .message.ai .bubble {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        color: #ddd;
+        border-bottom-left-radius: 4px;
+    }
+
+    /* THOUGHT BUBBLE */
+    .message.thought .bubble {
+        background: var(--thought-bg);
+        border: 1px solid rgba(46, 204, 113, 0.2);
+        color: #aaa;
+        font-size: 0.85rem;
         font-family: 'JetBrains Mono', monospace;
+    }
+
+    .thought-label {
+        font-size: 0.7rem;
+        color: var(--accent);
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* INPUT AREA */
+    .input-area {
+        padding: 20px 30px;
+        border-top: 1px solid var(--border);
+    }
+
+    .input-wrapper {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 6px;
+        display: flex;
+        align-items: flex-end;
+        transition: border-color 0.2s;
+    }
+
+    .input-wrapper:focus-within {
+        border-color: var(--accent);
+    }
+
+    textarea {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-size: 0.95rem;
+        padding: 10px 14px;
+        resize: none;
+        outline: none;
+        min-height: 24px;
+        max-height: 150px;
+        font-family: inherit;
+        line-height: 1.4;
+    }
+
+    .send-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: var(--accent);
+        border: none;
+        cursor: pointer;
+        transition: transform 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #000;
+    }
+
+    .send-btn:hover {
+        transform: scale(1.05);
+    }
+
+    .send-btn i {
+        font-size: 1.1rem;
+    }
+
+    /* SIM OVERLAY */
+    .sim-overlay {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        z-index: 100;
+        display: none;
+        flex-direction: column;
+        animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .sim-header {
+        padding: 20px 40px;
+        background: rgba(10, 10, 15, 0.9);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 10;
+    }
+
+    #sim-title {
+        font-size: 1.4rem;
+        margin: 0;
+    }
+
+    #sim-subtitle {
         font-size: 0.9rem;
-    }
-</style>
-
-<!-- ... (existing body structure) ... -->
-
-<script>
-    // ... (existing state) ...
-    let gui; // Global GUI instance
-
-    // ... (existing init) ...
-
-    function initThreeJS() {
-        // Placeholder
+        color: var(--secondary-text);
+        margin: 4px 0 0 0;
     }
 
-    function executeCode(code) {
-        // Cleanup old simulation
-        if (animationId) cancelAnimationFrame(animationId);
-        if (renderer && renderer.domElement && renderer.domElement.parentNode) {
-            renderer.domElement.parentNode.removeChild(renderer.domElement);
-        }
-        if (gui) { gui.destroy(); gui = null; }
-        DOM.canvas.innerHTML = '';
-        DOM.timer.style.display = 'block';
+    .sim-actions {
+        display: flex;
+        gap: 10px;
+    }
 
-        DOM.codeView.textContent = code;
+    .canvas-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
 
-        try {
-            // Strategy: Create a Blob and load it as a module or script
-            // This isolates execution better than eval and supports more syntax
+    .canvas-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
 
-            // We inject a harness that defines the globals for the script
-            const wrappedCode = `
-                try {
-                    const THREE = window.THREE;
-                    const CANNON = window.CANNON;
-                    const OrbitControls = THREE.OrbitControls;
-                    const GUI = window.lil.GUI;
-                    
-                    ${code}
-                    
-                    // Expecting the script to return an object 'controls' or similar
-                    // If the script is an IIFE that returns, we need to capture it.
-                    // But if it's just code, we need a convention.
-                    // Our prompt asks for an object return.
-                    
-                } catch(e) {
-                    window.reportRuntimeError(e);
-                }
-            `;
+    .close-btn:hover {
+        border-color: #e74c3c;
+        color: #e74c3c;
+    }
 
-            // But Blob injection is async and hard to bridge scope.
-            // Let's stick to Function but with better global scope bridging.
+    #canvas-container {
+        flex: 1;
+    }
 
-            // We will expose the libs to window so the code can simply use 'new THREE.OrbitControls'
-            window.THREE.OrbitControls = window.THREE.OrbitControls || THREE.OrbitControls;
+    .timer-hud {
+        position: absolute;
+        bottom: 30px;
+        right: 40px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.2rem;
+        color: var(--accent);
+        background: rgba(0, 0, 0, 0.6);
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+    }
 
-            // Create a function that returns the experiment
-            const createExperiment = new Function('THREE', 'CANNON', 'GUI', `
-                "use strict";
-                return (function() {
-                    ${code}
-                })();
-            `);
+    /* LOADER */
+    .loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(10px);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+    }
 
-            const sim = createExperiment(window.THREE, window.CANNON, window.lil.GUI);
+    .thinking-spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(46, 204, 113, 0.2);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 1s infinite linear;
+        margin-bottom: 20px;
+    }
 
-            if (!sim || !sim.rendererParameters) throw new Error("Code did not return a valid simulation object.");
-
-            // Renderer Setup
-            renderer = new THREE.WebGLRenderer(sim.rendererParameters);
-            renderer.setSize(DOM.canvas.clientWidth, DOM.canvas.clientHeight);
-            renderer.shadowMap.enabled = true;
-            DOM.canvas.appendChild(renderer.domElement);
-
-            // Interaction Controls (Orbit)
-            const controls = new THREE.OrbitControls(sim.camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-
-            // Physics/Logic Controls
-            physicsControls = sim.controls;
-
-            // Loop
-            const clock = new THREE.Clock();
-
-            function animate() {
-                animationId = requestAnimationFrame(animate);
-
-                controls.update(); // Orbit
-
-                if (!isPaused) {
-                    if (sim.render) sim.render();
-                    DOM.timer.textContent = clock.getElapsedTime().toFixed(2) + 's';
-                }
-            }
-            animate();
-
-        } catch (e) {
-            console.error(e);
-            window.reportRuntimeError(e);
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
         }
     }
 
-    window.reportRuntimeError = function (e) {
-        appendMessage('ai', `<strong>Runtime Error:</strong><br>${e.message}<br><button onclick="viewCode()" style="margin-top:5px; background:#333; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Inspect Code</button>`);
+    .thinking-text {
+        font-size: 1.2rem;
+        font-weight: 300;
+        color: #fff;
+        letter-spacing: 1px;
     }
 
-    // ... (rest of functions) ...
-</script>
---accent: #2ecc71;
---accent-glow: rgba(46, 204, 113, 0.4);
---bg: #050505;
---glass: rgba(10, 10, 15, 0.9);
---border: rgba(255, 255, 255, 0.1);
---sidebar-width: 400px;
-}
+    .pulse {
+        animation: pulse 2s infinite;
+    }
 
-body {
-background-color: var(--bg);
-color: #e0e0e0;
-font-family: 'Inter', system-ui, -apple-system, sans-serif;
-overflow: hidden;
-height: 100vh;
-margin: 0;
-display: flex;
-}
+    @keyframes pulse {
 
-#chat-widget-container,
-header,
-footer {
-display: none !important;
-}
+        0%,
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
 
-/* --- SIDEBAR (Chat) --- */
-.sidebar {
-width: var(--sidebar-width);
-height: 100vh;
-background: var(--bg);
-border-right: 1px solid var(--border);
-display: flex;
-flex-direction: column;
-z-index: 20;
-transition: transform 0.3s ease;
-}
-
-.sidebar-header {
-padding: 20px;
-border-bottom: 1px solid var(--border);
-display: flex;
-align-items: center;
-gap: 12px;
-}
-
-.logo-icon {
-width: 36px;
-height: 36px;
-background: var(--accent);
-border-radius: 8px;
-display: flex;
-align-items: center;
-justify-content: center;
-color: #000;
-font-size: 1.2rem;
-}
-
-.sidebar-title {
-font-weight: 700;
-font-size: 1rem;
-color: #fff;
-}
-
-.chat-history {
-flex: 1;
-overflow-y: auto;
-padding: 20px;
-display: flex;
-flex-direction: column;
-gap: 20px;
-scrollbar-width: thin;
-scrollbar-color: var(--accent) transparent;
-}
-
-.chat-history::-webkit-scrollbar {
-width: 4px;
-}
-
-.chat-history::-webkit-scrollbar-thumb {
-background: var(--accent);
-border-radius: 4px;
-}
-
-.message {
-display: flex;
-flex-direction: column;
-gap: 6px;
-max-width: 90%;
-animation: fadeIn 0.3s ease;
-}
-
-.message.user {
-align-self: flex-end;
-align-items: flex-end;
-}
-
-.message.ai {
-align-self: flex-start;
-align-items: flex-start;
-}
-
-.bubble {
-padding: 12px 16px;
-border-radius: 12px;
-font-size: 0.95rem;
-line-height: 1.5;
-position: relative;
-}
-
-.message.user .bubble {
-background: var(--accent);
-color: #000;
-border-bottom-right-radius: 2px;
-}
-
-.message.ai .bubble {
-background: rgba(255, 255, 255, 0.05);
-border: 1px solid var(--border);
-color: #ddd;
-border-bottom-left-radius: 2px;
-}
-
-.thought-trace {
-font-size: 0.75rem;
-color: #888;
-font-family: 'JetBrains Mono', monospace;
-background: rgba(0, 0, 0, 0.3);
-padding: 8px;
-border-radius: 6px;
-margin-top: 4px;
-border-left: 2px solid var(--accent);
-display: none;
-/* Hidden by default, toggleable */
-}
-
-.input-area {
-padding: 20px;
-border-top: 1px solid var(--border);
-background: var(--bg);
-}
-
-.input-wrapper {
-position: relative;
-background: rgba(255, 255, 255, 0.05);
-border: 1px solid var(--border);
-border-radius: 24px;
-padding: 4px;
-transition: border-color 0.2s;
-display: flex;
-align-items: flex-end;
-}
-
-.input-wrapper:focus-within {
-border-color: var(--accent);
-}
-
-textarea {
-width: 100%;
-background: transparent;
-border: none;
-color: #fff;
-font-size: 0.95rem;
-padding: 12px 16px;
-resize: none;
-outline: none;
-min-height: 24px;
-max-height: 150px;
-font-family: inherit;
-line-height: 1.4;
-}
-
-.send-btn {
-width: 40px;
-height: 40px;
-background: var(--accent);
-border-radius: 50%;
-border: none;
-color: #000;
-display: flex;
-align-items: center;
-justify-content: center;
-cursor: pointer;
-transition: transform 0.2s;
-margin-bottom: 2px;
-}
-
-.send-btn:hover {
-transform: scale(1.05);
-}
-
-.send-btn:disabled {
-background: #444;
-cursor: not-allowed;
-}
-
-/* --- CANVAS AREA --- */
-.canvas-wrapper {
-flex: 1;
-position: relative;
-background: radial-gradient(circle at 50% 50%, #1a1a24 0%, #000000 100%);
-}
-
-#canvas-container {
-width: 100%;
-height: 100%;
-}
-
-/* --- OVERLAYS --- */
-.controls-overlay {
-position: absolute;
-top: 20px;
-left: 20px;
-display: flex;
-gap: 10px;
-z-index: 10;
-}
-
-.canvas-btn {
-background: var(--glass);
-backdrop-filter: blur(10px);
-border: 1px solid var(--border);
-color: #fff;
-padding: 8px 16px;
-border-radius: 20px;
-cursor: pointer;
-font-size: 0.85rem;
-font-weight: 600;
-display: flex;
-align-items: center;
-gap: 6px;
-transition: all 0.2s;
-}
-
-.canvas-btn:hover {
-border-color: var(--accent);
-color: var(--accent);
-}
-
-.timer-hud {
-position: absolute;
-top: 20px;
-right: 20px;
-background: var(--glass);
-padding: 10px 16px;
-border-radius: 12px;
-font-family: 'JetBrains Mono', monospace;
-font-size: 1.1rem;
-color: var(--accent);
-border: 1px solid var(--accent);
-display: none;
-z-index: 10;
-box-shadow: 0 0 15px var(--accent-glow);
-}
-
-.loading-overlay {
-position: absolute;
-inset: 0;
-background: rgba(0, 0, 0, 0.8);
-backdrop-filter: blur(8px);
-display: none;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-z-index: 50;
-}
-
-.thinking-spinner {
-width: 50px;
-height: 50px;
-border: 3px solid rgba(46, 204, 113, 0.2);
-border-top-color: var(--accent);
-border-radius: 50%;
-animation: spin 1s infinite linear;
-margin-bottom: 20px;
-}
-
-.thinking-text {
-font-size: 1.2rem;
-font-weight: 300;
-color: #fff;
-letter-spacing: 1px;
-}
-
-.thinking-sub {
-font-size: 0.9rem;
-color: #888;
-margin-top: 8px;
-}
-
-@keyframes spin {
-to {
-transform: rotate(360deg);
-}
-}
-
-@keyframes fadeIn {
-from {
-opacity: 0;
-transform: translateY(10px);
-}
-
-to {
-opacity: 1;
-transform: translateY(0);
-}
-}
+        50% {
+            opacity: 0.7;
+            transform: scale(1.1);
+        }
+    }
 </style>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-    <div class="sidebar-header">
-        <a href="/" style="text-decoration:none;">
-            <div class="logo-icon"><i class="fas fa-atom"></i></div>
-        </a>
-        <div class="sidebar-title">Physics Sandbox</div>
-    </div>
+<!-- MAIN LAYOUT -->
+<div class="sandbox-app">
+    <!-- CHAT INTERFACE -->
+    <div class="chat-container" id="chat-container">
+        <div class="chat-header">
+            <a href="/" class="back-link"><i class="fas fa-chevron-left"></i> Home</a>
+            <div class="header-title">
+                <i class="fas fa-atom pulse"></i>
+                <span>STEM Lab Architect</span>
+            </div>
+        </div>
 
-    <div class="chat-history" id="chat-history">
-        <!-- Messages go here -->
-        <div class="message ai">
-            <div class="bubble">
-                Hello! I'm your Physics AI. detailed simulations in 3D.
-                <br><br>
-                Try "Simulate a double pendulum" or "Chain of falling dominos".
+        <div class="chat-history" id="chat-history">
+            <div class="message ai">
+                <div class="bubble">
+                    Welcome to the STEM Lab. I'm your physicist agent.
+                    <br><br>
+                    Describe an experiment you'd like to run in 3D. I'll analyze the physics and clarify parameters
+                    before we build it.
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea id="chat-input" rows="1"
+                    placeholder="e.g., 'A light experiment using a glass prism'"></textarea>
+                <button class="send-btn" id="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <div class="input-area">
-        <div class="input-wrapper">
-            <textarea id="chat-input" rows="1" placeholder="Describe a simulation..."></textarea>
-            <button class="send-btn" id="send-btn" onclick="handleSend()">
-                <i class="fas fa-arrow-up"></i>
-            </button>
+    <!-- 3D POPUP (Hidden by default) -->
+    <div class="sim-overlay" id="sim-overlay">
+        <div class="sim-header">
+            <div class="sim-details">
+                <h2 id="sim-title">Experiment Lab</h2>
+                <p id="sim-subtitle">Initializing physics engine...</p>
+            </div>
+            <div class="sim-actions">
+                <button class="canvas-btn" onclick="resetSim()"><i class="fas fa-undo"></i> Reset</button>
+                <button class="canvas-btn" onclick="toggleSim()"><i class="fas fa-pause" id="play-icon"></i></button>
+                <button class="canvas-btn close-btn" onclick="closeSim()"><i class="fas fa-times"></i></button>
+            </div>
         </div>
-    </div>
-</div>
-
-<!-- CANVAS -->
-<div class="canvas-wrapper">
-    <div id="canvas-container"></div>
-
-    <!-- HUD -->
-    <div class="controls-overlay">
-        <button class="canvas-btn" onclick="resetSim()">
-            <i class="fas fa-undo"></i> Reset
-        </button>
-        <button class="canvas-btn" onclick="toggleSim()">
-            <i class="fas fa-pause" id="play-icon"></i> <span id="play-text">Pause</span>
-        </button>
-        <button class="canvas-btn" onclick="viewCode()" title="View Generated Code">
-            <i class="fas fa-code"></i>
-        </button>
+        <div id="canvas-container"></div>
+        <div class="timer-hud" id="sim-timer">0.00s</div>
     </div>
 
-    <div class="timer-hud" id="sim-timer">0.00s</div>
-
-    <!-- LOADING -->
+    <!-- GLOBAL LOADER -->
     <div class="loading-overlay" id="loader">
         <div class="thinking-spinner"></div>
-        <div class="thinking-text" id="loading-text">Designing Experiment...</div>
-        ng-sub">Gemini 2.5 is calculating physics parameters
+        <div class="thinking-text" id="loading-text">Architecting...</div>
     </div>
-</div>
-</div>
-
-<!-- CODE MODAL (Simple overlay) -->
-<div id="code-modal"
-    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:100; padding:40px;">
-    <button class="canvas-btn" onclick="document.getElementById('code-modal').style.display='none'"
-        style="position:absolute; top:20px; right:20px;">Close</button>
-    <pre id="code-preview"
-        style="color:#2ecc71; font-family:'JetBrains Mono'; white-space:pre-wrap; overflow:auto; height:100%;"></pre>
 </div>
 
 <script>
@@ -795,8 +424,9 @@ transform: translateY(0);
     let currentExperiment = null;
     let isGenerating = false;
     let isPaused = false;
+    let renderer, animationId, physicsControls;
 
-    // Config
+    // --- DOM ---
     const DOM = {
         input: document.getElementById('chat-input'),
         history: document.getElementById('chat-history'),
@@ -804,20 +434,19 @@ transform: translateY(0);
         loaderText: document.getElementById('loading-text'),
         timer: document.getElementById('sim-timer'),
         canvas: document.getElementById('canvas-container'),
-        codeView: document.getElementById('code-preview'),
-        codeModal: document.getElementById('code-modal')
+        simOverlay: document.getElementById('sim-overlay'),
+        simTitle: document.getElementById('sim-title'),
+        simSubtitle: document.getElementById('sim-subtitle'),
+        sendBtn: document.getElementById('send-btn')
     };
 
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
-        initThreeJS();
         DOM.input.addEventListener('input', autoResize);
         DOM.input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
         });
-
-        // Load default if empty
-        loadDefaultExperiment();
+        DOM.sendBtn.onclick = handleSend;
     });
 
     function autoResize() {
@@ -834,14 +463,9 @@ transform: translateY(0);
         DOM.input.value = '';
         DOM.input.style.height = 'auto';
 
-        // 1. Check if simple chat or generation request
-        // For this "text-to-experiment" mode, we treat everything as a potential generation request 
-        // to the planning engine first.
-
-        setLoading(true, "Consulting STEM Architect...");
+        setLoading(true, "Consulting Lab Architect...");
 
         try {
-            // Step 1: Planning / Chat
             const res = await fetch('/api/stem/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -850,13 +474,18 @@ transform: translateY(0);
             const data = await res.json();
 
             if (data.success) {
-                appendMessage('ai', data.response, data.thought_trace);
+                // Display thought trace as thought bubble
+                if (data.thought_trace && data.thought_trace.length > 0) {
+                    const thoughts = data.thought_trace.join('\n');
+                    appendMessage('thought', thoughts);
+                }
 
-                // Check hidden state for "ready"
+                appendMessage('ai', data.response);
+
+                // If AI is ready, trigger generation
                 if (data.state && data.state.ready) {
-                    // Trigger Generation
-                    setLoading(true, "Generating Simulation Code...");
-                    await triggerGeneration(data.state.design || text); // Use accumulated design or raw text
+                    setLoading(true, "Building 3D Environment...");
+                    await triggerGeneration(data.state.design || text);
                 } else {
                     setLoading(false);
                 }
@@ -871,11 +500,7 @@ transform: translateY(0);
     }
 
     async function triggerGeneration(designDoc) {
-        DOM.codeView.textContent = "// Initializing Neural Link...\n";
-        DOM.codeModal.style.display = 'block'; // Auto-show code view
-
         let fullResponse = "";
-
         try {
             const response = await fetch('/api/stem/generate-stream', {
                 method: 'POST',
@@ -897,60 +522,64 @@ transform: translateY(0);
                     if (line.startsWith('data: ')) {
                         try {
                             const data = JSON.parse(line.substring(6));
-
                             if (data.type === 'chunk') {
                                 fullResponse += data.content;
-                                DOM.codeView.textContent = fullResponse;
-                                DOM.codeView.scrollTop = DOM.codeView.scrollHeight;
+                            } else if (data.type === 'thought') {
+                                appendMessage('thought', data.content);
                             } else if (data.type === 'error') {
-                                appendMessage('ai', `Stream Error: ${data.content}`);
+                                appendMessage('ai', `Build Error: ${data.content}`);
                             }
-                        } catch (e) { /* partial json, ignore */ }
+                        } catch (e) { }
                     }
                 }
             }
 
             setLoading(false);
 
-            // Parse the final response to extract code
+            // Extract code and metadata
             const codeMatch = fullResponse.match(/```(?:javascript|js)\s*([\s\S]*?)\s*```/);
             const jsonMatch = fullResponse.match(/```json\s*([\s\S]*?)\s*```/);
 
             if (codeMatch) {
                 const code = codeMatch[1];
-                executeCode(code);
+                let title = "Experiment";
+                let concept = "Physics";
 
-                let title = "Generated Simulation";
                 if (jsonMatch) {
                     try {
                         const meta = JSON.parse(jsonMatch[1]);
                         title = meta.title || title;
+                        concept = meta.concept || concept;
                         currentExperiment = { ...meta, threejs_code: code };
                     } catch (e) { }
                 }
 
-                appendMessage('ai', `Simulation "${title}" is ready!`);
-                // Hide code modal after a brief delay so they see the result
-                setTimeout(() => DOM.codeModal.style.display = 'none', 1000);
+                executeCode(code, title, concept);
             } else {
-                appendMessage('ai', "Error: Could not extract valid code from stream.");
+                appendMessage('ai', "Error: Lab Architect failed to provide valid 3D logic.");
             }
 
         } catch (e) {
-            appendMessage('ai', `Generation Error: ${e.message}`);
+            appendMessage('ai', `Lab Error: ${e.message}`);
             setLoading(false);
         }
     }
 
-    function appendMessage(role, text, trace) {
+    function appendMessage(role, text) {
         const div = document.createElement('div');
         div.className = `message ${role}`;
 
-        let html = `<div class="bubble">${text.replace(/\n/g, '<br>')}</div>`;
-        if (trace && trace.length > 0) {
-            // html += `<div class="thought-trace">[Thinking Process]<br>${trace.slice(-2).join('<br>')}</div>`;
+        let contentHtml = "";
+        if (role === 'thought') {
+            contentHtml = `
+                <div class="thought-label"><i class="fas fa-brain"></i> Reasoning Trace</div>
+                <div class="bubble">${text.replace(/\n/g, '<br>')}</div>
+            `;
+        } else {
+            contentHtml = `<div class="bubble">${text.replace(/\n/g, '<br>')}</div>`;
         }
-        div.innerHTML = html;
+
+        div.innerHTML = contentHtml;
         DOM.history.appendChild(div);
         DOM.history.scrollTop = DOM.history.scrollHeight;
     }
@@ -961,32 +590,23 @@ transform: translateY(0);
         if (text) DOM.loaderText.textContent = text;
     }
 
-    // --- PHYSICS ENGINE HOOKS ---
-    let renderer, animationId, physicsControls;
+    // --- SIMULATION EXECUTION ---
+    function executeCode(code, title, concept) {
+        // Prepare UI
+        DOM.simTitle.textContent = title;
+        DOM.simSubtitle.textContent = concept;
+        DOM.simOverlay.style.display = 'flex';
 
-    function initThreeJS() {
-        // Basic placeholder scene provided by executeCode usually
-        // But we need to handle "empty" state if needed.
-    }
-
-    function executeCode(code) {
-        // Cleanup old simulation
+        // Cleanup
         if (animationId) cancelAnimationFrame(animationId);
         if (renderer && renderer.domElement && renderer.domElement.parentNode) {
             renderer.domElement.parentNode.removeChild(renderer.domElement);
         }
-        if (gui) { gui.destroy(); gui = null; }
         DOM.canvas.innerHTML = '';
-        DOM.timer.style.display = 'block';
-
-        DOM.codeView.textContent = code;
 
         try {
-            // We will expose the libs to window so the code can simply use 'new THREE.OrbitControls'
             window.THREE.OrbitControls = window.THREE.OrbitControls || THREE.OrbitControls;
 
-            // Create a function that returns the experiment
-            // We expect the code to be the BODY of a function that returns the setup
             const createExperiment = new Function('THREE', 'CANNON', 'GUI', `
                 "use strict";
                 return (function() {
@@ -996,40 +616,43 @@ transform: translateY(0);
 
             const sim = createExperiment(window.THREE, window.CANNON, window.lil.GUI);
 
-            if (!sim || !sim.rendererParameters) throw new Error("Code did not return a valid simulation object.");
+            // Resilience: AI might return slightly different structures
+            if (!sim) throw new Error("Build failed to return any logic.");
 
-            // Renderer Setup
-            renderer = new THREE.WebGLRenderer(sim.rendererParameters);
+            const rendererParams = sim.rendererParameters || { antialias: true, alpha: true };
+            const scene = sim.scene || new THREE.Scene();
+            const camera = sim.camera || scene.children.find(c => c.isCamera);
+
+            if (!camera) throw new Error("Build failed to provide a camera.");
+
+            renderer = new THREE.WebGLRenderer(rendererParams);
             renderer.setSize(DOM.canvas.clientWidth, DOM.canvas.clientHeight);
             renderer.shadowMap.enabled = true;
             DOM.canvas.appendChild(renderer.domElement);
 
-            // Interaction Controls (Orbit)
-            const controls = new THREE.OrbitControls(sim.camera, renderer.domElement);
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
+            physicsControls = sim.controls || sim.physicsControls;
 
-            // Physics/Logic Controls
-            physicsControls = sim.controls;
-
-            // Loop
             const clock = new THREE.Clock();
-
             function animate() {
                 animationId = requestAnimationFrame(animate);
-
-                controls.update(); // Orbit
-
+                controls.update();
                 if (!isPaused) {
                     if (sim.render) sim.render();
+                    // Automatic Render Call
+                    if (renderer && scene && camera) {
+                        renderer.render(scene, camera);
+                    }
                     DOM.timer.textContent = clock.getElapsedTime().toFixed(2) + 's';
                 }
             }
             animate();
 
         } catch (e) {
-            console.error(e);
-            window.reportRuntimeError(e);
+            console.error("SIM_ERROR:", e);
+            appendMessage('ai', `Runtime Error: ${e.message}`);
+            closeSim();
         }
     }
 
@@ -1040,29 +663,16 @@ transform: translateY(0);
     function toggleSim() {
         isPaused = !isPaused;
         document.getElementById('play-icon').className = isPaused ? 'fas fa-play' : 'fas fa-pause';
-        document.getElementById('play-text').textContent = isPaused ? 'Resume' : 'Pause';
     }
 
-    function viewCode() {
-        DOM.codeModal.style.display = 'block';
-    }
-
-    async function loadDefaultExperiment() {
-        try {
-            const res = await fetch('/static/js/projectile_demo.js');
-            if (res.ok) {
-                const code = await res.text();
-                executeCode(code);
-                appendMessage('ai', "Loaded default Projectile Motion demo.");
-            }
-        } catch (e) { console.log("Default load skipped"); }
+    function closeSim() {
+        DOM.simOverlay.style.display = 'none';
+        if (animationId) cancelAnimationFrame(animationId);
     }
 
     window.addEventListener('resize', () => {
         if (renderer) {
             renderer.setSize(DOM.canvas.clientWidth, DOM.canvas.clientHeight);
-            // Need to update camera aspect too, but that requires access to camera from sim object
-            // For now, we rely on the sim handling it or simple resize
             if (physicsControls && physicsControls.getCamera) {
                 const cam = physicsControls.getCamera();
                 cam.aspect = DOM.canvas.clientWidth / DOM.canvas.clientHeight;
@@ -1070,6 +680,5 @@ transform: translateY(0);
             }
         }
     });
-
 </script>
 {% endblock %}

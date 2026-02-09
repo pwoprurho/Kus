@@ -144,7 +144,7 @@ def generate_stem_experiment_stream():
                         # Send content chunk
                         yield f"data: {json.dumps({'type': 'chunk', 'content': chunk['content']})}\n\n"
                     elif chunk["type"] == "thought":
-                         pass # skip thoughts for speed, or stream them to a debug console
+                        yield f"data: {json.dumps({'type': 'thought', 'content': chunk['content']})}\n\n"
                     elif chunk["type"] == "error":
                         yield f"data: {json.dumps({'type': 'error', 'content': chunk['content']})}\n\n"
                 
