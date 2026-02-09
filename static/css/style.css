@@ -499,6 +499,28 @@ nav a:hover {
 }
 
 /* 6. Utility & Typography Helpers */
+.reveal {
+    opacity: 0;
+    transition: none;
+    /* Let GSAP handle it */
+}
+
+.reveal-up {
+    transform: translateY(30px);
+}
+
+.reveal-left {
+    transform: translateX(-30px);
+}
+
+.reveal-right {
+    transform: translateX(30px);
+}
+
+.reveal-scale {
+    transform: scale(0.9);
+}
+
 .container {
     max-width: 1280px;
     margin: 0 auto;

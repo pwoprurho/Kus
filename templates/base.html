@@ -4,14 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Kusmus <abbr title="Artificial Intelligence">AI</abbr> - AI Solutions & Technology
-        Innovation{% endblock %}</title>
+    <title>{% block title %}Kusmus AI - AI Solutions & Technology Innovation{% endblock %}</title>
 
     <!-- SEO & Meta Tags -->
-    <meta name="description" content="{% block meta_description %}Kusmus <abbr title=" Artificial Intelligence">
-    AI</abbr> engineers certainty through comprehensive <abbr title="Artificial Intelligence">AI</abbr> solutions and
-    technology innovation. We build bespoke <abbr title="Artificial Intelligence">AI</abbr> agents, custom software, and
-    intelligent infrastructure for African enterprises.{% endblock %}">
+    <meta name="description"
+        content="{% block meta_description %}Kusmus AI engineers certainty through comprehensive AI solutions and technology innovation. We build bespoke AI agents, custom software, and intelligent infrastructure for African enterprises.{% endblock %}">
     <meta name="keywords"
         content="{% block meta_keywords %}AI Solutions, Technology Innovation, AI Agents, Enterprise Software, Custom Development, Nigeria Tech, African Innovation, Automated Operations, Engineering Certainty{% endblock %}">
     <meta name="author" content="Kusmus AI">
@@ -22,9 +19,7 @@
     <meta property="og:url" content="{{ request.url }}">
     <meta property="og:title" content="{% block og_title %}Kusmus AI - Engineering Certainty{% endblock %}">
     <meta property="og:description"
-        content="{% block og_description %}Engineering Certainty through advanced <abbr title=" Artificial
-        Intelligence">AI</abbr> solutions and technology innovation. We accelerate growth for Tier 1 Enterprises and
-    agile <abbr title="Small and Medium-sized Enterprises">SME</abbr>s across Africa.{% endblock %}">
+        content="{% block og_description %}Engineering Certainty through advanced AI solutions and technology innovation. We accelerate growth for Tier 1 Enterprises and agile SMEs across Africa.{% endblock %}">
     <meta property="og:image"
         content="{% block og_image %}{{ url_for('static', filename='images/pic01.png', _external=True) }}{% endblock %}">
 
@@ -42,7 +37,7 @@
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "name": "Kusmus <abbr title="Artificial Intelligence">AI</abbr>",
+      "name": "Kusmus AI",
       "url": "{{ request.url_root }}",
       "logo": "{{ url_for('static', filename='images/pic01.png', _external=True) }}",
       "contactPoint": {
@@ -73,6 +68,11 @@
         rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Animation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
@@ -342,6 +342,7 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scroll_effects.js') }}"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {

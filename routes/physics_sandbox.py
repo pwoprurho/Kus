@@ -116,6 +116,49 @@ def generate_stem_experiment():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@physics_bp.route("/api/stem/generate-stream", methods=["POST"])
+def generate_stem_experiment_stream():
+    """
+    Streams the high-fidelity code generation for real-time visualization.
+    """
+    from flask import Response, stream_with_context
+    
+    try:
+        data = request.get_json()
+        design_doc = data.get('design', '')
+        session_id = data.get('session_id', 'default')
+        
+        if not design_doc:
+            session = sessions["default"] # quick hack for fallback
+            if session:
+                design_doc = "\n".join([f"{h['role']}: {h['content']}" for h in session["history"]])
+            else:
+                return jsonify({"error": "No design context found"}), 400
+        
+        def generate():
+            yield f"data: {json.dumps({'type': 'start'})}\n\n"
+            try:
+                # We need to manually construct the generator since stem_engine is global
+                for chunk in stem_engine.generate_simulation_stream(design_doc):
+                    if chunk["type"] == "content":
+                        # Send content chunk
+                        yield f"data: {json.dumps({'type': 'chunk', 'content': chunk['content']})}\n\n"
+                    elif chunk["type"] == "thought":
+                         pass # skip thoughts for speed, or stream them to a debug console
+                    elif chunk["type"] == "error":
+                        yield f"data: {json.dumps({'type': 'error', 'content': chunk['content']})}\n\n"
+                
+                # Signal end
+                yield f"data: {json.dumps({'type': 'done'})}\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+
+        return Response(stream_with_context(generate()), mimetype='text/event-stream')
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @physics_bp.route("/api/physics/validate", methods=["POST"])
 def validate_code():
     """

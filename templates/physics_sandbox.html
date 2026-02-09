@@ -4,604 +4,274 @@
 {% block content %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19.1/dist/lil-gui.umd.min.js"></script>
 
 <style>
     :root {
-        --accent: #2ecc71;
-        --accent-glow: rgba(46, 204, 113, 0.4);
-        --accent-gradient: linear-gradient(135deg, #2ecc71 0%, #00d2ff 100%);
-        --bg: #050505;
-        --glass: rgba(10, 10, 15, 0.85);
-        --border: rgba(255, 255, 255, 0.05);
-        --panel-width: 340px;
+        --bg-color: #0e0e0e;
+        --sidebar-bg: #131313;
+        --border-color: #333;
+        --accent-color: #4facfe;
+        --accent-glow: rgba(79, 172, 254, 0.4);
+        --text-primary: #f0f0f0;
+        --text-secondary: #aaaaaa;
+        --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        --glass-bg: rgba(20, 20, 20, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.1);
     }
 
-    header,
-    footer,
-    #chat-widget-container {
-        display: none !important;
-    }
-
-    body {
-        background-color: var(--bg);
-        color: #e0e0e0;
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        overflow: hidden;
-        height: 100vh;
-        margin: 0;
-    }
-
-    #canvas-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 0;
-        background: radial-gradient(circle at 50% 50%, #151520 0%, #000000 80%);
-    }
-
-    .physics-grid {
-        position: relative;
-        z-index: 10;
-        display: grid;
-        grid-template-columns: var(--panel-width) 1fr var(--panel-width);
-        height: 100vh;
-        width: 100vw;
-        overflow: hidden;
-        pointer-events: none;
-        padding: 25px;
+    * {
         box-sizing: border-box;
     }
 
-    .glass-panel {
-        background: var(--glass);
-        backdrop-filter: blur(25px);
-        -webkit-backdrop-filter: blur(25px);
-        display: flex;
-        flex-direction: column;
-        border: 1px solid var(--border);
-        border-radius: 24px;
-        height: min-content;
-        max-height: calc(100vh - 120px);
-        overflow-y: auto;
-        pointer-events: auto;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-        scroll-behavior: smooth;
-        scrollbar-width: thin;
-        scrollbar-color: var(--accent) rgba(255, 255, 255, 0.05);
-    }
-
-    .glass-panel::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .glass-panel::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 10px;
-    }
-
-    .glass-panel::-webkit-scrollbar-thumb {
-        background: var(--accent);
-        border-radius: 10px;
-    }
-
-    .glass-panel::-webkit-scrollbar-thumb:hover {
-        background: #ffd700;
-    }
-
-    /* Left Panel - Controls */
-    .control-panel {
+    body {
+        margin: 0;
         padding: 0;
-        gap: 0;
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        font-family: var(--font-family);
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        display: flex;
+    }
+
+    /* Hide default header/footer if they exist in base template overlaying this */
+    header,
+    footer {
+        display: none !important;
+    }
+
+    /* LAYOUT */
+    .sidebar {
+        width: 350px;
+        background-color: var(--sidebar-bg);
+        border-right: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
-        max-height: calc(100vh - 50px);
+        height: 100%;
+        z-index: 10;
+        transition: transform 0.3s ease;
     }
 
-    .panel-header {
-        padding: 20px 25px;
-        border-bottom: 1px solid var(--border);
-    }
-
-    /* Chat Area */
-    .chat-section {
+    .canvas-wrapper {
         flex: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
+        position: relative;
+        background: radial-gradient(circle at 50% 50%, #1a1a24 0%, #000000 100%);
         overflow: hidden;
     }
 
-    .chat-messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 15px 20px;
+    #canvas-container {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    /* SIDEBAR CONTENT */
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
         display: flex;
-        flex-direction: column;
+        align-items: center;
         gap: 12px;
-        scrollbar-width: thin;
-        scrollbar-color: var(--accent) rgba(255, 255, 255, 0.05);
     }
 
-    .chat-messages::-webkit-scrollbar {
-        width: 5px;
-    }
-
-    .chat-messages::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 10px;
-    }
-
-    .chat-messages::-webkit-scrollbar-thumb {
-        background: var(--accent);
-        border-radius: 10px;
-    }
-
-    .chat-msg {
-        max-width: 90%;
-        padding: 12px 16px;
-        border-radius: 16px;
-        font-size: 0.85rem;
-        line-height: 1.5;
-        animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(8px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .chat-msg.user {
-        align-self: flex-end;
-        background: var(--accent);
-        color: #000;
-        font-weight: 500;
-        border-bottom-right-radius: 4px;
-    }
-
-    .chat-msg.ai {
-        align-self: flex-start;
-        background: rgba(255, 255, 255, 0.05);
-        color: #ddd;
-        border: 1px solid var(--border);
-        border-bottom-left-radius: 4px;
-    }
-
-    .chat-input-area {
-        padding: 15px 20px;
-        border-top: 1px solid var(--border);
-        display: flex;
-        gap: 10px;
-        align-items: flex-end;
-    }
-
-    .chat-input-area textarea {
-        flex: 1;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 12px 15px;
-        color: #fff;
-        font-size: 0.9rem;
-        resize: none;
-        outline: none;
-        font-family: inherit;
-        min-height: 44px;
-        max-height: 100px;
-        transition: border-color 0.2s;
-    }
-
-    .chat-input-area textarea:focus {
-        border-color: var(--accent);
-    }
-
-    .chat-send-btn {
-        width: 44px;
-        height: 44px;
-        background: var(--accent);
-        border: none;
-        border-radius: 12px;
-        color: #000;
-        cursor: pointer;
+    .logo-icon {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s;
-        flex-shrink: 0;
+        color: #fff;
+        font-weight: bold;
     }
 
-    .chat-send-btn:hover {
-        transform: scale(1.05);
+    .sidebar-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        letter-spacing: -0.5px;
+    }
+
+    .chat-history {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .message {
+        display: flex;
+        flex-direction: column;
+        max-width: 90%;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .message.user {
+        align-self: flex-end;
+    }
+
+    .message.ai {
+        align-self: flex-start;
+    }
+
+    .bubble {
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .message.user .bubble {
+        background-color: var(--accent-color);
+        color: #fff;
+        border-bottom-right-radius: 2px;
         box-shadow: 0 4px 15px var(--accent-glow);
     }
 
-    .generate-sim-btn {
-        width: 100%;
-        padding: 14px;
-        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-        border: none;
-        border-radius: 12px;
-        color: #000;
-        font-weight: 700;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        cursor: pointer;
-        margin: 15px 20px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        transition: all 0.2s;
-        box-shadow: 0 4px 20px rgba(46, 204, 113, 0.3);
+    .message.ai .bubble {
+        background-color: #2a2a2a;
+        color: #e0e0e0;
+        border-bottom-left-radius: 2px;
+        border: 1px solid var(--border-color);
     }
 
-    .generate-sim-btn.visible {
-        display: flex;
-    }
-
-    .generate-sim-btn:hover {
-        transform: translateY(-2px);
-    }
-
-
-    .btn-back {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        color: #888;
-        text-decoration: none;
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        padding-bottom: 20px;
-        transition: all 0.2s ease;
-        opacity: 0.7;
-    }
-
-    .btn-back:hover {
-        color: var(--accent);
-        opacity: 1;
-        transform: translateX(-3px);
-    }
-
-    .section-title {
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: #666;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        margin-bottom: 12px;
-        margin-top: 5px;
-    }
-
-    .experiment-input {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 15px;
-        transition: border-color 0.3s;
-    }
-
-    .experiment-input:focus-within {
-        border-color: var(--accent);
-    }
-
-    .experiment-input textarea {
-        width: 100%;
-        height: 70px;
-        background: transparent;
-        border: none;
-        color: #fff;
-        font-size: 0.9rem;
-        resize: none;
-        outline: none;
-        font-family: inherit;
-        line-height: 1.4;
-    }
-
-    .btn-generate {
-        width: 100%;
-        padding: 14px;
-        background: var(--accent);
-        border: none;
-        border-radius: 10px;
-        color: #000;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        margin-top: 10px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-size: 0.75rem;
-    }
-
-    .btn-generate:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(46, 204, 113, 0.3);
-        filter: brightness(1.1);
-    }
-
-    .btn-generate:active {
-        transform: translateY(0);
-    }
-
-    /* Quick Templates */
-    .template-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-    }
-
-    .template-btn {
-        padding: 10px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        color: #aaa;
-        font-size: 0.75rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .template-btn:hover {
-        background: rgba(255, 255, 255, 0.06);
-        color: var(--accent);
-        border-color: var(--accent);
-    }
-
-    /* Sliders */
-    .param-group {
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 10px;
-        padding: 12px;
-        margin-bottom: 10px;
-        border: 1px solid transparent;
-    }
-
-    .param-label {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #888;
-    }
-
-    .param-value {
-        color: var(--accent);
-        font-family: 'JetBrains Mono', monospace;
-    }
-
-    .param-slider {
-        width: 100%;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        -webkit-appearance: none;
-        outline: none;
-    }
-
-    .param-slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        width: 16px;
-        height: 16px;
-        background: var(--accent);
-        border-radius: 50%;
-        cursor: pointer;
-        box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
-    }
-
-    /* Right Panel */
-    .info-panel {
-        padding: 0;
-    }
-
-    .info-header {
-        padding: 20px;
-        border-bottom: 1px solid var(--border);
-        display: flex;
-        gap: 15px;
-    }
-
-    .tab-btn {
-        padding: 8px 0;
-        background: transparent;
-        border: none;
-        color: #666;
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        transition: all 0.2s;
-    }
-
-    .tab-btn.active {
-        color: var(--accent);
-        border-bottom-color: var(--accent);
-    }
-
-    .info-card {
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 12px;
-    }
-
-    .info-label {
-        font-size: 0.65rem;
-        color: #555;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: 700;
-        margin-bottom: 6px;
-    }
-
-    .info-value {
-        font-size: 0.9rem;
-        color: #fff;
-        font-weight: 500;
-    }
-
-    .code-display {
-        background: #08080a;
-        border-radius: 8px;
-        padding: 15px;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.75rem;
-        color: #9cdcfe;
-    }
-
-    /* Floating Canvas Controls */
-    .canvas-area {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        pointer-events: none;
-    }
-
-    .canvas-overlay {
-        position: absolute;
-        top: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 12px;
-        z-index: 20;
-        pointer-events: auto;
-    }
-
-    .overlay-btn {
-        padding: 12px 24px;
-        background: rgba(10, 10, 15, 0.8);
-        backdrop-filter: blur(15px);
-        border: 1px solid var(--border);
-        border-radius: 30px;
-        color: white;
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .overlay-btn:hover {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: var(--accent);
-        color: var(--accent);
-    }
-
-    /* MVP-style Prompt Bar */
     .input-area {
-        position: absolute;
-        bottom: 40px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 100%;
-        max-width: 700px;
-        pointer-events: auto;
+        padding: 20px;
+        border-top: 1px solid var(--border-color);
+        background-color: var(--sidebar-bg);
     }
 
-    .search-box {
+    .input-wrapper {
+        position: relative;
+        background: #222;
+        border: 1px solid var(--border-color);
+        border-radius: 24px;
+        padding: 4px 8px;
         display: flex;
-        background: var(--glass);
-        backdrop-filter: blur(25px);
-        -webkit-backdrop-filter: blur(25px);
-        border: 1px solid var(--border);
-        border-radius: 30px;
-        padding: 12px 12px 12px 25px;
-        gap: 12px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
         align-items: flex-end;
+        transition: border-color 0.2s;
     }
 
-    .search-box textarea {
+    .input-wrapper:focus-within {
+        border-color: var(--accent-color);
+    }
+
+    #chat-input {
         flex: 1;
         background: transparent;
         border: none;
         color: #fff;
-        font-size: 1rem;
-        outline: none;
+        padding: 10px;
         resize: none;
-        height: 24px;
-        max-height: 120px;
         font-family: inherit;
-        padding-top: 4px;
+        max-height: 150px;
+        outline: none;
+        font-size: 0.95rem;
     }
 
-    .search-box button {
-        width: 40px;
-        height: 40px;
+    .send-btn {
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
-        background: var(--accent);
         border: none;
-        color: #000;
+        background: var(--accent-color);
+        color: white;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        margin-bottom: -2px;
+        margin-bottom: 2px;
+        transition: transform 0.2s;
     }
 
-    .search-box button:hover {
+    .send-btn:hover {
         transform: scale(1.1);
-        filter: brightness(1.1);
     }
 
-    /* Loaders & Errors */
-    .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(15px);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        z-index: 100;
-        gap: 25px;
+    .send-btn:disabled {
+        background: #444;
+        cursor: not-allowed;
     }
 
-    .loading-overlay.active {
+    /* OVERLAYS & HUD */
+    .controls-overlay {
+        position: absolute;
+        top: 20px;
+        left: 20px;
         display: flex;
+        gap: 10px;
+        z-index: 20;
     }
 
-    .loading-spinner {
-        width: 60px;
-        height: 60px;
-        border: 4px solid rgba(46, 204, 113, 0.1);
-        border-top-color: var(--accent);
+    .canvas-btn {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.2s;
+    }
+
+    .canvas-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .timer-hud {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        padding: 8px 16px;
+        border-radius: 8px;
+        color: var(--accent-color);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: bold;
+        border: 1px solid var(--glass-border);
+        display: none;
+        /* Shown by JS */
+    }
+
+    /* LOADING & SPINNERS */
+    .loading-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(5px);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+    }
+
+    .thinking-spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top-color: var(--accent-color);
         border-radius: 50%;
-        animation: spin 1s linear infinite;
+        animation: spin 1s infinite linear;
+        margin-bottom: 20px;
     }
 
-    .loading-text {
-        color: var(--accent);
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        font-size: 0.8rem;
+    .thinking-text {
+        font-size: 1.2rem;
+        color: #fff;
+        letter-spacing: 0.5px;
     }
 
     @keyframes spin {
@@ -610,981 +280,796 @@
         }
     }
 
-    /* Full Screen Styles */
-    body.full-screen .template-grid,
-    body.full-screen .section-title,
-    body.full-screen .param-group,
-    body.full-screen .info-panel,
-    body.full-screen .sidebar,
-    body.full-screen .btn-back,
-    body.full-screen .input-area {
-        display: none !important;
-    }
-
-    body.full-screen .canvas-area {
-        width: 100vw;
-        height: 100vh;
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 1000;
-    }
-
-    body.full-screen .canvas-overlay {
-        top: 20px;
-        bottom: auto;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(10, 10, 15, 0.5);
-        backdrop-filter: blur(8px);
-        padding: 5px 12px;
-        border-radius: 40px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex;
-        flex-direction: row;
-        gap: 6px;
-    }
-
-    body.full-screen .overlay-btn {
-        padding: 6px 12px;
-        font-size: 0.6rem;
-        background: transparent;
-        border: none;
-        gap: 6px;
-    }
-
-    body.full-screen .canvas-overlay.hidden {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-20px);
-        pointer-events: none;
-    }
-
-    /* Simulation Timer HUD */
-    .simulation-timer {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(10px);
-        padding: 10px 20px;
-        border-radius: 10px;
-        border: 1px solid var(--accent);
-        color: var(--accent);
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1.2rem;
-        z-index: 1000;
-        pointer-events: none;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 0 20px rgba(46, 204, 113, 0.2);
-    }
-
-    .simulation-timer i {
-        font-size: 1rem;
-    }
-
-    /* Full-Screen Theater Mode */
-    body.full-screen .physics-grid {
-        display: none;
-    }
-
-    body.full-screen #canvas-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: 9999;
-    }
-
-    /* Countdown Overlay */
-    .countdown-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.95);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-        backdrop-filter: blur(10px);
-    }
-
-    .countdown-overlay.active {
-        display: flex;
-    }
-
-    .countdown-number {
-        font-size: 10rem;
-        font-weight: 900;
-        color: var(--accent);
-        font-family: 'JetBrains Mono', monospace;
-        text-shadow: 0 0 40px var(--accent-glow);
-        animation: countdownPulse 1s ease-in-out;
-    }
-
-    @keyframes countdownPulse {
-        0% {
-            transform: scale(0.5);
+    @keyframes fadeIn {
+        from {
             opacity: 0;
+            transform: translateY(10px);
         }
 
-        50% {
-            transform: scale(1.2);
+        to {
             opacity: 1;
+            transform: translateY(0);
         }
+    }
 
-        100% {
-            transform: scale(1);
-            opacity: 1;
-        }
+    /* CODE MODAL */
+    #code-modal {
+        backdrop-filter: blur(2px);
+    }
+
+    #code-preview {
+        background: #111;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 20px;
+        color: #a5d6a7;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
     }
 </style>
 
-<div id="canvas-container">
-    <!-- Simulation Timer HUD -->
-    <div class="simulation-timer" id="simulation-timer" style="display: none;">
-        <i class="fas fa-stopwatch"></i>
-        <span id="timer-display">0.00s</span>
-    </div>
-</div>
-
-<!-- Countdown Overlay -->
-<div class="countdown-overlay" id="countdown-overlay">
-    <div class="countdown-number" id="countdown-number">5</div>
-</div>
-
-<div class="physics-grid">
-    <!-- Left Panel: Conversational Chat -->
-    <aside class="control-panel glass-panel">
-        <div class="panel-header">
-            <a href="{{ url_for('public.audit_request') }}" class="btn-back">
-                <i class="fas fa-chevron-left"></i> EXIT
-            </a>
-            <div style="display: flex; align-items: center; gap: 12px; margin-top: 15px;">
-                <div
-                    style="width: 40px; height: 40px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #000;">
-                    <i class="fas fa-flask"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 700; font-size: 0.95rem;">STEM Research Lab</div>
-                    <div style="font-size: 0.65rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;"
-                        id="research-status">READY</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="chat-section">
-            <div class="chat-messages" id="chat-messages">
-                <div class="chat-msg ai">
-                    Welcome! Describe an experiment and I'll help design it. Once we have all the details, I'll generate
-                    the
-                    simulation code for you.
-                </div>
-            </div>
-
-            <button class="generate-sim-btn" id="generate-btn" onclick="triggerGeneration()">
-                <i class="fas fa-bolt"></i> GENERATE SIMULATION
-            </button>
-
-            <div class="chat-input-area">
-                <textarea id="chat-input" placeholder="Describe your experiment..." rows="1"
-                    onkeydown="handleChatKey(event)"></textarea>
-                <button class="chat-send-btn" onclick="sendChatMessage()">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Center: Canvas -->
-    <div class="canvas-area">
-        <div class="canvas-overlay">
-            <button class="overlay-btn" onclick="togglePlay()" id="play-btn">
-                <span>⏸</span> Pause
-            </button>
-            <button class="overlay-btn" onclick="resetExperiment()">
-                <span>↺</span> Reset
-            </button>
-            <button class="overlay-btn" onclick="stepFrame()">
-                <span>▶</span> Step
-            </button>
-            <button class="overlay-btn" onclick="toggleFullScreen()" id="fullscreen-btn">
-                <span>⛶</span> Full Screen
-            </button>
-        </div>
-    </div>
-
-    <!-- Right Panel: Info -->
-    <aside class="info-panel glass-panel">
-        <div class="info-header">
-            <button class="tab-btn active" onclick="switchTab('info')">Info</button>
-            <button class="tab-btn" onclick="switchTab('code')">Code</button>
-        </div>
-
-        <div class="tab-content">
-            <div class="tab-pane active" id="info-tab">
-                <div class="info-card">
-                    <div class="info-label">Current Protocol</div>
-                    <div class="info-value" id="exp-title">-</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-label">Active Doctrine</div>
-                    <div class="info-value" id="exp-concept">-</div>
-                </div>
-                <!-- Research Propagation Module -->
-                <div class="info-card research-module"
-                    style="border-color: rgba(46,204,113,0.2); background: linear-gradient(to bottom right, rgba(46,204,113,0.05), transparent);">
-                    <div class="info-label" style="color: var(--accent);">Research Propagation</div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                        <div style="text-align: center;">
-                            <div style="font-size: 0.8rem; font-weight: 700;">ALPHA</div>
-                            <div style="font-size: 0.6rem; opacity: 0.5;">Status</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 0.8rem; font-weight: 700;">99.8%</div>
-                            <div style="font-size: 0.6rem; opacity: 0.5;">Fidelity</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="info-card">
-                    <div class="info-label">Objects</div>
-                    <div class="info-value" id="exp-objects">0</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-label">Runtime</div>
-                    <div class="info-value" id="exp-runtime">-</div>
-                </div>
-            </div>
-
-            <div class="tab-pane" id="code-tab">
-                <pre class="code-display" id="code-display">
-// Generated code will appear here
-// Click "Generate Experiment" to start
-                </pre>
-            </div>
-        </div>
-    </aside>
-</div>
-
-<!-- Loading Overlay -->
-<div class="loading-overlay" id="loading-overlay">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">Generating experiment...</div>
-</div>
-
-<!-- Error Toast -->
-<div class="error-toast" id="error-toast"></div>
+<!-- ... (existing body structure) ... -->
 
 <script>
-    // Global state
-    let currentExperiment = null;
-    let currentRenderer = null;
-    let animationId = null;
-    let isPlaying = true;
-    let sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
-    let isProcessing = false;
-    let simulationStartTime = null;
-    let timerInterval = null;
+    // ... (existing state) ...
+    let gui; // Global GUI instance
 
-    // Initialize on load
-    document.addEventListener('DOMContentLoaded', () => {
-        initPhysicsRenderer();
-        autoResizeTextarea();
-    });
+    // ... (existing init) ...
 
-    // ESC key to exit theater mode
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && document.body.classList.contains('full-screen')) {
-            exitTheaterMode();
-            addChatMessage('ai', 'Exited theater mode. You can start a new experiment anytime!');
-        }
-    });
-
-    // ===== COUNTDOWN & TIMER FUNCTIONS =====
-    async function startCountdown() {
-        return new Promise((resolve) => {
-            const overlay = document.getElementById('countdown-overlay');
-            const numberEl = document.getElementById('countdown-number');
-            let count = 5;
-
-            overlay.classList.add('active');
-            numberEl.textContent = count;
-
-            const countdownInterval = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    numberEl.textContent = count;
-                    // Trigger animation restart
-                    numberEl.style.animation = 'none';
-                    setTimeout(() => numberEl.style.animation = '', 10);
-                } else {
-                    numberEl.textContent = 'START!';
-                    setTimeout(() => {
-                        overlay.classList.remove('active');
-                        clearInterval(countdownInterval);
-                        resolve();
-                    }, 800);
-                }
-            }, 1000);
-        });
+    function initThreeJS() {
+        // Placeholder
     }
 
-    function startSimulationTimer() {
-        const timerDisplay = document.getElementById('timer-display');
-        const timerHUD = document.getElementById('simulation-timer');
-
-        timerHUD.style.display = 'flex';
-        simulationStartTime = Date.now();
-
-        timerInterval = setInterval(() => {
-            const elapsed = (Date.now() - simulationStartTime) / 1000;
-            timerDisplay.textContent = elapsed.toFixed(2) + 's';
-        }, 10);
-    }
-
-    function stopSimulationTimer() {
-        if (timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-        document.getElementById('simulation-timer').style.display = 'none';
-        document.getElementById('timer-display').textContent = '0.00s';
-    }
-
-    function enterTheaterMode() {
-        document.body.classList.add('full-screen');
-    }
-
-    function exitTheaterMode() {
-        document.body.classList.remove('full-screen');
-        stopSimulationTimer();
-    }
-
-    // ===== CHAT FUNCTIONS =====
-    function handleChatKey(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendChatMessage();
-        }
-    }
-
-    async function sendChatMessage() {
-        if (isProcessing) return;
-
-        const input = document.getElementById('chat-input');
-        const message = input.value.trim();
-        if (!message) return;
-
-        addChatMessage('user', message);
-        input.value = '';
-        input.style.height = 'auto';
-
-        setStatus('CONSULTING SPECIALIST...');
-        isProcessing = true;
-
-        try {
-            const response = await fetch('/api/stem/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, session_id: sessionId })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                addChatMessage('ai', result.response);
-
-                if (result.state.ready) {
-                    document.getElementById('generate-btn').classList.add('visible');
-                    setStatus(result.state.subject.toUpperCase() + ' DESIGN READY');
-                } else {
-                    document.getElementById('generate-btn').classList.remove('visible');
-                    setStatus('PLANNING: ' + result.state.subject.toUpperCase());
-                }
-            } else {
-                addChatMessage('ai', 'Error: ' + (result.error || 'Unknown error'));
-            }
-        } catch (error) {
-            addChatMessage('ai', 'Connection error. Please try again.');
-        } finally {
-            isProcessing = false;
-        }
-    }
-
-    async function triggerGeneration() {
-        if (isProcessing) return;
-        isProcessing = true;
-
-        setStatus('GENERATING WITH GEMINI 3.0...');
-        showLoading(true);
-        document.getElementById('generate-btn').classList.remove('visible');
-
-        try {
-            const response = await fetch('/api/stem/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ session_id: sessionId })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                currentExperiment = result.experiment;
-
-                // Display code in the code tab
-                const codeDisplay = document.getElementById('code-display');
-                if (codeDisplay && result.experiment.threejs_code) {
-                    codeDisplay.textContent = result.experiment.threejs_code;
-                }
-
-                showLoading(false);
-                addChatMessage('ai', 'Simulation ready! Entering theater mode...');
-
-                // Enter theater mode
-                enterTheaterMode();
-
-                // Run countdown
-                await startCountdown();
-
-                // Execute simulation and start timer
-                executeGeneratedCode(result.experiment.threejs_code);
-                updateUI(result.experiment);
-                startSimulationTimer();
-
-                setStatus('SIMULATION ACTIVE');
-            } else {
-                addChatMessage('ai', 'Generation failed: ' + (result.error || 'Unknown error'));
-                setStatus('GENERATION FAILED');
-            }
-        } catch (error) {
-            addChatMessage('ai', 'Generation error: ' + error.message);
-        } finally {
-            isProcessing = false;
-            showLoading(false);
-        }
-    }
-
-    function addChatMessage(role, text) {
-        const container = document.getElementById('chat-messages');
-        const div = document.createElement('div');
-        div.className = 'chat-msg ' + role;
-        div.textContent = text;
-        container.appendChild(div);
-        container.scrollTop = container.scrollHeight;
-    }
-
-    function setStatus(text) {
-        document.getElementById('research-status').textContent = text;
-    }
-
-    function autoResizeTextarea() {
-        const textarea = document.getElementById('chat-input');
-        if (textarea) {
-            textarea.addEventListener('input', () => {
-                textarea.style.height = 'auto';
-                textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
-            });
-        }
-    }
-
-
-    function initPhysicsRenderer() {
-        const container = document.getElementById('canvas-container');
-
-        // Check if Three.js is loaded
-        if (typeof THREE === 'undefined') {
-            showError('Three.js not loaded. Please refresh the page.');
-            return;
-        }
-
-        // Create basic scene
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0a0f);
-
-        const camera = new THREE.PerspectiveCamera(
-            60,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            1000
-        );
-        camera.position.set(10, 8, 15);
-        camera.lookAt(0, 2, 0);
-
-        const renderer = new THREE.WebGLRenderer({
-            antialias: true,
-            preserveDrawingBuffer: true
-        });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.shadowMap.enabled = true;
-        container.appendChild(renderer.domElement);
-
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
-        scene.add(ambientLight);
-
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(10, 20, 10);
-        directionalLight.castShadow = true;
-        scene.add(directionalLight);
-
-        // Ground
-        const groundGeometry = new THREE.PlaneGeometry(30, 30);
-        const groundMaterial = new THREE.MeshStandardMaterial({
-            color: 0x1a1a2e,
-            metalness: 0.1,
-            roughness: 0.8
-        });
-        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-        ground.rotation.x = -Math.PI / 2;
-        ground.receiveShadow = true;
-        scene.add(ground);
-
-        // Grid Helper (1 unit = 1 meter)
-        const gridHelper = new THREE.GridHelper(50, 50, 0x00ff88, 0x222222);
-        gridHelper.position.y = 0.01; // Slightly above ground to prevent z-fighting
-        scene.add(gridHelper);
-
-        // Axes Helper (X=red, Y=green, Z=blue)
-        const axesHelper = new THREE.AxesHelper(10);
-        scene.add(axesHelper);
-
-        // Handle resize
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // Initial objects array
-        const objects = [];
-
-        // Animation loop
-        function animate() {
-            if (window._animationCanceled) return;
-            animationId = requestAnimationFrame(animate);
-            if (isPlaying) {
-                renderer.render(scene, camera);
-            }
-        }
-        animate();
-
-        window.physicsControls = {
-            getScene: () => scene,
-            getCamera: () => camera,
-            updateGravity: (x, y, z) => { }, // Placeholder for initial state
-            updateObjectParameter: (idx, p, v) => { },
-            reset: () => { }
-        };
-        currentRenderer = renderer;
-    }
-
-    async function generateExperiment() {
-        const promptEl = document.getElementById('main-prompt');
-        const description = promptEl.value.trim();
-
-        if (!description) {
-            showError('Please describe an experiment first');
-            return;
-        }
-
-        showLoading(true);
-        hideError();
-
-        try {
-            const response = await fetch('/api/physics/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    description: description,
-                    options: { show_code: true }
-                })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                currentExperiment = result.experiment;
-                executeGeneratedCode(result.experiment.threejs_code);
-                updateUI(result.experiment);
-            } else {
-                showError(result.error || 'Failed to generate experiment');
-            }
-        } catch (error) {
-            showError('Error generating experiment: ' + error.message);
-        } finally {
-            showLoading(false);
-        }
-    }
-
-    function executeGeneratedCode(code) {
-        if (!code) {
-            console.warn('No code provided to execute');
-            return;
-        }
-
-        // Cleanup previous
-        window._animationCanceled = true;
+    function executeCode(code) {
+        // Cleanup old simulation
         if (animationId) cancelAnimationFrame(animationId);
-
-        if (currentRenderer) {
-            currentRenderer.dispose();
-            // currentRenderer.forceContextLoss(); // Avoid this for persistent context if possible
-            if (currentRenderer.domElement && currentRenderer.domElement.parentNode) {
-                currentRenderer.domElement.parentNode.removeChild(currentRenderer.domElement);
-            }
+        if (renderer && renderer.domElement && renderer.domElement.parentNode) {
+            renderer.domElement.parentNode.removeChild(renderer.domElement);
         }
+        if (gui) { gui.destroy(); gui = null; }
+        DOM.canvas.innerHTML = '';
+        DOM.timer.style.display = 'block';
 
-        const container = document.getElementById('canvas-container');
-        // Do NOT clear container innerHTML if we want to preserve things, 
-        // but here we want a fresh start for the new renderer.
-        container.innerHTML = '';
+        DOM.codeView.textContent = code;
 
         try {
-            let cleanCode = code.trim();
+            // Strategy: Create a Blob and load it as a module or script
+            // This isolates execution better than eval and supports more syntax
 
-            // Extract code from IIFE if present
-            const iifeMatch = cleanCode.match(/^\(\s*function\s*\(\s*\)\s*\{([\s\S]*)\}\s*\)\s*\(\s*\)\s*;?$/);
-            if (iifeMatch) {
-                cleanCode = iifeMatch[1];
-            }
-
-            // Wrap to inject dependencies and capture renderer/loop
-            const wrapper = `
-                (function() {
+            // We inject a harness that defines the globals for the script
+            const wrappedCode = `
+                try {
                     const THREE = window.THREE;
                     const CANNON = window.CANNON;
-                    const container = document.getElementById('canvas-container');
+                    const OrbitControls = THREE.OrbitControls;
+                    const GUI = window.lil.GUI;
                     
-                    // Override renderer creation to ensure it goes into our container
-                    const OriginalRenderer = THREE.WebGLRenderer;
-                    THREE.WebGLRenderer = function(params) {
-                        const r = new OriginalRenderer({
-                            ...params,
-                            antialias: true,
-                            preserveDrawingBuffer: true
-                        });
-                        r.setSize(window.innerWidth, window.innerHeight);
-                        r.setPixelRatio(window.devicePixelRatio);
-                        container.appendChild(r.domElement);
-                        window._currentRenderer = r;
-                        return r;
-                    };
-
-                    // Capture animation loop
-                    const OriginalRAF = window.requestAnimationFrame;
-                    window.requestAnimationFrame = function(cb) {
-                        return OriginalRAF((time) => {
-                            if (window._animationCanceled) return;
-                            cb(time);
-                        });
-                    };
-
-                    const result = (function() {
-                        ${cleanCode}
-                    })();
-
-                    // Revert overrides
-                    THREE.WebGLRenderer = OriginalRenderer;
+                    ${code}
                     
-                    return result;
-                })()
-            `;
-
-            setTimeout(() => {
-                window._animationCanceled = false;
-                try {
-                    const result = eval(wrapper);
-                    currentRenderer = window._currentRenderer;
-
-                    if (result && typeof result === 'object') {
-                        window.physicsControls = result;
-                    }
-                } catch (e) {
-                    console.error('Eval error:', e);
-                    showError('Error executing code: ' + e.message);
+                    // Expecting the script to return an object 'controls' or similar
+                    // If the script is an IIFE that returns, we need to capture it.
+                    // But if it's just code, we need a convention.
+                    // Our prompt asks for an object return.
+                    
+                } catch(e) {
+                    window.reportRuntimeError(e);
                 }
-            }, 50);
-
-        } catch (error) {
-            console.error('Code preparation error:', error);
-            showError('Error preparing generated code: ' + error.message);
-        }
-    }
-
-    function updateUI(experiment) {
-        // Update info panel
-        document.getElementById('exp-title').textContent = experiment.title || 'Physics Experiment';
-        document.getElementById('exp-concept').textContent = experiment.concept || 'Physics';
-        document.getElementById('exp-objects').textContent = experiment.objects?.length || 0;
-        document.getElementById('exp-runtime').textContent = (experiment.estimated_runtime / 1000).toFixed(1) + 's';
-
-        // Update code display
-        document.getElementById('code-display').textContent = experiment.threejs_code || '// No code generated';
-
-        // Update parameters
-        updateExperimentParams(experiment.parameters || {});
-        updateObjectParams(experiment.objects || []);
-    }
-
-    function updateExperimentParams(params) {
-        // This handles experiment-wide parameters like restitution
-        // For now, we reuse the gravity logic or add them to the main settings side
-        // But to keep it dynamic, let's append them to the object-params container too
-        // or a new template-params container.
-        const container = document.getElementById('object-params');
-
-        // We add them at the top
-        let html = '';
-        Object.entries(params).forEach(([name, config]) => {
-            if (name === 'gravity') return; // Handled separately
-            html += `
-                <div class="object-card">
-                    <div class="object-name">Global Setting</div>
-                    <div class="object-type">${name}</div>
-                    <div class="param-group" style="margin-top: 8px;">
-                        <div class="param-label">
-                            <span>${name}</span>
-                            <span class="param-value" id="global-${name}-value">${config.value}</span>
-                        </div>
-                        <input type="range" class="param-slider" 
-                               min="${config.min}" max="${config.max}" step="${config.step || 0.1}" 
-                               value="${config.value}"
-                               onchange="updateGlobalParam('${name}', this.value)">
-                    </div>
-                </div>
             `;
-        });
-        window._globalParamsHtml = html;
-    }
 
-    function updateGlobalParam(name, value) {
-        value = parseFloat(value);
-        document.getElementById(`global-${name}-value`).textContent = value;
-        if (window.physicsControls?.updateObjectParameter) {
-            window.physicsControls.updateObjectParameter(null, name, value);
-        }
-    }
+            // But Blob injection is async and hard to bridge scope.
+            // Let's stick to Function but with better global scope bridging.
 
-    function updateObjectParams(objects) {
-        const container = document.getElementById('object-params');
-        const title = document.getElementById('objects-title');
+            // We will expose the libs to window so the code can simply use 'new THREE.OrbitControls'
+            window.THREE.OrbitControls = window.THREE.OrbitControls || THREE.OrbitControls;
 
-        if (objects.length === 0 && !window._globalParamsHtml) {
-            title.style.display = 'none';
-            container.innerHTML = '';
-            return;
-        }
+            // Create a function that returns the experiment
+            const createExperiment = new Function('THREE', 'CANNON', 'GUI', `
+                "use strict";
+                return (function() {
+                    ${code}
+                })();
+            `);
 
-        title.style.display = 'block';
-        let html = window._globalParamsHtml || '';
-        html += objects.map((obj, index) => `
-            <div class="object-card">
-                <div class="object-name">${obj.name || 'Object ' + (index + 1)}</div>
-                <div class="object-type">${obj.type}</div>
-                ${obj.adjustable ? renderAdjustableParams(obj.adjustable, index) : ''}
-            </div>
-        `).join('');
-        container.innerHTML = html;
-    }
+            const sim = createExperiment(window.THREE, window.CANNON, window.lil.GUI);
 
-    function renderAdjustableParams(adjustable, index) {
-        return Object.entries(adjustable).map(([param, config]) => `
-            <div class="param-group" style="margin-top: 8px;">
-                <div class="param-label">
-                    <span>${param}</span>
-                    <span class="param-value" id="obj-${index}-${param}-value">${config.value || config.min}</span>
-                </div>
-                <input type="range" class="param-slider" 
-                       id="obj-${index}-${param}"
-                       min="${config.min}" max="${config.max}" step="${config.step || 0.1}" 
-                       value="${config.value}"
-                       onchange="updateObjectParam(${index}, '${param}', this.value)">
-            </div>
-        `).join('');
-    }
+            if (!sim || !sim.rendererParameters) throw new Error("Code did not return a valid simulation object.");
 
-    function updateObjectParam(objectIndex, paramName, value) {
-        value = parseFloat(value);
+            // Renderer Setup
+            renderer = new THREE.WebGLRenderer(sim.rendererParameters);
+            renderer.setSize(DOM.canvas.clientWidth, DOM.canvas.clientHeight);
+            renderer.shadowMap.enabled = true;
+            DOM.canvas.appendChild(renderer.domElement);
 
-        // Update display
-        const display = document.getElementById(`obj-${objectIndex}-${paramName}-value`);
-        if (display) display.textContent = value.toFixed(2);
+            // Interaction Controls (Orbit)
+            const controls = new THREE.OrbitControls(sim.camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
 
-        // Call renderer control function
-        if (window.physicsControls?.updateObjectParameter) {
-            window.physicsControls.updateObjectParameter(objectIndex, paramName, value);
-        }
-    }
+            // Physics/Logic Controls
+            physicsControls = sim.controls;
 
-    function updateGravity(value) {
-        document.getElementById('gravity-value').textContent = value + ' m/s²';
+            // Loop
+            const clock = new THREE.Clock();
 
-        if (window.physicsControls?.updateGravity) {
-            window.physicsControls.updateGravity(0, -parseFloat(value), 0);
-        }
-    }
+            function animate() {
+                animationId = requestAnimationFrame(animate);
 
-    function updateTimeScale(value) {
-        document.getElementById('timescale-value').textContent = value + 'x';
+                controls.update(); // Orbit
 
-        if (window.physicsControls?.updateTimeScale) {
-            window.physicsControls.updateTimeScale(parseFloat(value));
-        }
-    }
-
-    function toggleFullScreen() {
-        document.body.classList.toggle('full-screen');
-        const btn = document.getElementById('fullscreen-btn');
-        const overlay = document.querySelector('.canvas-overlay');
-
-        if (document.body.classList.contains('full-screen')) {
-            btn.innerHTML = '<span>❐</span> Exit Full Screen';
-            resetOverlayTimeout();
-        } else {
-            btn.innerHTML = '<span>⛶</span> Full Screen';
-            overlay.classList.remove('hidden');
-            clearTimeout(overlayTimeout);
-        }
-
-        // Trigger resize to fix canvas
-        setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-    }
-
-    let overlayTimeout = null;
-    function resetOverlayTimeout() {
-        if (!document.body.classList.contains('full-screen')) return;
-
-        const overlay = document.querySelector('.canvas-overlay');
-        if (!overlay) return;
-
-        overlay.classList.remove('hidden');
-
-        clearTimeout(overlayTimeout);
-        overlayTimeout = setTimeout(() => {
-            if (document.body.classList.contains('full-screen')) {
-                overlay.classList.add('hidden');
+                if (!isPaused) {
+                    if (sim.render) sim.render();
+                    DOM.timer.textContent = clock.getElapsedTime().toFixed(2) + 's';
+                }
             }
-        }, 1500);
-    }
+            animate();
 
-    document.addEventListener('mousemove', resetOverlayTimeout);
-    document.addEventListener('click', resetOverlayTimeout);
-
-    function togglePlay() {
-        isPlaying = !isPlaying;
-        const btn = document.getElementById('play-btn');
-        btn.innerHTML = isPlaying ? '<span>⏸</span> Pause' : '<span>▶</span> Play';
-    }
-
-    function resetExperiment() {
-        if (currentExperiment?.threejs_code) {
-            executeGeneratedCode(currentExperiment.threejs_code);
+        } catch (e) {
+            console.error(e);
+            window.reportRuntimeError(e);
         }
     }
 
-    function stepFrame() {
-        // Single step implementation
-        isPlaying = false;
-        if (currentRenderer && window.physicsControls?.getScene) {
-            const scene = window.physicsControls.getScene();
-            const camera = window.physicsControls.getCamera();
-            currentRenderer.render(scene, camera);
-        }
+    window.reportRuntimeError = function (e) {
+        appendMessage('ai', `<strong>Runtime Error:</strong><br>${e.message}<br><button onclick="viewCode()" style="margin-top:5px; background:#333; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Inspect Code</button>`);
     }
 
-    async function loadTemplate(templateId) {
-        showLoading(true);
+    // ... (rest of functions) ...
+</script>
+--accent: #2ecc71;
+--accent-glow: rgba(46, 204, 113, 0.4);
+--bg: #050505;
+--glass: rgba(10, 10, 15, 0.9);
+--border: rgba(255, 255, 255, 0.1);
+--sidebar-width: 400px;
+}
+
+body {
+background-color: var(--bg);
+color: #e0e0e0;
+font-family: 'Inter', system-ui, -apple-system, sans-serif;
+overflow: hidden;
+height: 100vh;
+margin: 0;
+display: flex;
+}
+
+#chat-widget-container,
+header,
+footer {
+display: none !important;
+}
+
+/* --- SIDEBAR (Chat) --- */
+.sidebar {
+width: var(--sidebar-width);
+height: 100vh;
+background: var(--bg);
+border-right: 1px solid var(--border);
+display: flex;
+flex-direction: column;
+z-index: 20;
+transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+padding: 20px;
+border-bottom: 1px solid var(--border);
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.logo-icon {
+width: 36px;
+height: 36px;
+background: var(--accent);
+border-radius: 8px;
+display: flex;
+align-items: center;
+justify-content: center;
+color: #000;
+font-size: 1.2rem;
+}
+
+.sidebar-title {
+font-weight: 700;
+font-size: 1rem;
+color: #fff;
+}
+
+.chat-history {
+flex: 1;
+overflow-y: auto;
+padding: 20px;
+display: flex;
+flex-direction: column;
+gap: 20px;
+scrollbar-width: thin;
+scrollbar-color: var(--accent) transparent;
+}
+
+.chat-history::-webkit-scrollbar {
+width: 4px;
+}
+
+.chat-history::-webkit-scrollbar-thumb {
+background: var(--accent);
+border-radius: 4px;
+}
+
+.message {
+display: flex;
+flex-direction: column;
+gap: 6px;
+max-width: 90%;
+animation: fadeIn 0.3s ease;
+}
+
+.message.user {
+align-self: flex-end;
+align-items: flex-end;
+}
+
+.message.ai {
+align-self: flex-start;
+align-items: flex-start;
+}
+
+.bubble {
+padding: 12px 16px;
+border-radius: 12px;
+font-size: 0.95rem;
+line-height: 1.5;
+position: relative;
+}
+
+.message.user .bubble {
+background: var(--accent);
+color: #000;
+border-bottom-right-radius: 2px;
+}
+
+.message.ai .bubble {
+background: rgba(255, 255, 255, 0.05);
+border: 1px solid var(--border);
+color: #ddd;
+border-bottom-left-radius: 2px;
+}
+
+.thought-trace {
+font-size: 0.75rem;
+color: #888;
+font-family: 'JetBrains Mono', monospace;
+background: rgba(0, 0, 0, 0.3);
+padding: 8px;
+border-radius: 6px;
+margin-top: 4px;
+border-left: 2px solid var(--accent);
+display: none;
+/* Hidden by default, toggleable */
+}
+
+.input-area {
+padding: 20px;
+border-top: 1px solid var(--border);
+background: var(--bg);
+}
+
+.input-wrapper {
+position: relative;
+background: rgba(255, 255, 255, 0.05);
+border: 1px solid var(--border);
+border-radius: 24px;
+padding: 4px;
+transition: border-color 0.2s;
+display: flex;
+align-items: flex-end;
+}
+
+.input-wrapper:focus-within {
+border-color: var(--accent);
+}
+
+textarea {
+width: 100%;
+background: transparent;
+border: none;
+color: #fff;
+font-size: 0.95rem;
+padding: 12px 16px;
+resize: none;
+outline: none;
+min-height: 24px;
+max-height: 150px;
+font-family: inherit;
+line-height: 1.4;
+}
+
+.send-btn {
+width: 40px;
+height: 40px;
+background: var(--accent);
+border-radius: 50%;
+border: none;
+color: #000;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+transition: transform 0.2s;
+margin-bottom: 2px;
+}
+
+.send-btn:hover {
+transform: scale(1.05);
+}
+
+.send-btn:disabled {
+background: #444;
+cursor: not-allowed;
+}
+
+/* --- CANVAS AREA --- */
+.canvas-wrapper {
+flex: 1;
+position: relative;
+background: radial-gradient(circle at 50% 50%, #1a1a24 0%, #000000 100%);
+}
+
+#canvas-container {
+width: 100%;
+height: 100%;
+}
+
+/* --- OVERLAYS --- */
+.controls-overlay {
+position: absolute;
+top: 20px;
+left: 20px;
+display: flex;
+gap: 10px;
+z-index: 10;
+}
+
+.canvas-btn {
+background: var(--glass);
+backdrop-filter: blur(10px);
+border: 1px solid var(--border);
+color: #fff;
+padding: 8px 16px;
+border-radius: 20px;
+cursor: pointer;
+font-size: 0.85rem;
+font-weight: 600;
+display: flex;
+align-items: center;
+gap: 6px;
+transition: all 0.2s;
+}
+
+.canvas-btn:hover {
+border-color: var(--accent);
+color: var(--accent);
+}
+
+.timer-hud {
+position: absolute;
+top: 20px;
+right: 20px;
+background: var(--glass);
+padding: 10px 16px;
+border-radius: 12px;
+font-family: 'JetBrains Mono', monospace;
+font-size: 1.1rem;
+color: var(--accent);
+border: 1px solid var(--accent);
+display: none;
+z-index: 10;
+box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.loading-overlay {
+position: absolute;
+inset: 0;
+background: rgba(0, 0, 0, 0.8);
+backdrop-filter: blur(8px);
+display: none;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+z-index: 50;
+}
+
+.thinking-spinner {
+width: 50px;
+height: 50px;
+border: 3px solid rgba(46, 204, 113, 0.2);
+border-top-color: var(--accent);
+border-radius: 50%;
+animation: spin 1s infinite linear;
+margin-bottom: 20px;
+}
+
+.thinking-text {
+font-size: 1.2rem;
+font-weight: 300;
+color: #fff;
+letter-spacing: 1px;
+}
+
+.thinking-sub {
+font-size: 0.9rem;
+color: #888;
+margin-top: 8px;
+}
+
+@keyframes spin {
+to {
+transform: rotate(360deg);
+}
+}
+
+@keyframes fadeIn {
+from {
+opacity: 0;
+transform: translateY(10px);
+}
+
+to {
+opacity: 1;
+transform: translateY(0);
+}
+}
+</style>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <a href="/" style="text-decoration:none;">
+            <div class="logo-icon"><i class="fas fa-atom"></i></div>
+        </a>
+        <div class="sidebar-title">Physics Sandbox</div>
+    </div>
+
+    <div class="chat-history" id="chat-history">
+        <!-- Messages go here -->
+        <div class="message ai">
+            <div class="bubble">
+                Hello! I'm your Physics AI. detailed simulations in 3D.
+                <br><br>
+                Try "Simulate a double pendulum" or "Chain of falling dominos".
+            </div>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-wrapper">
+            <textarea id="chat-input" rows="1" placeholder="Describe a simulation..."></textarea>
+            <button class="send-btn" id="send-btn" onclick="handleSend()">
+                <i class="fas fa-arrow-up"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- CANVAS -->
+<div class="canvas-wrapper">
+    <div id="canvas-container"></div>
+
+    <!-- HUD -->
+    <div class="controls-overlay">
+        <button class="canvas-btn" onclick="resetSim()">
+            <i class="fas fa-undo"></i> Reset
+        </button>
+        <button class="canvas-btn" onclick="toggleSim()">
+            <i class="fas fa-pause" id="play-icon"></i> <span id="play-text">Pause</span>
+        </button>
+        <button class="canvas-btn" onclick="viewCode()" title="View Generated Code">
+            <i class="fas fa-code"></i>
+        </button>
+    </div>
+
+    <div class="timer-hud" id="sim-timer">0.00s</div>
+
+    <!-- LOADING -->
+    <div class="loading-overlay" id="loader">
+        <div class="thinking-spinner"></div>
+        <div class="thinking-text" id="loading-text">Designing Experiment...</div>
+        ng-sub">Gemini 2.5 is calculating physics parameters
+    </div>
+</div>
+</div>
+
+<!-- CODE MODAL (Simple overlay) -->
+<div id="code-modal"
+    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:100; padding:40px;">
+    <button class="canvas-btn" onclick="document.getElementById('code-modal').style.display='none'"
+        style="position:absolute; top:20px; right:20px;">Close</button>
+    <pre id="code-preview"
+        style="color:#2ecc71; font-family:'JetBrains Mono'; white-space:pre-wrap; overflow:auto; height:100%;"></pre>
+</div>
+
+<script>
+    // --- STATE ---
+    let sessionId = 'phys_' + Math.random().toString(36).substr(2, 9);
+    let currentExperiment = null;
+    let isGenerating = false;
+    let isPaused = false;
+
+    // Config
+    const DOM = {
+        input: document.getElementById('chat-input'),
+        history: document.getElementById('chat-history'),
+        loader: document.getElementById('loader'),
+        loaderText: document.getElementById('loading-text'),
+        timer: document.getElementById('sim-timer'),
+        canvas: document.getElementById('canvas-container'),
+        codeView: document.getElementById('code-preview'),
+        codeModal: document.getElementById('code-modal')
+    };
+
+    // --- INIT ---
+    document.addEventListener('DOMContentLoaded', () => {
+        initThreeJS();
+        DOM.input.addEventListener('input', autoResize);
+        DOM.input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+        });
+
+        // Load default if empty
+        loadDefaultExperiment();
+    });
+
+    function autoResize() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    }
+
+    // --- CHAT LOGIC ---
+    async function handleSend() {
+        const text = DOM.input.value.trim();
+        if (!text || isGenerating) return;
+
+        appendMessage('user', text);
+        DOM.input.value = '';
+        DOM.input.style.height = 'auto';
+
+        // 1. Check if simple chat or generation request
+        // For this "text-to-experiment" mode, we treat everything as a potential generation request 
+        // to the planning engine first.
+
+        setLoading(true, "Consulting STEM Architect...");
 
         try {
-            const response = await fetch('/api/physics/quick-templates');
-            const templates = await response.json();
-            const template = templates[templateId];
+            // Step 1: Planning / Chat
+            const res = await fetch('/api/stem/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text, session_id: sessionId })
+            });
+            const data = await res.json();
 
-            if (template) {
-                document.getElementById('main-prompt').value =
-                    `Execute research protocol: ${template.name}. Aim: ${template.description}`;
+            if (data.success) {
+                appendMessage('ai', data.response, data.thought_trace);
 
-                // Adjust textarea height
-                const promptEl = document.getElementById('main-prompt');
-                promptEl.style.height = 'auto';
-                promptEl.style.height = (promptEl.scrollHeight) + 'px';
-
-                // Apply template configuration
-                applyTemplateConfig(template.config);
+                // Check hidden state for "ready"
+                if (data.state && data.state.ready) {
+                    // Trigger Generation
+                    setLoading(true, "Generating Simulation Code...");
+                    await triggerGeneration(data.state.design || text); // Use accumulated design or raw text
+                } else {
+                    setLoading(false);
+                }
+            } else {
+                appendMessage('ai', "Error: " + data.error);
+                setLoading(false);
             }
-        } catch (error) {
-            showError('Error loading template');
-        } finally {
-            showLoading(false);
+        } catch (e) {
+            appendMessage('ai', "Connection Error: " + e.message);
+            setLoading(false);
         }
     }
 
-    function applyTemplateConfig(config) {
-        // Apply global parameters
-        if (config.simulation?.gravity) {
-            const g = Math.abs(config.simulation.gravity[1]);
-            document.getElementById('gravity-slider').value = g;
-            updateGravity(g);
-        }
-    }
+    async function triggerGeneration(designDoc) {
+        DOM.codeView.textContent = "// Initializing Neural Link...\n";
+        DOM.codeModal.style.display = 'block'; // Auto-show code view
 
-    async function modifyExperiment() {
-        const modification = document.getElementById('quick-input').value.trim();
-        if (!modification || !currentExperiment) return;
+        let fullResponse = "";
 
-        // For now, just clear the input
-        // In full implementation, this would use AI to modify the experiment
-        document.getElementById('quick-input').value = '';
-    }
-
-    function switchTab(tabName) {
-        // Update tab buttons
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        event.target.classList.add('active');
-
-        // Update tab content
-        document.querySelectorAll('.tab-pane').forEach(pane => {
-            pane.classList.remove('active');
-        });
-        document.getElementById(tabName + '-tab').classList.add('active');
-    }
-
-    async function loadExamplePrompts() {
         try {
-            const response = await fetch('/api/physics/examples');
-            const examples = await response.json();
+            const response = await fetch('/api/stem/generate-stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ design: designDoc, session_id: sessionId })
+            });
 
-            // Store for autocomplete/suggestions
-            window.physicsExamples = examples;
-        } catch (error) {
-            console.error('Error loading examples:', error);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+
+                            if (data.type === 'chunk') {
+                                fullResponse += data.content;
+                                DOM.codeView.textContent = fullResponse;
+                                DOM.codeView.scrollTop = DOM.codeView.scrollHeight;
+                            } else if (data.type === 'error') {
+                                appendMessage('ai', `Stream Error: ${data.content}`);
+                            }
+                        } catch (e) { /* partial json, ignore */ }
+                    }
+                }
+            }
+
+            setLoading(false);
+
+            // Parse the final response to extract code
+            const codeMatch = fullResponse.match(/```(?:javascript|js)\s*([\s\S]*?)\s*```/);
+            const jsonMatch = fullResponse.match(/```json\s*([\s\S]*?)\s*```/);
+
+            if (codeMatch) {
+                const code = codeMatch[1];
+                executeCode(code);
+
+                let title = "Generated Simulation";
+                if (jsonMatch) {
+                    try {
+                        const meta = JSON.parse(jsonMatch[1]);
+                        title = meta.title || title;
+                        currentExperiment = { ...meta, threejs_code: code };
+                    } catch (e) { }
+                }
+
+                appendMessage('ai', `Simulation "${title}" is ready!`);
+                // Hide code modal after a brief delay so they see the result
+                setTimeout(() => DOM.codeModal.style.display = 'none', 1000);
+            } else {
+                appendMessage('ai', "Error: Could not extract valid code from stream.");
+            }
+
+        } catch (e) {
+            appendMessage('ai', `Generation Error: ${e.message}`);
+            setLoading(false);
         }
     }
 
-    function showLoading(show) {
-        document.getElementById('loading-overlay').classList.toggle('active', show);
+    function appendMessage(role, text, trace) {
+        const div = document.createElement('div');
+        div.className = `message ${role}`;
+
+        let html = `<div class="bubble">${text.replace(/\n/g, '<br>')}</div>`;
+        if (trace && trace.length > 0) {
+            // html += `<div class="thought-trace">[Thinking Process]<br>${trace.slice(-2).join('<br>')}</div>`;
+        }
+        div.innerHTML = html;
+        DOM.history.appendChild(div);
+        DOM.history.scrollTop = DOM.history.scrollHeight;
     }
 
-    function showError(message) {
-        const toast = document.getElementById('error-toast');
-        toast.textContent = message;
-        toast.classList.add('active');
-
-        setTimeout(() => {
-            toast.classList.remove('active');
-        }, 5000);
+    function setLoading(active, text) {
+        isGenerating = active;
+        DOM.loader.style.display = active ? 'flex' : 'none';
+        if (text) DOM.loaderText.textContent = text;
     }
 
-    function hideError() {
-        document.getElementById('error-toast').classList.remove('active');
+    // --- PHYSICS ENGINE HOOKS ---
+    let renderer, animationId, physicsControls;
+
+    function initThreeJS() {
+        // Basic placeholder scene provided by executeCode usually
+        // But we need to handle "empty" state if needed.
     }
+
+    function executeCode(code) {
+        // Cleanup old simulation
+        if (animationId) cancelAnimationFrame(animationId);
+        if (renderer && renderer.domElement && renderer.domElement.parentNode) {
+            renderer.domElement.parentNode.removeChild(renderer.domElement);
+        }
+        if (gui) { gui.destroy(); gui = null; }
+        DOM.canvas.innerHTML = '';
+        DOM.timer.style.display = 'block';
+
+        DOM.codeView.textContent = code;
+
+        try {
+            // We will expose the libs to window so the code can simply use 'new THREE.OrbitControls'
+            window.THREE.OrbitControls = window.THREE.OrbitControls || THREE.OrbitControls;
+
+            // Create a function that returns the experiment
+            // We expect the code to be the BODY of a function that returns the setup
+            const createExperiment = new Function('THREE', 'CANNON', 'GUI', `
+                "use strict";
+                return (function() {
+                    ${code}
+                })();
+            `);
+
+            const sim = createExperiment(window.THREE, window.CANNON, window.lil.GUI);
+
+            if (!sim || !sim.rendererParameters) throw new Error("Code did not return a valid simulation object.");
+
+            // Renderer Setup
+            renderer = new THREE.WebGLRenderer(sim.rendererParameters);
+            renderer.setSize(DOM.canvas.clientWidth, DOM.canvas.clientHeight);
+            renderer.shadowMap.enabled = true;
+            DOM.canvas.appendChild(renderer.domElement);
+
+            // Interaction Controls (Orbit)
+            const controls = new THREE.OrbitControls(sim.camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Physics/Logic Controls
+            physicsControls = sim.controls;
+
+            // Loop
+            const clock = new THREE.Clock();
+
+            function animate() {
+                animationId = requestAnimationFrame(animate);
+
+                controls.update(); // Orbit
+
+                if (!isPaused) {
+                    if (sim.render) sim.render();
+                    DOM.timer.textContent = clock.getElapsedTime().toFixed(2) + 's';
+                }
+            }
+            animate();
+
+        } catch (e) {
+            console.error(e);
+            window.reportRuntimeError(e);
+        }
+    }
+
+    function resetSim() {
+        if (physicsControls && physicsControls.reset) physicsControls.reset();
+    }
+
+    function toggleSim() {
+        isPaused = !isPaused;
+        document.getElementById('play-icon').className = isPaused ? 'fas fa-play' : 'fas fa-pause';
+        document.getElementById('play-text').textContent = isPaused ? 'Resume' : 'Pause';
+    }
+
+    function viewCode() {
+        DOM.codeModal.style.display = 'block';
+    }
+
+    async function loadDefaultExperiment() {
+        try {
+            const res = await fetch('/static/js/projectile_demo.js');
+            if (res.ok) {
+                const code = await res.text();
+                executeCode(code);
+                appendMessage('ai', "Loaded default Projectile Motion demo.");
+            }
+        } catch (e) { console.log("Default load skipped"); }
+    }
+
+    window.addEventListener('resize', () => {
+        if (renderer) {
+            renderer.setSize(DOM.canvas.clientWidth, DOM.canvas.clientHeight);
+            // Need to update camera aspect too, but that requires access to camera from sim object
+            // For now, we rely on the sim handling it or simple resize
+            if (physicsControls && physicsControls.getCamera) {
+                const cam = physicsControls.getCamera();
+                cam.aspect = DOM.canvas.clientWidth / DOM.canvas.clientHeight;
+                cam.updateProjectionMatrix();
+            }
+        }
+    });
+
 </script>
 {% endblock %}

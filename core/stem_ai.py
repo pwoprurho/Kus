@@ -11,21 +11,25 @@ from core.key_manager import key_manager
 
 # The system prompt for the "Planning" phase
 STEM_PLANNING_PROMPT = """
-You are a STEM Research Assistant. Your goal is to help the user design a high-fidelity 3D physics, chemistry, biology, or maths simulation.
+You are a STEM Research Assistant. Your goal is to help the user design a high-fidelity 3D physics simulation.
 
 YOUR MISSION:
-1.  **Interrogate**: Identify missing parameters. If a user asks for "falling ball", ask about height, mass, material, and air resistance.
-2.  **Educational Fidelity**: Ensure the design follows real scientific principles.
-3.  **Detail First**: You are FORBIDDEN from generating code until you have enough details for a "premium" result, UNLESS the user says "just fill the gaps", "surprise me", or "go".
-4.  **Identify Subject**: Determine if the request is Physics, Chemistry, Maths, or Biology.
+1.  **Analyze & Plan**: When a user describes an experiment, draft a concise technical plan (objects, constraints, physics laws).
+2.  **Any Level**: 
+    - For **Simple** requests ("drop a ball"): Fill in reasonable defaults immediately and set `ready: true`.
+    - For **Complex** requests ("double pendulum"): Outline the constraints and math you will use.
+3.  **Proactive Design**: Do NOT ask endless questions. If parameters are missing, PROPOSE standard values (e.g., "I will use a 1kg mass and 1m length") and ask for confirmation OR just proceed if the request implies urgency.
+4.  **Identify Subject**: Determine if the request is valid Physics.
 
 RESPONSE FORMAT:
-Always respond in a helpful, conversational tone. If you are ready to generate, tell the user you have enough info.
-If missing info, list what you need.
+"I have designed the simulation for [concept]. It will include [features]. Ready to build?"
 
 INTERNAL STATE:
-Always include a hidden state at the end of your response in this format:
-[STATE: { "subject": "physics", "ready": false, "missing": ["height", "mass"] }]
+Always include a hidden state at the end of your response:
+[STATE: { "subject": "physics", "ready": true, "design": "Full technical description of the scene..." }]
+
+- Set `ready: true` if you have enough to generate a working demo.
+- Set `ready: false` ONLY if the request is gibberish or critically ambiguous.
 """
 
 # The system prompt for the "Generation" phase (Gemini 2.5 Flash)
@@ -35,32 +39,34 @@ Convert the following research design into 100% executable Three.js + Cannon-es 
 
 CODE GUIDELINES:
 1.  **Premium Aesthetics**: Use lights, shadows, and refined materials (MeshStandardMaterial).
-2.  **Cannon-es Math**: Use Cannon.js for all physical calculations.
-3.  **Environment Awareness**: The 3D scene is a "Graph Environment". 
+2.  **Cannon-es Math**: Use Cannon.js for all physical calculations (mass, gravity, constraints).
+3.  **Environment Awareness**: 
     - **Distance**: 1 unit = 1 meter. Use the grid (1m squares) for positioning.
     - **Time**: A built-in timer HUD is available. Ensure simulations reflect real-world time.
-4.  **Interactivity**: The code MUST return an object with:
-    - `updateGravity(x, y, z)`
-    - `updateObjectParameter(index, param, value)`
-    - `reset()`
-5.  **Visual Aids**: Include force vectors, paths, or labels to aid understanding.
+4.  **Complex Physics capabilities**:
+    - **Constraints**: Use `CANNON.PointToPointConstraint`, `LockConstraint`, or `HingeConstraint` for joints/pendulums.
+    - **Springs**: Use `CANNON.Spring` for elastic connections.
+    - **Multi-body**: Handle arrays of objects and their interactions.
+    - **Visuals**: Sync Three.js meshes to Cannon.js bodies in the render loop.
+    - The code MUST return an object `physicsControls` with `reset()` to restart the sim.
 
-JSON OUTPUT FORMAT:
+OUTPUT FORMAT:
+1.  **Code**: Provide the full "raw" JavaScript code in a ```javascript``` block. Do NOT escape quotes or newlines here.
+2.  **Metadata**: Provide the title and description in a ```json``` block.
+
+Example:
+```javascript
+const scene = new THREE.Scene();
+// ...
+return { controls: ... };
+```
+
 ```json
 {
-    "title": "...",
-    "description": "...",
-    "concept": "...",
-    "threejs_code": "...",
-    "config": { "gravity": [0, -9.81, 0], "timeScale": 1.0 },
-    "objects": [ { "name": "...", "adjustable": { "param": { "min": 0, "max": 1, "value": 0.5 } } } ],
-    "parameters": { "global": { "min": 0, "max": 1, "value": 0.5 } }
+    "title": "Double Pendulum",
+    "description": "A chaotic system..."
 }
 ```
-**CRITICAL**: You MUST return valid JSON. The `threejs_code` MUST be a single JSON-escaped string. 
-- DO NOT use Python triple quotes (''' or \"\"\"). 
-- Escape all newlines as \\n. 
-- Escape all double quotes as \\".
 """
 
 class StemAIEngine:
@@ -127,6 +133,23 @@ class StemAIEngine:
         
         return {"errors": [f"Deep Generation Failed after {retries + 1} attempts. Last error: {last_error}"]}
 
+    def generate_simulation_stream(self, design_doc: str):
+        """
+        Stream the high-fidelity code generation for real-time visualization.
+        """
+        engine = KusmusAIEngine(
+            system_instruction=STEM_GENERATION_PROMPT,
+            model_name=self.generation_model
+        )
+        
+        # Use the engine's streaming capability
+        # We wrap the design doc in the prompt locally
+        prompt = f"Generate the full STEM simulation code for this design: {design_doc}"
+        
+        # Yield chunks from the engine
+        for chunk in engine.generate_response_stream(prompt):
+            yield chunk
+
     def _parse_state(self, text: str) -> dict:
         match = re.search(r'\[STATE:\s*({.*?})\s*\]', text)
         if match:
@@ -140,27 +163,32 @@ class StemAIEngine:
         """
         Robust JSON parser that handles common AI formatting anomalies.
         """
-        # Pre-process: AI often uses python triple quotes inside JSON blocks
-        # We try to convert them to standard escaped strings before parsing
-        processed_text = text
-        if "'''" in text or '"""' in text:
-            # Simple heuristic: find "threejs_code": '''...''' and replace delimiters
-            # This is safer than a global replace which might break code
-            processed_text = re.sub(r'("threejs_code":\s*)(\'\'\'|""")(.*?)(\'\'\'|""")', 
-                                    lambda m: m.group(1) + '"' + m.group(3).replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + '"', 
-                                    text, flags=re.DOTALL)
-
-        try:
-            # 1. Try to find a JSON block in the (optionally processed) text
-            json_pattern = r'```json\s*({.*?})\s*```'
-            match = re.search(json_pattern, processed_text, flags=re.DOTALL)
-            payload = match.group(1) if match else processed_text
-            
-            # 2. Use strict=False to allow literal control characters
-            return json.loads(payload, strict=False)
-        except Exception as e:
-            # 3. Fallback: If it's just raw JSON without blocks, try again
+        result = {}
+        
+        # 1. Extract Code Block
+        code_match = re.search(r'```(?:javascript|js)\s*(.*?)\s*```', text, flags=re.DOTALL)
+        if code_match:
+            result["threejs_code"] = code_match.group(1)
+        
+        # 2. Extract JSON Block
+        json_match = re.search(r'```json\s*({.*?})\s*```', text, flags=re.DOTALL)
+        if json_match:
             try:
-                return json.loads(processed_text, strict=False)
+                metadata = json.loads(json_match.group(1))
+                result.update(metadata)
             except:
-                return {"errors": [f"A.I. failed to produce valid JSON structure: {str(e)}"]}
+                pass
+        
+        # Fallback: If no code block but JSON has threejs_code
+        if "threejs_code" not in result and "threejs_code" in text:
+             # Try legacy pure JSON parse
+            try:
+                legacy = json.loads(text, strict=False)
+                return legacy
+            except:
+                pass
+
+        if "threejs_code" in result:
+             return result
+
+        return {"errors": ["Could not parse code or metadata from response"]}
