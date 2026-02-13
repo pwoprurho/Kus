@@ -627,7 +627,9 @@
 
             renderer = new THREE.WebGLRenderer(rendererParams);
             renderer.setSize(DOM.canvas.clientWidth, DOM.canvas.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
             renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             DOM.canvas.appendChild(renderer.domElement);
 
             const controls = new THREE.OrbitControls(camera, renderer.domElement);
