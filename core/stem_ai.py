@@ -35,43 +35,52 @@ Always include a hidden state at the end of your response:
 # The system prompt for the "Generation" phase (Gemini 2.5 Flash)
 STEM_GENERATION_PROMPT = """
 You are a STEM Simulation Architect. Generate 100% executable Three.js + Cannon.js code.
-The available globals are: `THREE` (r128), `CANNON` (0.6.2), and `GUI` (lil-gui). Do NOT use import/export.
+The available globals are: `THREE` (r128), `CANNON` (0.6.2), and `lil.GUI`. Do NOT use import/export.
 
 === EXPERIMENT CATEGORIES ===
 
-**CATEGORY A: RIGID-BODY MECHANICS** (Free fall, Pendulums, Collisions, Projectiles)
+**CATEGORY A: RIGID-BODY MECHANICS** (Pendulums, Collisions, Projectiles)
 - Use `CANNON.World`, `CANNON.Body`, `CANNON.Sphere`, `CANNON.Box`, `CANNON.Plane`.
 - You MUST call `world.gravity.set(0, -9.82, 0)` and `world.step(1/60)` every frame.
-- Dynamic bodies MUST have `mass > 0`. Static bodies (ground, pivots) have `mass: 0`.
-- For pendulums: use `CANNON.PointToPointConstraint`. You MUST draw a visible `THREE.Line` connecting pivot to bob and update it every frame.
-- Sync meshes: `mesh.position.copy(body.position); mesh.quaternion.copy(body.quaternion);`
-- **CANNON.js 0.6.2 API WARNING**: Do NOT use `setFromEulerAngles` — it does not exist. For rotations use `quaternion.setFromAxisAngle(new CANNON.Vec3(axis), angle)`. For ground planes: `groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);`
+- **CANNON.js 0.6.2 API WARNING**: Do NOT use `setFromEulerAngles`. For rotations use `quaternion.setFromAxisAngle(new CANNON.Vec3(axis), angle)`.
+- **CONSTRAINT VISUALIZATION**: Do **NOT** manually draw lines for constraints (springs, distance constraints). The system will **automatically visualize** all `world.constraints` and `world.springs`. JUST create the physics constraint and add it to the world.
 
-**CATEGORY B: QUANTUM EXPERIMENTS** (Quantum coin toss, Schrödinger wave, Double-slit, Tunneling)
+**CATEGORY B: QUANTUM EXPERIMENTS** (Quantum coin toss, Schrödinger wave, Tunneling)
 - Do NOT use Cannon.js. Implement the physics in pure JavaScript.
 - For wave functions: Use a grid/array and solve the Schrödinger equation numerically (e.g., split-step FFT or finite-difference).
-- For quantum coin/superposition: Visualize superposition as a translucent object with both states overlapping. On "measurement" (click/button), collapse to one state with correct probabilities.
-- Use `THREE.Points`, `THREE.BufferGeometry`, or `THREE.Mesh` arrays for visualization.
-- Color-code probability density using HSL or a gradient.
+- Visualize using `THREE.Points` or `THREE.Mesh` with custom shaders or vertex colors.
 
-**CATEGORY C: LIGHT & OPTICS** (Prism refraction, Lens focusing, Double-slit interference, Reflection)
+**CATEGORY C: LIGHT & OPTICS** (Prism refraction, Lenses, Interference)
 - Do NOT use Cannon.js. Implement ray tracing / wave optics in pure JavaScript.
-- For refraction: Implement Snell's law (n1*sin(θ1) = n2*sin(θ2)). Draw rays as `THREE.Line` segments.
-- For interference/diffraction: Compute intensity patterns using I = I0 * cos²(δ/2) or Fourier methods. Visualize as a colored screen mesh.
-- For prisms: Draw the prism as a `THREE.Shape` extruded geometry. Decompose white light into spectral colors (rainbow).
-- Use `THREE.LineBasicMaterial` with emissive colors for light rays.
+- Implement Snell's law ($n_1 \sin \theta_1 = n_2 \sin \theta_2$) for refraction.
+- Visualize rays using `THREE.Line`.
 
-=== VISUALIZATION STANDARDS (ALL CATEGORIES) ===
-- Materials: `THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.3 })`. Use distinct colors.
-- Shadows: Set `castShadow = true` and `receiveShadow = true` on meshes and ground.
-- Lighting: `new THREE.AmbientLight(0xffffff, 0.5)` + `new THREE.DirectionalLight(0xffffff, 1.0)` at position (5, 10, 5) with `castShadow = true`.
-- Ground: A `THREE.Mesh` with `PlaneGeometry(20, 20)`, rotated -π/2 on X, at y=0, receiveShadow=true.
-- Grid: `new THREE.GridHelper(20, 20, 0x444444, 0x222222)` added to scene.
-- Camera: `THREE.PerspectiveCamera(60, W/H, 0.1, 1000)` positioned to see the full scene.
+**CATEGORY D: ELECTROMAGNETISM** (Lorentz force, Field lines, Cyclotron)
+- Use `CANNON.World` for integration, even if no collisions. Apply custom forces in the update loop.
+- Lorentz Force: $\mathbf{F} = q(\mathbf{E} + \mathbf{v} \times \mathbf{B})$. Apply via `body.applyForce(force, body.position)`.
+- Visualize field lines using `THREE.Line` (streamlines).
+- Visualize charged particles as colored spheres (Red +, Blue -).
+
+**CATEGORY E: THERMODYNAMICS & SOFT BODIES** (Ideal Gas, Cloth, Springs)
+- **Thermo**: Simulate N particles in a box. elastic collisions. Color by velocity (Hot=Red, Cold=Blue).
+- **Soft Bodies**: Use `CANNON.Spring` or `CANNON.DistanceConstraint` between a grid of spheres.
+- **Cloth**: Grid of particles connected by distance constraints.
+
+**CATEGORY F: FLUID DYNAMICS** (SPH, Flow)
+- Use a particle-based approach (Smoothed Particle Hydrodynamics - SPH) in pure JS or Cannon.js particles with custom repulsive forces.
+- Visualize as a collection of blue spheres or a metaball mesh if possible.
+
+=== VISUALIZATION STANDARDS ===
+- Materials: `THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.3 })`.
+- Shadows: `castShadow = true` and `receiveShadow = true`.
+- Lighting: Ambient + Directional (5, 10, 5).
+- Controls: Use `lil.GUI` for parameters (Gravity, B-field strength, Temperature).
 
 === OUTPUT FORMAT ===
 1. Full JavaScript in a ```javascript``` block.
 2. Metadata in a ```json``` block.
+3. **CRITICAL**: The JS **MUST** return an object containing `{ scene, camera, rendererParameters, render, world }`.
+   - `world`: The `CANNON.World` instance (if used). This triggers the auto-visualization of constraints.
 
 === COMPLETE WORKING EXAMPLE (Free Fall) ===
 ```javascript
@@ -102,6 +111,8 @@ scene.add(new THREE.GridHelper(20, 20, 0x444444, 0x222222));
 // --- Physics World ---
 const world = new CANNON.World();
 world.gravity.set(0, -9.82, 0);
+
+// Ground physics
 const groundBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
 groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
 world.addBody(groundBody);
@@ -113,6 +124,7 @@ const ballMat = new THREE.MeshStandardMaterial({ color: 0xff4444, roughness: 0.4
 const ballMesh = new THREE.Mesh(ballGeo, ballMat);
 ballMesh.castShadow = true;
 scene.add(ballMesh);
+
 const ballBody = new CANNON.Body({ mass: 1, shape: new CANNON.Sphere(radius) });
 ballBody.position.set(0, 10, 0);
 world.addBody(ballBody);
@@ -128,11 +140,12 @@ function update() {
     ballMesh.quaternion.copy(ballBody.quaternion);
 }
 
+// CRITICAL: Return 'world' for visual helper!
 return {
     rendererParameters: { antialias: true, alpha: true },
     scene: scene,
     camera: camera,
-    controls: { reset: () => { ballBody.position.set(0, 10, 0); ballBody.velocity.set(0, 0, 0); } },
+    world: world, // <--- MUST INCLUDE THIS
     render: update
 };
 ```

@@ -636,12 +636,73 @@
             controls.enableDamping = true;
             physicsControls = sim.controls || sim.physicsControls;
 
+            // --- Visualization Helper ---
+            class VisualizationHelper {
+                constructor(scene, world) {
+                    this.scene = scene;
+                    this.world = world;
+                    this.lines = {}; // Map of constraint ID -> THREE.Line
+                }
+
+                update() {
+                    if (!this.world) return;
+
+                    // 1. Visualize Constraints (Strings, Pivots)
+                    this.world.constraints.forEach(c => {
+                        this.updateConstraint(c);
+                    });
+
+                    // Cleanup removed constraints
+                    Object.keys(this.lines).forEach(id => {
+                        if (!this.world.constraints.find(c => c.id == id)) {
+                            this.scene.remove(this.lines[id]);
+                            delete this.lines[id];
+                        }
+                    });
+                }
+
+                updateConstraint(c) {
+                    let id = c.id;
+                    let line = this.lines[id];
+
+                    if (!line) {
+                        const material = new THREE.LineBasicMaterial({ color: 0xffff00, linewidth: 2 }); // Yellow strings
+                        const geometry = new THREE.BufferGeometry();
+                        line = new THREE.Line(geometry, material);
+                        this.scene.add(line);
+                        this.lines[id] = line;
+                    }
+
+                    // Get world positions of anchor points
+                    const bodyA = c.bodyA;
+                    const bodyB = c.bodyB;
+
+                    // Pivot/PointToPoint often uses 'pivotA' and 'pivotB' (local offsets)
+                    // We need to transform them to world space
+                    const zero = new CANNON.Vec3(0, 0, 0);
+                    const pivotA = c.pivotA ? c.pivotA : zero;
+                    const pivotB = c.pivotB ? c.pivotB : zero;
+
+                    const rA = bodyA.position.vadd(bodyA.quaternion.vmult(pivotA));
+                    const rB = bodyB.position.vadd(bodyB.quaternion.vmult(pivotB));
+
+                    const points = [
+                        new THREE.Vector3(rA.x, rA.y, rA.z),
+                        new THREE.Vector3(rB.x, rB.y, rB.z)
+                    ];
+                    line.geometry.setFromPoints(points);
+                }
+            }
+
+            const vizHelper = sim.world ? new VisualizationHelper(scene, sim.world) : null;
+
             const clock = new THREE.Clock();
             function animate() {
                 animationId = requestAnimationFrame(animate);
                 controls.update();
                 if (!isPaused) {
                     if (sim.render) sim.render();
+                    if (vizHelper) vizHelper.update(); // Auto-draw physics constraints
                     // Automatic Render Call
                     if (renderer && scene && camera) {
                         renderer.render(scene, camera);
