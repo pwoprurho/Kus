@@ -1,0 +1,6 @@
+# core/biology_ai.py
+from core.subjects.biology import PLANNING_PROMPT, GENERATION_PROMPT_ADDITION
+
+class BiologySubject:
+    PLANNING_PROMPT = PLANNING_PROMPT
+    GENERATION_PROMPT_ADDITION = GENERATION_PROMPT_ADDITION

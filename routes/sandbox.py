@@ -152,8 +152,8 @@ def sandbox_view():
         return render_template('client/research_agent.html', user=session.get('user', {}))
 
     # SPECIAL CASE: Physics Sandbox
-    if 'physics' in selected_demo.lower():
-        return render_template('physics_sandbox.html', is_sandbox_demo=True)
+    if 'physics' in selected_demo.lower() or 'stem' in selected_demo.lower():
+        return render_template('stem.html', is_sandbox_demo=True)
 
     def resolve_demo_key(raw):
         if not raw:

@@ -570,13 +570,18 @@
 
                 {% for key in sorted_keys %}
                 {% set info = demos[key] %}
-                {% set is_coming_soon = (key in ['deep_research', 'electoral_integrity']) %}
+                {% set is_coming_soon = (key in ['electoral_integrity']) %}
+                {% set is_beta = (key in ['deep_research', 'physics_sandbox']) %}
 
                 <a href="{{ url_for('sandbox.sandbox_view') }}?demo={{ key }}"
                     class="demo-card {{ 'coming-soon' if is_coming_soon else '' }}" {{ 'onclick="return false;"' if
                     is_coming_soon else '' }}>
 
-                    <span class="demo-status-badge">{{ 'COMING SOON' if is_coming_soon else 'ONLINE' }}</span>
+                    <span class="demo-status-badge">
+                        {% if is_coming_soon %}COMING SOON
+                        {% elif is_beta %}BETA
+                        {% else %}ONLINE{% endif %}
+                    </span>
 
                     <div class="card-icon">
                         {% if 'sentinel' in key and 'market' not in key %}

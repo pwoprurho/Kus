@@ -151,8 +151,8 @@ DEMO_REGISTRY = {
         "tools_allowed": ["google_search"]
     },
     "physics_sandbox": {
-        "name": "Physics Practical Sandbox",
-        "model": "gemini-3-0-pro-preview",
+        "name": "STEM Lab (Experimental)",
+        "model": "gemini-2.5-flash",
         "instruction": (
             "You are a Physics Lab Assistant that converts natural language experiment descriptions "
             "into interactive Three.js visualizations with cannon-es physics. "

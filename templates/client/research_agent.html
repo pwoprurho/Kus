@@ -1,132 +1,465 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="h-screen flex flex-col bg-[#0f1115] text-gray-200 overflow-hidden font-sans">
+<!-- Premium Fonts and Metadata -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
 
-    <!-- HEADER -->
-    <header class="h-16 border-b border-gray-800 flex items-center justify-between px-6 bg-[#161b22]">
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-purple-900/30 rounded-lg border border-purple-500/30 text-purple-400">
-                <i class="fas fa-microscope text-lg"></i>
-            </div>
-            <div>
-                <h1 class="font-bold text-lg tracking-wide">Deep Research Agent</h1>
-                <p class="text-xs text-gray-500 uppercase tracking-widest">Gemini Interactions API</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-4">
-            <div id="status-indicator" class="flex items-center gap-2 text-xs font-mono text-gray-500">
-                <span class="w-2 h-2 rounded-full bg-gray-600"></span>
-                READY
-            </div>
-            <a href="/sandbox" class="text-xs hover:text-white transition-colors">
-                <i class="fas fa-times"></i> EXIT
-            </a>
-        </div>
-    </header>
+<style>
+    :root {
+        --bg: #020408;
+        --glass: rgba(13, 17, 23, 0.7);
+        --glass-bright: rgba(255, 255, 255, 0.03);
+        --border: rgba(255, 255, 255, 0.08);
+        --accent: #a78bfa;
+        --accent-glow: rgba(167, 139, 250, 0.4);
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+    }
 
-    <!-- MAIN CONTENT -->
-    <main class="flex-1 overflow-y-auto p-8">
-        <div class="max-w-4xl mx-auto space-y-8">
+    body {
+        margin: 0;
+        background-color: var(--bg);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+        overflow: hidden;
+    }
 
-            <!-- PHASE 1: PLANNING -->
-            <section id="phase-plan" class="border border-gray-800 bg-[#161b22] rounded-xl p-6 shadow-xl">
-                <div class="flex items-start justify-between mb-4">
-                    <div>
-                        <h2 class="text-xl font-semibold text-white mb-1">1. Research Strategy</h2>
-                        <p class="text-sm text-gray-400">Define your objective. The agent will generate a structured
-                            plan.</p>
-                    </div>
-                    <span class="px-2 py-1 bg-blue-900/20 text-blue-400 text-xs rounded border border-blue-800/50">Phase
-                        1</span>
-                </div>
+    /* Neural Deep Background */
+    .neural-canvas {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at 50% 0%, #171923 0%, #020408 100%);
+        z-index: -1;
+    }
 
-                <div class="space-y-4">
-                    <textarea id="goal-input" rows="3"
-                        class="w-full bg-[#0d1117] border border-gray-700 rounded-lg p-4 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm placeholder-gray-600 transition-all resize-none"
-                        placeholder="e.g., Analyze the competitive landscape of B2B AI agents in the legal sector..."></textarea>
+    .grid-overlay {
+        position: fixed;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 40px 40px;
+        mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+        z-index: -1;
+    }
 
-                    <div class="flex justify-end">
-                        <button onclick="generatePlan()" id="btn-plan"
-                            class="px-5 py-2 bg-white text-black font-semibold rounded-lg text-sm hover:bg-gray-200 transition-transform active:scale-95 flex items-center gap-2">
-                            <span>Generate Plan</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
-                </div>
-            </section>
+    /* Hide global elements */
+    #chat-widget-container,
+    header,
+    footer {
+        display: none !important;
+    }
 
-            <!-- PHASE 2: EXECUTION (Initially Hidden) -->
-            <section id="phase-execute"
-                class="hidden border border-gray-800 bg-[#161b22] rounded-xl p-6 shadow-xl relative overflow-hidden">
-                <!-- Loading Overlay -->
-                <div id="research-loader"
-                    class="hidden absolute inset-0 bg-[#161b22]/90 z-20 flex flex-col items-center justify-center">
-                    <div
-                        class="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4">
-                    </div>
-                    <p class="text-purple-400 font-mono animate-pulse">Deep Researching... (This takes 2-5 mins)</p>
-                    <p id="research-timer" class="text-gray-500 text-xs mt-2 font-mono">00:00</p>
-                </div>
+    .research-app {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+        padding: 30px;
+        box-sizing: border-box;
+    }
 
-                <div class="flex items-start justify-between mb-4">
-                    <div>
-                        <h2 class="text-xl font-semibold text-white mb-1">2. Execution Plan</h2>
-                        <p class="text-sm text-gray-400">Select tasks to investigate. Deep Research runs in the
-                            background.</p>
-                    </div>
+    /* TITRE & STATUS */
+    .app-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding: 0 10px;
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .brand-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--glass-bright);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+        font-size: 1.4rem;
+        box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .brand-text h1 {
+        margin: 0;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
+        font-size: 1.4rem;
+        letter-spacing: -0.5px;
+    }
+
+    .brand-text p {
+        margin: 0;
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    /* MAIN NAV TABS */
+    .nav-tabs {
+        display: flex;
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 8px;
+        gap: 8px;
+        width: auto;
+    }
+
+    .tab {
+        padding: 12px 24px;
+        border-radius: 14px;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid transparent;
+    }
+
+    .tab.active {
+        background: var(--glass-bright);
+        color: var(--accent);
+        border-color: var(--border);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .tab:hover:not(.active) {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* CONTENT AREA */
+    .content-frame {
+        flex: 1;
+        background: var(--glass);
+        backdrop-filter: blur(40px);
+        border: 1px solid var(--border);
+        border-radius: 32px;
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        overflow: hidden;
+        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+    }
+
+    .tab-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 50px;
+        display: none;
+        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+        background: rgba(0, 0, 0, 0.3);
+        border-left: 1px solid var(--border);
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .sidebar-block h3 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--text-secondary);
+        margin: 0 0 16px 0;
+    }
+
+    .status-card {
+        background: var(--glass-bright);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+    }
+
+    .trace-log {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        color: #64748b;
+        height: 200px;
+        overflow-y: auto;
+    }
+
+    /* FORMS & INPUTS */
+    .input-group {
+        margin-bottom: 30px;
+    }
+
+    .input-label {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .premium-textarea {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px;
+        color: #fff;
+        font-family: inherit;
+        font-size: 1rem;
+        line-height: 1.6;
+        resize: none;
+        transition: all 0.3s;
+        box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .premium-textarea:focus {
+        border-color: var(--accent);
+        background: rgba(0, 0, 0, 0.6);
+        outline: none;
+        box-shadow: 0 0 20px rgba(167, 139, 250, 0.1), inset 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-action {
+        background: #fff;
+        color: #000;
+        padding: 14px 32px;
+        border-radius: 12px;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        border: none;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+    }
+
+    /* TASK CARDS */
+    .task-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .task-item {
+        background: var(--glass-bright);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .task-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .task-item input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        accent-color: var(--accent);
+    }
+
+    /* LOADER */
+    .loader-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.95);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(20px);
+    }
+
+    .pulse-ring {
+        width: 100px;
+        height: 100px;
+        border: 2px solid var(--accent);
+        border-radius: 50%;
+        animation: pulseFade 2s infinite ease-out;
+    }
+
+    @keyframes pulseFade {
+        0% {
+            transform: scale(0);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(1.5);
+            opacity: 0;
+        }
+    }
+</style>
+
+<div class="neural-canvas"></div>
+<div class="grid-overlay"></div>
+
+<div class="loader-overlay" id="loading-overlay">
+    <div class="pulse-ring"></div>
+    <p style="margin-top: 30px; font-family: 'Outfit'; letter-spacing: 4px; color: var(--accent)" id="loading-msg">
+        SYNTHESIZING VECTORS...</p>
+</div>
+
+<div class="research-app">
+    <div class="app-header">
+        <div class="brand">
+            <div class="brand-icon"><i class="fas fa-microscope"></i></div>
+            <div class="brand-text">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <h1>DEEP RESEARCH AGENT</h1>
                     <span
-                        class="px-2 py-1 bg-amber-900/20 text-amber-400 text-xs rounded border border-amber-800/50">Phase
-                        2</span>
+                        style="color: var(--accent); font-size: 0.6rem; border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; font-weight: 800; letter-spacing: 1px;">BETA</span>
                 </div>
+                <p>Advanced Neural Intelligence</p>
+            </div>
+        </div>
 
-                <div id="tasks-container" class="space-y-2 mb-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+        <div class="nav-tabs">
+            <div class="tab active" data-tab="strategy" id="tab-strategy">
+                <i class="fas fa-brain"></i> Strategy
+            </div>
+            <div class="tab" data-tab="execution" id="tab-execution">
+                <i class="fas fa-terminal"></i> Execution
+            </div>
+            <div class="tab" data-tab="intelligence" id="tab-intelligence">
+                <i class="fas fa-file-invoice"></i> Intelligence
+            </div>
+        </div>
+
+        <div>
+            <a href="/sandbox" class="tab" style="opacity: 0.5"><i class="fas fa-power-off"></i> EXIT</a>
+        </div>
+    </div>
+
+    <div class="content-frame">
+        <!-- PRIMARY CONTENT -->
+        <div class="main-content">
+            <!-- TAB: STRATEGY -->
+            <div class="tab-content active" id="content-strategy">
+                <div class="input-group">
+                    <label class="input-label">Articulate Your Objective</label>
+                    <textarea id="goal-input" class="premium-textarea" rows="8"
+                        placeholder="e.g., Analyze the impact of quantum computing on modern cryptography..."></textarea>
+                </div>
+                <button class="btn-action" onclick="generatePlan()">
+                    <span>INITIALIZE PLANNING</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- TAB: EXECUTION -->
+            <div class="tab-content" id="content-execution">
+                <h2 style="font-family: 'Outfit'; font-size: 1.8rem; margin-bottom: 24px">Investigation Vectors</h2>
+                <div class="task-stack" id="tasks-container">
                     <!-- Tasks injected here -->
+                    <p style="color: var(--text-secondary); text-align: center; padding: 40px">Initialize planning to
+                        populate vectors.</p>
                 </div>
-
-                <div class="flex justify-end border-t border-gray-800 pt-4">
-                    <button onclick="startResearch()" id="btn-research"
-                        class="px-5 py-2 bg-purple-600 text-white font-semibold rounded-lg text-sm hover:bg-purple-500 transition-transform active:scale-95 flex items-center gap-2">
-                        <i class="fas fa-robot"></i>
-                        <span>Start Deep Research</span>
+                <div style="margin-top: 30px">
+                    <button class="btn-action" onclick="startResearch()">
+                        <span>EXECUTE DEEP RESEARCH</span>
+                        <i class="fas fa-bolt"></i>
                     </button>
                 </div>
-            </section>
+            </div>
 
-            <!-- PHASE 3: RESULTS (Initially Hidden) -->
-            <section id="phase-results" class="hidden space-y-6">
-
-                <!-- Report Card -->
-                <div class="border border-gray-800 bg-[#161b22] rounded-xl p-8 shadow-xl">
-                    <div class="flex items-center justify-between mb-6 pb-6 border-b border-gray-800">
-                        <div>
-                            <h2 class="text-2xl font-bold text-white mb-1">Executive Report</h2>
-                            <p class="text-sm text-gray-400">Synthesized Findings & Recommendations</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <span
-                                class="px-2 py-1 bg-green-900/20 text-green-400 text-xs rounded border border-green-800/50">Completed</span>
-                            <button class="p-2 hover:bg-gray-800 rounded text-gray-400"><i
-                                    class="fas fa-download"></i></button>
-                        </div>
-                    </div>
-
-                    <!-- Infographic Area -->
-                    <div id="infographic-area" class="mb-8 hidden">
-                        <div class="border border-gray-700 rounded-lg overflow-hidden bg-white/5">
-                            <img id="infographic-img" src="" class="w-full h-auto object-cover" alt="TL;DR Infographic">
-                        </div>
-                    </div>
-
-                    <div id="report-content" class="prose prose-invert prose-sm max-w-none text-gray-300">
-                        <!-- Markdown Report Injected Here -->
-                    </div>
+            <!-- TAB: INTELLIGENCE -->
+            <div class="tab-content" id="content-intelligence">
+                <div id="infographic-area" style="margin-bottom: 30px; display: none;">
+                    <img id="infographic-img" src=""
+                        style="width: 100%; border-radius: 20px; border: 1px solid var(--border);"
+                        alt="Visual Intelligence">
                 </div>
-
-            </section>
-
+                <div id="report-content" class="prose prose-invert max-w-none text-gray-300">
+                    <!-- Markdown Report -->
+                </div>
+            </div>
         </div>
-    </main>
+
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-block">
+                <h3>AGENT STATUS</h3>
+                <div class="status-card">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px">
+                        <div
+                            style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981">
+                        </div>
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #10b981">CORE ONLINE</span>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0">Active Model: Gemini 2.5 Flash
+                    </p>
+                </div>
+            </div>
+
+            <div class="sidebar-block">
+                <h3>EXECUTION TRACE</h3>
+                <div class="status-card trace-log" id="trace-log">
+                    > System Booted...
+                    <br>> Await Objective Input...
+                </div>
+            </div>
+
+            <div class="sidebar-block">
+                <h3>RESEARCH TIMER</h3>
+                <div class="status-card" style="text-align: center">
+                    <span id="research-timer"
+                        style="font-family: 'JetBrains Mono'; font-size: 2rem; font-weight: 800; color: var(--accent)">00:00</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Scripts -->
@@ -135,11 +468,26 @@
     let PLAN_ID = null;
     let TASKS = [];
 
+    // TABS LOGIC
+    document.querySelectorAll('.tab').forEach(t => {
+        t.onclick = () => {
+            const tabId = t.dataset.tab;
+            if (!tabId) return;
+
+            document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            t.classList.add('active');
+            document.getElementById('content-' + tabId).classList.add('active');
+        };
+    });
+
     async function generatePlan() {
         const goal = document.getElementById('goal-input').value.trim();
         if (!goal) return;
 
-        setLoading('btn-plan', true);
+        setLoading(true, "ARCHITECTING STRATEGY...");
+        logTrace(`Initializing planning for: ${goal.substring(0, 30)}...`);
 
         try {
             const res = await fetch('/api/research/plan', {
@@ -153,52 +501,47 @@
 
             PLAN_ID = data.plan_id;
             TASKS = data.tasks;
-
-            if (!TASKS || TASKS.length === 0) {
-                throw new Error("No tasks were generated for this goal. Please try a more specific goal.");
-            }
+            logTrace(`Plan synthesized. ${TASKS.length} vectors identified.`);
 
             renderTasks(TASKS);
-            document.getElementById('phase-execute').classList.remove('hidden');
 
-            // Smooth scroll
-            setTimeout(() => document.getElementById('phase-execute').scrollIntoView({ behavior: 'smooth' }), 100);
+            // Switch to Execution Tab
+            setTimeout(() => document.getElementById('tab-execution').click(), 500);
 
         } catch (e) {
-            console.error("Plan Gen Error:", e);
-            alert("Error generating plan: " + e.message);
+            logTrace(`ERROR: ${e.message}`);
+            alert("Strategic Error: " + e.message);
         } finally {
-            setLoading('btn-plan', false);
+            setLoading(false);
         }
     }
 
     function renderTasks(tasks) {
         const container = document.getElementById('tasks-container');
         container.innerHTML = tasks.map(t => `
-            <label class="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 cursor-pointer border border-transparent hover:border-gray-700 transition-colors group">
-                <input type="checkbox" checked value="${t.num}" class="mt-1 w-4 h-4 rounded border-gray-600 text-purple-600 focus:ring-purple-500/50 bg-[#0d1117]">
-                <div class="text-sm">
-                    <span class="font-mono text-purple-400 font-bold mr-2">${t.num}.</span>
-                    <span class="text-gray-300 group-hover:text-white">${t.text}</span>
+            <div class="task-item">
+                <input type="checkbox" checked value="${t.num}">
+                <div style="flex: 1">
+                    <div style="font-size: 0.65rem; color: var(--accent); font-weight: 800; font-family: 'JetBrains Mono'">VECTOR ${t.num.toString().padStart(2, '0')}</div>
+                    <div style="font-size: 0.9rem; color: #fff; margin-top: 4px">${t.text}</div>
                 </div>
-            </label>
+            </div>
         `).join('');
     }
 
     async function startResearch() {
         const selected = Array.from(document.querySelectorAll('#tasks-container input:checked')).map(cb => {
-            const t = TASKS.find(x => x.num === cb.value);
+            const t = TASKS.find(x => x.num == cb.value);
             return `${t.num}. ${t.text}`;
         });
 
-        if (selected.length === 0) return alert("Select at least one task.");
+        if (selected.length === 0) return alert("Select investigation vectors.");
 
-        // Show Loader
-        document.getElementById('research-loader').classList.remove('hidden');
+        setLoading(true, "EXECUTING DEEP RESEARCH...");
         startTimer();
+        logTrace(`Executing research on ${selected.length} nodes...`);
 
         try {
-            // 1. Execute Research
             const res = await fetch('/api/research/execute', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -207,59 +550,50 @@
             const data = await res.json();
             if (data.error) throw new Error(data.error);
 
-            const researchId = data.research_id;
+            logTrace(`Data ingestion complete. Finalizing intelligence report...`);
 
-            // 2. Poll for Completion (Simulated for demo if needed, but Interactions API is sync unless background=True)
-            // Our backend service currently does sync for simplicity, or returns immediately.
-            // If it returns immediately, we render results.
-
-            // 3. Generate Report
             const reportRes = await fetch('/api/research/report', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ research_id: researchId, research_text: "" }) // Text is handled by backend state or fetched
+                body: JSON.stringify({ research_id: data.research_id })
             });
             const reportData = await reportRes.json();
 
             if (reportData.error) throw new Error(reportData.error);
 
-            // Render Results
             document.getElementById('report-content').innerHTML = marked.parse(reportData.report_text);
-
             if (reportData.infographic) {
                 document.getElementById('infographic-img').src = "data:image/png;base64," + reportData.infographic;
-                document.getElementById('infographic-area').classList.remove('hidden');
+                document.getElementById('infographic-area').style.display = 'block';
             }
 
-            document.getElementById('phase-results').classList.remove('hidden');
-            setTimeout(() => document.getElementById('phase-results').scrollIntoView({ behavior: 'smooth' }), 100);
+            logTrace(`Report generated. Switching to Intelligence tab.`);
+            document.getElementById('tab-intelligence').click();
 
         } catch (e) {
-            alert("Research Execution Failed: " + e.message);
+            logTrace(`CORE ERROR: ${e.message}`);
+            alert("Neural Core Fault: " + e.message);
         } finally {
-            document.getElementById('research-loader').classList.add('hidden');
+            setLoading(false);
             stopTimer();
         }
     }
 
-    // UI Helpers
-    function setLoading(btnId, isLoading) {
-        const btn = document.getElementById(btnId);
-        if (isLoading) {
-            btn.dataset.original = btn.innerHTML;
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
-            btn.disabled = true;
-        } else {
-            btn.innerHTML = btn.dataset.original;
-            btn.disabled = false;
-        }
+    function setLoading(active, msg) {
+        document.getElementById('loading-overlay').style.display = active ? 'flex' : 'none';
+        if (msg) document.getElementById('loading-msg').textContent = msg;
+    }
+
+    function logTrace(msg) {
+        const log = document.getElementById('trace-log');
+        log.innerHTML += `<br>> ${msg}`;
+        log.scrollTop = log.scrollHeight;
     }
 
     let timerInterval;
     function startTimer() {
         let sec = 0;
         const el = document.getElementById('research-timer');
-        el.innerText = "00:00";
         timerInterval = setInterval(() => {
             sec++;
             const m = Math.floor(sec / 60).toString().padStart(2, '0');
@@ -267,27 +601,6 @@
             el.innerText = `${m}:${s}`;
         }, 1000);
     }
-    function stopTimer() {
-        clearInterval(timerInterval);
-    }
+    function stopTimer() { clearInterval(timerInterval); }
 </script>
-
-<style>
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: #0d1117;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #333;
-        border-radius: 3px;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #444;
-    }
-</style>
 {% endblock %}

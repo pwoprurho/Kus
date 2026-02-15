@@ -1,0 +1,6 @@
+# core/chemistry_ai.py
+from core.subjects.chemistry import PLANNING_PROMPT, GENERATION_PROMPT_ADDITION
+
+class ChemistrySubject:
+    PLANNING_PROMPT = PLANNING_PROMPT
+    GENERATION_PROMPT_ADDITION = GENERATION_PROMPT_ADDITION

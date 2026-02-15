@@ -21,20 +21,21 @@ stem_engine = StemAIEngine()
 # In-memory session store (In production, use Redis/Database)
 sessions = {}
 
-@physics_bp.route("/physics-sandbox")
-def physics_sandbox_view():
+@physics_bp.route("/stem-sandbox")
+def stem_sandbox_view():
     """Renders the Conversational STEM Sandbox interface."""
-    return render_template('physics_sandbox.html')
+    return render_template('stem.html')
 
 
 @physics_bp.route("/api/stem/chat", methods=["POST"])
 def stem_chat():
     """
-    Handles conversational detail gathering.
+    Handles conversational detail gathering for a specific subject.
     """
     try:
         data = request.get_json()
         message = data.get('message', '').strip()
+        subject = data.get('subject', 'physics').lower()
         session_id = data.get('session_id', 'default')
         
         if not message:
@@ -44,7 +45,7 @@ def stem_chat():
         session = sessions.get(session_id, {"history": [], "design": ""})
         
         # Interact with the AI
-        result = stem_engine.chat_interact(message, context_logs=session["history"])
+        result = stem_engine.chat_interact(message, subject_name=subject, context_logs=session["history"])
         
         # Update history
         session["history"].append({"role": "user", "content": message})
@@ -67,15 +68,15 @@ def stem_chat():
 @physics_bp.route("/api/stem/generate", methods=["POST"])
 def generate_stem_experiment():
     """
-    Triggers the high-fidelity code generation phase using Gemini 3.0.
+    Triggers the high-fidelity code generation phase.
     """
     try:
         data = request.get_json()
         design_doc = data.get('design', '').strip()
+        subject = data.get('subject', 'physics').lower()
         session_id = data.get('session_id', 'default')
         
         if not design_doc:
-            # If no design doc provided, try to compile from session history
             session = sessions.get(session_id)
             if session:
                 design_doc = "\n".join([f"{h['role']}: {h['content']}" for h in session["history"]])
@@ -83,7 +84,7 @@ def generate_stem_experiment():
                 return jsonify({"error": "No design context found"}), 400
         
         # Generate simulation
-        result = stem_engine.generate_simulation(design_doc)
+        result = stem_engine.generate_simulation(design_doc, subject_name=subject)
         
         if result.get('errors'):
             return jsonify({
@@ -110,9 +111,6 @@ def generate_stem_experiment():
         })
         
     except Exception as e:
-        import traceback
-        print(f"CRITICAL [STEM] Generation Endpoint Error: {str(e)}")
-        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
 
