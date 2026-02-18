@@ -316,6 +316,9 @@ def crypto_wallet_action():
 @public_bp.route('/sitemap.xml', methods=['GET'])
 def sitemap():
     """Generates a dynamic sitemap for SEO."""
+    import xml.sax.saxutils as saxutils
+    
+    # 1. Page Definitions
     host_url = request.url_root.rstrip('/')
     pages = [
         'public.home', 
@@ -328,20 +331,22 @@ def sitemap():
         'public.audit_request'
     ]
     
-    import xml.sax.saxutils as saxutils
-    
     xml_sitemap = ['<?xml version="1.0" encoding="UTF-8"?>']
     xml_sitemap.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
 
-    # 1. Static Pages
+    # 2. Static Pages
     for page in pages:
         try:
             url = url_for(page, _external=True)
             escaped_url = saxutils.escape(url)
-            xml_sitemap.append(f'<url><loc>{escaped_url}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>')
+            xml_sitemap.append(f'  <url>')
+            xml_sitemap.append(f'    <loc>{escaped_url}</loc>')
+            xml_sitemap.append(f'    <changefreq>weekly</changefreq>')
+            xml_sitemap.append(f'    <priority>0.8</priority>')
+            xml_sitemap.append(f'  </url>')
         except: continue
 
-    # 2. Dynamic Blog Posts
+    # 3. Dynamic Blog Posts
     if supabase_admin:
         try:
             response = supabase_admin.table('blog_posts').select("id, published_at").eq('status', 'Published').execute()
@@ -349,8 +354,21 @@ def sitemap():
                 for post in response.data:
                     url = url_for('public.blog_post', post_id=post['id'], _external=True)
                     escaped_url = saxutils.escape(url)
-                    date = post['published_at'].split('T')[0] if post.get('published_at') else datetime.now().strftime('%Y-%m-%d')
-                    xml_sitemap.append(f'<url><loc>{escaped_url}</loc><lastmod>{date}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>')
+                    
+                    # Hardened Date Parsing (Must be YYYY-MM-DD)
+                    raw_date = post.get('published_at')
+                    if raw_date:
+                        # Handle space vs T vs full timestamp
+                        clean_date = raw_date.replace('T', ' ').split(' ')[0]
+                    else:
+                        clean_date = datetime.now().strftime('%Y-%m-%d')
+                    
+                    xml_sitemap.append(f'  <url>')
+                    xml_sitemap.append(f'    <loc>{escaped_url}</loc>')
+                    xml_sitemap.append(f'    <lastmod>{clean_date}</lastmod>')
+                    xml_sitemap.append(f'    <changefreq>weekly</changefreq>')
+                    xml_sitemap.append(f'    <priority>0.9</priority>')
+                    xml_sitemap.append(f'  </url>')
         except: pass
 
     xml_sitemap.append('</urlset>')
