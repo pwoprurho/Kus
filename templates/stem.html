@@ -270,9 +270,9 @@
         transform: rotate(180deg);
     }
 
-    /* INPUT AREA - Persistent 20% height */
+    /* INPUT AREA - Persistent 22% height */
     .input-area {
-        height: 20vh;
+        height: 22vh;
         min-height: 120px;
         flex-shrink: 0;
         padding: 16px 20px;
@@ -710,8 +710,9 @@
     }
 
     async function triggerBuild(designDoc) {
+        let fullResponse = "";
         try {
-            const res = await fetch('/api/stem/generate', {
+            const response = await fetch('/api/stem/generate-stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -721,16 +722,59 @@
                 })
             });
 
-            const data = await res.json();
-            if (data.success) {
-                const exp = data.experiment;
-                executeEngine(exp.threejs_code, exp.title, exp.concept || ACTIVE_SUBJECT);
-            } else {
-                appendMessage('ai', "Architect Error: " + data.error);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            if (data.type === 'chunk') {
+                                fullResponse += data.content;
+                            } else if (data.type === 'thought') {
+                                appendMessage('thought', data.content);
+                            } else if (data.type === 'error') {
+                                appendMessage('ai', `Build Error: ${data.content}`);
+                            }
+                        } catch (e) { }
+                    }
+                }
             }
+
+            setLoading(false);
+
+            // Extract code and metadata
+            const codeMatch = fullResponse.match(/```(?:javascript|js)\s*([\s\S]*?)\s*```/);
+            const jsonMatch = fullResponse.match(/```json\s*([\s\S]*?)\s*```/);
+
+            if (codeMatch) {
+                const code = codeMatch[1];
+                let title = "Experiment";
+                let concept = ACTIVE_SUBJECT;
+
+                if (jsonMatch) {
+                    try {
+                        const meta = JSON.parse(jsonMatch[1]);
+                        title = meta.title || title;
+                        concept = meta.concept || concept;
+                        currentExperiment = { ...meta, threejs_code: code };
+                    } catch (e) { }
+                }
+
+                executeEngine(code, title, concept);
+            } else {
+                appendMessage('ai', "Error: Lab Architect failed to provide valid 3D logic.");
+            }
+
         } catch (e) {
-            appendMessage('ai', "Build Failure: " + e.message);
-        } finally {
+            appendMessage('ai', `Lab Error: ${e.message}`);
             setLoading(false);
         }
     }
@@ -757,6 +801,11 @@
                 "use strict";
                 try {
                     ${code}
+                    
+                    // Auto-invoke if wrapped in function
+                    if (typeof createSimulation === 'function') {
+                        return createSimulation();
+                    }
                 } catch(e) { 
                     console.error("Simulation Execution Error:", e);
                     throw e;

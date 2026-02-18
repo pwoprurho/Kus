@@ -26,7 +26,7 @@ The available globals are: `THREE` (r128), `CANNON` (0.6.2), and `lil.GUI`. Do N
 === OUTPUT FORMAT ===
 1. Full JavaScript in a ```javascript``` block.
 2. Metadata in a ```json``` block.
-3. **CRITICAL**: The JS **MUST** return an object containing { scene, camera, rendererParameters, render, world }.
+3. **CRITICAL**: The JS **MUST** end with a top-level return statement: `return { scene, camera, rendererParameters, render, world };`. Do not wrap in a function.
 """
 
 class StemAIEngine:
@@ -95,6 +95,24 @@ class StemAIEngine:
                 last_error = str(e)
         
         return {"errors": [f"Deep Generation Failed. Last error: {last_error}"]}
+
+    def generate_simulation_stream(self, design_doc: str, subject_name: str = "physics"):
+        """
+        Stream the high-fidelity code generation for real-time visualization.
+        """
+        subject = self.get_subject_logic(subject_name)
+        full_system_prompt = BASE_GENERATION_PROMPT + "\n" + subject.GENERATION_PROMPT_ADDITION
+        
+        engine = KusmusAIEngine(
+            system_instruction=full_system_prompt,
+            model_name=self.generation_model,
+            tools=[]
+        )
+        
+        prompt = f"Generate the full {subject_name.upper()} simulation code for this design: {design_doc}"
+        
+        for chunk in engine.generate_response_stream(prompt):
+            yield chunk
 
     def _parse_state(self, text: str, default_subject: str) -> dict:
         match = re.search(r'\[STATE:\s*({.*?})\s*\]', text)

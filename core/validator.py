@@ -110,28 +110,45 @@ class PhysicsCodeValidator:
     
     def _check_syntax(self, code: str) -> None:
         """Check for basic JavaScript syntax issues."""
+        # Strip comments and strings to avoid false positives
+        clean_code = self._strip_comments_and_strings(code)
+        
         # Check for balanced braces
-        open_braces = code.count('{')
-        close_braces = code.count('}')
+        open_braces = clean_code.count('{')
+        close_braces = clean_code.count('}')
         if open_braces != close_braces:
             self.issues.append(f"Unbalanced braces: {{ = {open_braces}, }} = {close_braces}")
         
         # Check for balanced parentheses
-        open_parens = code.count('(')
-        close_parens = code.count(')')
+        open_parens = clean_code.count('(')
+        close_parens = clean_code.count(')')
         if open_parens != close_parens:
             self.issues.append(f"Unbalanced parentheses: ( = {open_parens}, ) = {close_parens}")
         
         # Check for balanced brackets
-        open_brackets = code.count('[')
-        close_brackets = code.count(']')
+        open_brackets = clean_code.count('[')
+        close_brackets = clean_code.count(']')
         if open_brackets != close_brackets:
             self.issues.append(f"Unbalanced brackets: [ = {open_brackets}, ] = {close_brackets}")
+
+    def _strip_comments_and_strings(self, code: str) -> str:
+        """Removes comments and strings for structural analysis."""
+        # Remove strings (double and single quoted) - improved regex for escaped quotes
+        code = re.sub(r'"(?:[^"\\]|\\.)*"', '', code)
+        code = re.sub(r"'(?:[^'\\]|\\.)*'", '', code)
+        # Remove template literals (backticks) - handling multi-line and escaped backticks
+        code = re.sub(r'`(?:[^`\\]|\\.)*`', '', code, flags=re.DOTALL)
+        # Remove single line comments
+        code = re.sub(r'//.*', '', code)
+        # Remove multi-line comments
+        code = re.sub(r'/\*.*?\*/', '', code, flags=re.DOTALL)
+        return code
     
     def _check_blocked_patterns(self, code: str) -> None:
         """Check for blocked security patterns."""
+        clean_code = self._strip_comments_and_strings(code)
         for pattern, message in self.BLOCKED_PATTERNS:
-            if re.search(pattern, code, re.IGNORECASE):
+            if re.search(pattern, clean_code, re.IGNORECASE):
                 self.issues.append(message)
     
     def _check_resource_limits(self, code: str) -> None:
@@ -156,27 +173,30 @@ class PhysicsCodeValidator:
     
     def _check_threejs_requirements(self, code: str) -> None:
         """Check for required Three.js components."""
+        clean_code = self._strip_comments_and_strings(code)
         required = [
             ('THREE\\.Scene', 'THREE.Scene creation'),
             ('THREE\\.(PerspectiveCamera|OrthographicCamera)', 'Camera setup'),
             ('THREE\\.WebGLRenderer', 'WebGLRenderer creation'),
-            ('requestAnimationFrame', 'Animation loop'),
+            (r'requestAnimationFrame|setAnimationLoop|animate\s*\(', 'Animation loop'),
         ]
         
         for pattern, requirement in required:
-            if not re.search(pattern, code):
+            if not re.search(pattern, clean_code):
                 self.issues.append(f"Missing {requirement}")
     
     def _check_cannon_requirements(self, code: str) -> None:
         """Check for physics simulation requirements."""
+        clean_code = self._strip_comments_and_strings(code)
         # Physics is optional, so this is a warning, not an error
-        if 'CANNON' not in code and 'CANNON' not in code:
+        if 'CANNON' not in clean_code and 'CANNON' not in clean_code:
             # Check if physics is expected based on scene description
-            if 'gravity' in code.lower() or 'physics' in code.lower():
+            if 'gravity' in clean_code.lower() or 'physics' in clean_code.lower():
                 self.issues.append("Physics mentioned but Cannon-es not detected")
     
     def _count_object_creations(self, code: str) -> int:
         """Count Three.js object creations."""
+        clean_code = self._strip_comments_and_strings(code)
         patterns = [
             r'new\s+THREE\.\w+Geometry',
             r'new\s+THREE\.\w+Material',
@@ -187,7 +207,7 @@ class PhysicsCodeValidator:
         
         count = 0
         for pattern in patterns:
-            count += len(re.findall(pattern, code))
+            count += len(re.findall(pattern, clean_code))
         
         return count
     

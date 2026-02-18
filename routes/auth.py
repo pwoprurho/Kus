@@ -132,6 +132,7 @@ def client_access():
                     session['temp_client_email'] = email
                     session['temp_client_key'] = auth_input
                     session['temp_client_name'] = audit_res.data[0]['name']
+                    session['temp_client_phone'] = audit_res.data[0].get('phone')
                     
                     flash("Identity Verified. Initialize Security Protocol.", "success")
                     return redirect(url_for('auth.client_setup'))
@@ -153,6 +154,7 @@ def client_setup():
     if request.method == 'POST':
         password = request.form.get('password')
         confirm = request.form.get('confirm_password')
+        phone = request.form.get('phone')
         
         if password != confirm:
             flash("Passwords do not match.", "error")
@@ -162,6 +164,8 @@ def client_setup():
         email = session.get('temp_client_email')
         key = session.get('temp_client_key')
         name = session.get('temp_client_name', 'Valued Client')
+        # Use phone from form if provided, else session fallback
+        client_phone = phone or session.get('temp_client_phone')
         
         
         try:
@@ -171,7 +175,8 @@ def client_setup():
             if existing.data:
                 # UPDATE (Password Reset)
                 supabase_admin.table('clients').update({
-                    'password_hash': hashed_pw
+                    'password_hash': hashed_pw,
+                    'phone': client_phone
                 }).eq('email', email).execute()
                 
                 client_id = existing.data[0]['id']
@@ -183,6 +188,7 @@ def client_setup():
                     'email': email,
                     'password_hash': hashed_pw,
                     'full_name': name,
+                    'phone': client_phone,
                     'recovery_key': key
                 }).execute()
                 

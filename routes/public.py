@@ -39,24 +39,31 @@ def client_settings():
             deriv_token = request.form.get('deriv_token')
             gemini_key = request.form.get('gemini_key')
             risk = request.form.get('risk_tolerance')
+            phone = request.form.get('phone')
             
+            # Update phone in DB
+            try:
+                supabase_admin.table('clients').update({'phone': phone}).eq('id', client_id).execute()
+            except Exception as e:
+                print(f"Phone Update Error: {e}")
+
             # 3. Simulate Configuration Update
-            # In production, we would merge these into a 'config' JSON column
             config_update = {
                 'deriv_token': deriv_token if deriv_token else None,
                 'gemini_key': gemini_key if gemini_key else None,
-                'risk_tolerance': int(risk) if risk else 5
+                'risk_tolerance': int(risk) if risk else 5,
+                'phone': phone
             }
             
-            # Attempt update (Safe simulation: if column doesn't exist, Supabase might error, so we catch)
+            # Attempt update (Safe simulation)
             try:
-                # Assuming 'metadata' or 'config' column exists. If not, this is a demo dummy save.
                 # supabase_admin.table('clients').update({'config': config_update}).eq('id', client_id).execute()
                 pass 
             except Exception as e:
                 print(f"Config Save Warning: {e}")
 
             # 4. Handle Password Change (If provided)
+            # ... (unchanged)
             new_pw = request.form.get('new_password')
             confirm_pw = request.form.get('confirm_password')
 
@@ -65,10 +72,6 @@ def client_settings():
                     flash("Passwords do not match.", "error")
                     return render_template('client/client_settings.html', config=config_update)
                 
-                # In a real app, hash password here:
-                # from werkzeug.security import generate_password_hash
-                # hashed = generate_password_hash(new_pw)
-                # supabase_admin.table('clients').update({'password_hash': hashed}).eq('id', client_id).execute()
                 flash("Password Updated Successfully.", "success")
             else:
                 flash("Configuration Saved.", "success")
@@ -78,16 +81,19 @@ def client_settings():
         except Exception as e:
             flash(f"Error saving settings: {str(e)}", "error")
 
-    # GET Request: Fetch existing config (Simulated for Demo)
-    # In reality: res = supabase_admin.table('clients').select('config').eq('id', client_id).single().execute()
-    # config = res.data.get('config', {})
-    
-    # Mock Config for Display
+    # GET Request: Fetch existing config
     mock_config = {
         'risk_tolerance': 5,
         'deriv_token': '',
-        'gemini_key': ''
+        'gemini_key': '',
+        'phone': ''
     }
+    
+    try:
+        res = supabase_admin.table('clients').select('phone').eq('id', client_id).single().execute()
+        if res.data:
+            mock_config['phone'] = res.data.get('phone', '')
+    except: pass
 
     return render_template('client/client_settings.html', config=mock_config)
 
@@ -185,8 +191,40 @@ def blog_post(post_id):
     return render_template("blog_post.html", post=post)
 
 # --- FIX: Added missing route to resolve BuildError in index.html ---
-@public_bp.route("/request-audit")
+@public_bp.route("/request-audit", methods=['GET', 'POST'])
 def audit_request():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        message = request.form.get('message')
+
+        if not name or not email or not phone:
+            flash("All secure contact fields are required.", "error")
+            return render_template("request_audit.html")
+
+        try:
+            # Generate a simple verification code for the client to use later
+            import secrets
+            verification_code = secrets.token_hex(4).upper()
+
+            # Insert into Supabase
+            supabase_admin.table('audit_requests').insert({
+                'name': name,
+                'email': email,
+                'phone': phone,
+                'message': message,
+                'verification_code': verification_code
+            }).execute()
+
+            flash(f"Request Transmitted. Your Identity Token is: {verification_code}. Keep this secure.", "success")
+            return redirect(url_for('public.home'))
+
+        except Exception as e:
+            print(f"Audit Request Error: {e}")
+            flash("Electronic transmission failure. Please try again.", "error")
+            return render_template("request_audit.html")
+
     return render_template("request_audit.html")
 
 # =========================================================
@@ -290,6 +328,8 @@ def sitemap():
         'public.audit_request'
     ]
     
+    import xml.sax.saxutils as saxutils
+    
     xml_sitemap = ['<?xml version="1.0" encoding="UTF-8"?>']
     xml_sitemap.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
 
@@ -297,7 +337,8 @@ def sitemap():
     for page in pages:
         try:
             url = url_for(page, _external=True)
-            xml_sitemap.append(f'<url><loc>{url}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>')
+            escaped_url = saxutils.escape(url)
+            xml_sitemap.append(f'<url><loc>{escaped_url}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>')
         except: continue
 
     # 2. Dynamic Blog Posts
@@ -307,12 +348,13 @@ def sitemap():
             if response.data:
                 for post in response.data:
                     url = url_for('public.blog_post', post_id=post['id'], _external=True)
+                    escaped_url = saxutils.escape(url)
                     date = post['published_at'].split('T')[0] if post.get('published_at') else datetime.now().strftime('%Y-%m-%d')
-                    xml_sitemap.append(f'<url><loc>{url}</loc><lastmod>{date}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>')
+                    xml_sitemap.append(f'<url><loc>{escaped_url}</loc><lastmod>{date}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>')
         except: pass
 
     xml_sitemap.append('</urlset>')
-    return Response('\n'.join(xml_sitemap), mimetype='application/xml')
+    return Response('\n'.join(xml_sitemap), mimetype='application/xml; charset=utf-8')
 
 @public_bp.route('/robots.txt', methods=['GET'])
 def robots():

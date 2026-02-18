@@ -109,3 +109,6 @@ supabase_service_role_key*
 list_models.py
 models.txt
 models_error.txt
+
+# Temporary Reference Files
+temp_*

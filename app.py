@@ -12,6 +12,19 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev_secret_key_change_in_production")
 
+# --- DOMAIN & SEO CONFIGURATION ---
+# Set SERVER_NAME in production (e.g., kusmus.org) to ensure correct absolute URLs
+# Use PREFERRED_URL_SCHEME (e.g., https) for secure links
+if os.getenv("SERVER_NAME"):
+    app.config["SERVER_NAME"] = os.getenv("SERVER_NAME")
+if os.getenv("PREFERRED_URL_SCHEME"):
+    app.config["PREFERRED_URL_SCHEME"] = os.getenv("PREFERRED_URL_SCHEME")
+
+# --- PROXY FIX FOR SEO ---
+# Ensures url_for generates correct https URLs behind proxies (e.g., Railway/Cloudflare)
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 # 2. Initialize Supabase Client
 from db import supabase_admin
 
