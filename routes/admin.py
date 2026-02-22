@@ -410,7 +410,7 @@ def edit_post(post_id):
         try:
             supabase_admin.table('blog_posts').update({
                 "title": request.form.get('title'), "summary": request.form.get('summary'),
-                "content_html": request.form.get('content'), "updated_at": "now()"
+                "content_html": request.form.get('content')
             }).eq('id', post_id).execute()
             flash("Insight updated successfully.", "success")
             return redirect(url_for('admin.dashboard'))
