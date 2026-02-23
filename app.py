@@ -38,7 +38,7 @@ from routes.physics_sandbox import physics_bp
 
 # 3. Setup Flask-Login
 login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
+login_manager.login_view = 'auth.client_access'
 login_manager.login_message = "Please log in to access the Command Center."
 login_manager.init_app(app)
 

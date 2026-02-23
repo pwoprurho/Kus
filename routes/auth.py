@@ -56,88 +56,102 @@ def get_auth_client():
     if not url or not key: return None
     return create_client(url, key)
 
-# --- ADMIN LOGIN (UNCHANGED) ---
+# --- LEGACY ADMIN LOGIN REDIRECT ---
+# Redirects old admin login URL to the unified access page
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        try:
-            temp_client = get_auth_client()
-            auth_res = temp_client.auth.sign_in_with_password({"email": email, "password": password})
-            if auth_res.user:
-                response = supabase_admin.table('user_profiles').select('*').eq('id', auth_res.user.id).single().execute()
-                if response.data:
-                    data = response.data
-                    user = User(data['id'], data.get('full_name'), data.get('email'), data.get('role', 'intern'), data.get('location'))
-                    login_user(user)
-                    return redirect(url_for('admin.dashboard')) 
-                else: flash('User profile not found.', 'error')
-            else: flash('Invalid credentials.', 'error')
-        except Exception as e: flash(f'Login failed: {str(e)}', 'error')
-    return render_template('admin/login.html') 
+    return redirect(url_for('auth.client_access'))
 
 # =========================================================
-# === SECURE CLIENT PROTOCOLS ===
+# === UNIFIED SECURE ACCESS (Zero Trust) ===
 # =========================================================
 
 @auth_bp.route('/client-access', methods=['GET', 'POST'])
 def client_access():
     if request.method == 'POST':
-        email = request.form.get('email')
-        auth_input = request.form.get('auth_input').strip()
-        print(f"[DEBUG] Received email: {email}")
-        print(f"[DEBUG] Received auth_input: {auth_input}")
-        
-        
+        email = (request.form.get('email') or '').strip().lower()
+        auth_input = (request.form.get('auth_input') or '').strip()
+
+        # --- ZERO TRUST: Input Validation ---
+        if not email or '@' not in email or not auth_input:
+            flash("All fields are required.", "error")
+            return render_template('client/client_access.html')
+
+        # === PHASE 1: ADMIN AUTH (Supabase Auth) ===
         try:
-            # Check for existing client
+            temp_client = get_auth_client()
+            if temp_client:
+                auth_res = temp_client.auth.sign_in_with_password({
+                    "email": email, "password": auth_input
+                })
+                if auth_res.user:
+                    response = supabase_admin.table('user_profiles').select('*').eq('id', auth_res.user.id).single().execute()
+                    if response.data:
+                        data = response.data
+                        user = User(
+                            data['id'], data.get('full_name'),
+                            data.get('email'), data.get('role', 'intern'),
+                            data.get('location')
+                        )
+                        # Zero Trust: Regenerate session on login
+                        session.clear()
+                        login_user(user)
+                        flash("Command Access Granted.", "success")
+                        return redirect(url_for('admin.dashboard'))
+        except Exception:
+            pass  # Not an admin — fall through to client auth silently
+
+        # === PHASE 2: CLIENT AUTH ===
+        try:
             client_res = supabase_admin.table('clients').select('*').eq('email', email).execute()
-            
+
             if client_res.data and len(client_res.data) > 0:
                 client_data = client_res.data[0]
-                print(f"[DEBUG] DB client_data: {client_data}")
+
                 # Check for Valid Session OTP (OR Master Key)
                 session_otp = session.get('recovery_otp')
-                is_valid_otp = session_otp and auth_input == session_otp and session.get('recovery_email') == email
-                # Case 1: RECOVERY (OTP or Key)
-                if is_valid_otp or auth_input == client_data['recovery_key']:
-                    print(f"[DEBUG] OTP valid: {is_valid_otp}, Recovery key match: {auth_input == client_data['recovery_key']}")
+                is_valid_otp = (
+                    session_otp
+                    and auth_input == session_otp
+                    and session.get('recovery_email') == email
+                )
+
+                # Case 1: RECOVERY (OTP or Recovery Key)
+                if is_valid_otp or auth_input == client_data.get('recovery_key'):
                     session['temp_client_email'] = email
-                    session['temp_client_key'] = auth_input # Generic truthy verification token
+                    session['temp_client_key'] = auth_input
                     if is_valid_otp:
-                        session.pop('recovery_otp', None) # Consume OTP
+                        session.pop('recovery_otp', None)  # Consume OTP
                         flash("Identity Verified. Proceed to Credential Reset.", "info")
                     else:
                         flash("Master Key Accepted. Proceed to Credential Reset.", "info")
-                    return redirect(url_for('auth.client_setup')) 
-                # Case 2: LOGIN (Entered Password)
-                print(f"[DEBUG] Password hash from DB: {client_data['password_hash']}")
-                pw_check = check_password_hash(client_data['password_hash'], auth_input)
-                print(f"[DEBUG] check_password_hash result: {pw_check}")
-                if pw_check:
+                    return redirect(url_for('auth.client_setup'))
+
+                # Case 2: PASSWORD LOGIN
+                if client_data.get('password_hash') and check_password_hash(client_data['password_hash'], auth_input):
+                    # Zero Trust: Regenerate session on login
+                    session.clear()
                     session['client_access'] = True
-                    session['client_id'] = client_data['id'] # CRITICAL: Lock ID into session
+                    session['client_id'] = client_data['id']
                     session['client_email'] = email
                     flash("Secure Channel Established.", "success")
                     return redirect(url_for('public.client_dashboard'))
                 else:
                     flash("Access Denied: Invalid Password or Key.", "error")
             else:
-                # Case 3: FIRST TIME REGISTRATION
+                # Case 3: FIRST TIME REGISTRATION (Verification Code)
                 audit_res = supabase_admin.table('audit_requests')\
                     .select('*').eq('email', email).eq('verification_code', auth_input).execute()
-                
+
                 if audit_res.data and len(audit_res.data) > 0:
                     session['temp_client_email'] = email
                     session['temp_client_key'] = auth_input
                     session['temp_client_name'] = audit_res.data[0]['name']
                     session['temp_client_phone'] = audit_res.data[0].get('phone')
-                    
                     flash("Identity Verified. Initialize Security Protocol.", "success")
                     return redirect(url_for('auth.client_setup'))
                 else:
-                     flash("Access Denied: Identity Token Invalid.", "error")
+                    flash("Access Denied: Identity Token Invalid.", "error")
 
         except Exception as e:
             print(f"Auth Error: {e}")
@@ -219,9 +233,8 @@ def client_setup():
     return render_template('client/client_setup.html')
 
 @auth_bp.route('/logout')
-@login_required
 def logout():
     logout_user()
     session.clear() 
     flash('Session Terminated.', 'info')
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('auth.client_access'))

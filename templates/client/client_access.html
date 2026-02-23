@@ -2,31 +2,69 @@
 {% block title %}Secure Access{% endblock %}
 {% block content %}
 <style>
-    .access-wrapper { min-height: 80vh; display: flex; align-items: center; justify-content: center; }
-    .access-card { background: rgba(5,5,5,0.9); padding: 50px; border: 1px solid #333; border-top: 3px solid #0072ff; width: 100%; max-width: 500px; text-align: center; }
-    .form-control { width: 100%; background: #111; border: 1px solid #444; color: white; padding: 15px; margin-bottom: 20px; font-family: 'Inter', monospace; }
-    .btn-access { width: 100%; background: #0072ff; color: white; padding: 15px; border: none; font-weight: bold; cursor: pointer; }
+    .access-wrapper {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .access-card {
+        background: rgba(5, 5, 5, 0.9);
+        padding: 50px;
+        border: 1px solid #333;
+        border-top: 3px solid #0072ff;
+        width: 100%;
+        max-width: 500px;
+        text-align: center;
+    }
+
+    .form-control {
+        width: 100%;
+        background: #111;
+        border: 1px solid #444;
+        color: white;
+        padding: 15px;
+        margin-bottom: 20px;
+        font-family: 'Inter', monospace;
+    }
+
+    .btn-access {
+        width: 100%;
+        background: #0072ff;
+        color: white;
+        padding: 15px;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+    }
 </style>
 
 <div class="access-wrapper fade-in">
     <div class="access-card">
-        <h1 style="color:white; margin-bottom:10px;">Client Protocol Access</h1>
-        <p style="color:#888; margin-bottom:30px;">Enter your credentials or Verification Code to authenticate.</p>
+        <h1 style="color:white; margin-bottom:10px;">Secure Access</h1>
+        <p style="color:#888; margin-bottom:30px;">Enter your credentials, Verification Code, or Recovery Key to
+            authenticate.</p>
 
-        <div id="status-msg" style="display:none; padding:10px; margin-bottom:15px; border-radius:4px; font-size:13px;"></div>
+        <div id="status-msg" style="display:none; padding:10px; margin-bottom:15px; border-radius:4px; font-size:13px;">
+        </div>
 
         <form method="post" id="loginForm">
-            <input type="email" id="emailInput" name="email" class="form-control" placeholder="Authorized Email" required>
-            
+            <input type="email" id="emailInput" name="email" class="form-control" placeholder="Authorized Email"
+                required>
+
             <div style="position: relative;">
-                <input type="password" name="auth_input" class="form-control" placeholder="Password OR 6-Digit Code" required autocomplete="off" style="padding-right: 100px;">
-                <button type="button" onclick="requestRecovery()" id="sendBtn" style="position:absolute; right:12px; top:12px; background:rgba(0,114,255,0.1); border:1px solid rgba(0,114,255,0.3); color:#0072ff; cursor:pointer; font-size:11px; font-weight:bold; padding:4px 8px; border-radius:4px; transition:all 0.2s;">
+                <input type="password" name="auth_input" class="form-control" placeholder="Password OR 6-Digit Code"
+                    required autocomplete="off" style="padding-right: 100px;">
+                <button type="button" onclick="requestRecovery()" id="sendBtn"
+                    style="position:absolute; right:12px; top:12px; background:rgba(0,114,255,0.1); border:1px solid rgba(0,114,255,0.3); color:#0072ff; cursor:pointer; font-size:11px; font-weight:bold; padding:4px 8px; border-radius:4px; transition:all 0.2s;">
                     SEND CODE
                 </button>
             </div>
-            
+
             <small style="display:block; color:#555; text-align:left; margin-top:-15px; margin-bottom:20px;">
-                <i class="fas fa-info-circle"></i> Forgot password? Click 'SEND CODE' to receive a random digit token via email.
+                <i class="fas fa-info-circle"></i> Forgot password? Click 'SEND CODE' to receive a random digit token
+                via email.
             </small>
 
             <button type="submit" class="btn-access">AUTHENTICATE</button>
@@ -35,46 +73,46 @@
 </div>
 
 <script>
-async function requestRecovery() {
-    const email = document.getElementById('emailInput').value;
-    const btn = document.getElementById('sendBtn');
-    const msg = document.getElementById('status-msg');
-    
-    if (!email || !email.includes('@')) {
-        alert('Please enter a valid email address first.');
-        return;
-    }
+    async function requestRecovery() {
+        const email = document.getElementById('emailInput').value;
+        const btn = document.getElementById('sendBtn');
+        const msg = document.getElementById('status-msg');
 
-    btn.innerText = 'SENDING...';
-    btn.disabled = true;
-    msg.style.display = 'none';
+        if (!email || !email.includes('@')) {
+            alert('Please enter a valid email address first.');
+            return;
+        }
 
-    try {
-        const res = await fetch('/auth/send-recovery', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ email: email })
-        });
-        const data = await res.json();
-        
-        msg.style.display = 'block';
-        if (data.success) {
-            msg.style.background = 'rgba(46, 204, 113, 0.2)';
-            msg.style.color = '#2ecc71';
-            msg.innerText = 'SENT: Check your email for the 6-digit code.';
-            btn.innerText = 'SENT ✓';
-        } else {
-            msg.style.background = 'rgba(231, 76, 60, 0.2)';
-            msg.style.color = '#e74c3c';
-            msg.innerText = data.error || 'Failed to send code.';
+        btn.innerText = 'SENDING...';
+        btn.disabled = true;
+        msg.style.display = 'none';
+
+        try {
+            const res = await fetch('/auth/send-recovery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+            const data = await res.json();
+
+            msg.style.display = 'block';
+            if (data.success) {
+                msg.style.background = 'rgba(46, 204, 113, 0.2)';
+                msg.style.color = '#2ecc71';
+                msg.innerText = 'SENT: Check your email for the 6-digit code.';
+                btn.innerText = 'SENT ✓';
+            } else {
+                msg.style.background = 'rgba(231, 76, 60, 0.2)';
+                msg.style.color = '#e74c3c';
+                msg.innerText = data.error || 'Failed to send code.';
+                btn.innerText = 'RETRY';
+                btn.disabled = false;
+            }
+        } catch (e) {
+            alert('System Error: ' + e.message);
             btn.innerText = 'RETRY';
             btn.disabled = false;
         }
-    } catch(e) {
-        alert('System Error: ' + e.message);
-        btn.innerText = 'RETRY';
-        btn.disabled = false;
     }
-}
 </script>
 {% endblock %}
