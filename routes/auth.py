@@ -77,31 +77,7 @@ def client_access():
             flash("All fields are required.", "error")
             return render_template('client/client_access.html')
 
-        # === PHASE 1: ADMIN AUTH (Supabase Auth) ===
-        try:
-            temp_client = get_auth_client()
-            if temp_client:
-                auth_res = temp_client.auth.sign_in_with_password({
-                    "email": email, "password": auth_input
-                })
-                if auth_res.user:
-                    response = supabase_admin.table('user_profiles').select('*').eq('id', auth_res.user.id).single().execute()
-                    if response.data:
-                        data = response.data
-                        user = User(
-                            data['id'], data.get('full_name'),
-                            data.get('email'), data.get('role', 'intern'),
-                            data.get('location')
-                        )
-                        # Zero Trust: Regenerate session on login
-                        session.clear()
-                        login_user(user)
-                        flash("Command Access Granted.", "success")
-                        return redirect(url_for('admin.dashboard'))
-        except Exception:
-            pass  # Not an admin — fall through to client auth silently
-
-        # === PHASE 2: CLIENT AUTH ===
+        # === PHASE 1: CLIENT AUTH (Primary) ===
         try:
             client_res = supabase_admin.table('clients').select('*').eq('email', email).execute()
 
@@ -136,26 +112,48 @@ def client_access():
                     session['client_email'] = email
                     flash("Secure Channel Established.", "success")
                     return redirect(url_for('public.client_dashboard'))
-                else:
-                    flash("Access Denied: Invalid Password or Key.", "error")
-            else:
-                # Case 3: FIRST TIME REGISTRATION (Verification Code)
-                audit_res = supabase_admin.table('audit_requests')\
-                    .select('*').eq('email', email).eq('verification_code', auth_input).execute()
 
-                if audit_res.data and len(audit_res.data) > 0:
-                    session['temp_client_email'] = email
-                    session['temp_client_key'] = auth_input
-                    session['temp_client_name'] = audit_res.data[0]['name']
-                    session['temp_client_phone'] = audit_res.data[0].get('phone')
-                    flash("Identity Verified. Initialize Security Protocol.", "success")
-                    return redirect(url_for('auth.client_setup'))
-                else:
-                    flash("Access Denied: Identity Token Invalid.", "error")
+            # Case 3: FIRST TIME REGISTRATION (Verification Code)
+            audit_res = supabase_admin.table('audit_requests')\
+                .select('*').eq('email', email).eq('verification_code', auth_input).execute()
+
+            if audit_res.data and len(audit_res.data) > 0:
+                session['temp_client_email'] = email
+                session['temp_client_key'] = auth_input
+                session['temp_client_name'] = audit_res.data[0]['name']
+                session['temp_client_phone'] = audit_res.data[0].get('phone')
+                flash("Identity Verified. Initialize Security Protocol.", "success")
+                return redirect(url_for('auth.client_setup'))
 
         except Exception as e:
-            print(f"Auth Error: {e}")
-            flash("System Error during handshake.", "error")
+            print(f"Client Auth Error: {e}")
+
+        # === PHASE 2: ADMIN AUTH (Supabase Auth Fallback) ===
+        try:
+            temp_client = get_auth_client()
+            if temp_client:
+                auth_res = temp_client.auth.sign_in_with_password({
+                    "email": email, "password": auth_input
+                })
+                if auth_res.user:
+                    response = supabase_admin.table('user_profiles').select('*').eq('id', auth_res.user.id).single().execute()
+                    if response.data:
+                        data = response.data
+                        user = User(
+                            data['id'], data.get('full_name'),
+                            data.get('email'), data.get('role', 'intern'),
+                            data.get('location')
+                        )
+                        # Zero Trust: Regenerate session on login
+                        session.clear()
+                        login_user(user)
+                        flash("Command Access Granted.", "success")
+                        return redirect(url_for('admin.dashboard'))
+        except Exception:
+            pass  # Not an admin either — fall through to error
+
+        # === ZERO TRUST: Generic denial (no role leakage) ===
+        flash("Access Denied: Invalid credentials.", "error")
 
     return render_template('client/client_access.html')
 
