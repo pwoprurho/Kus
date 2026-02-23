@@ -375,7 +375,7 @@
         <div id="chat-window" class="chat-window">
             <div class="chat-header">
                 <span><i class="fas fa-circle" style="color:#00ff88; font-size: 8px; margin-right: 8px;"></i> Kusmus AI
-                    Assistant</span>
+                    Architect</span>
                 <i class="fas fa-times" onclick="document.getElementById('chat-toggle-btn').click()"
                     style="cursor:pointer; opacity: 0.7;"></i>
             </div>
@@ -385,7 +385,7 @@
                 <button id="chat-send-btn"><i class="fas fa-arrow-up"></i></button>
             </div>
         </div>
-        <button id="chat-toggle-btn" class="chat-toggle"><i class="fas fa-comment-alt"></i></button>
+        <button id="chat-toggle-btn" class="chat-toggle"><i class="fas fa-project-diagram"></i></button>
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
@@ -400,11 +400,11 @@
             const chatSendBtn = document.getElementById('chat-send-btn');
             const chatToggleBtn = document.getElementById('chat-toggle-btn');
 
-            // Default to Sentinel if accessed directly
-            window.currentDemoId = 'sentinel_monitor';
+            // Default to AI Architect for global widget
+            window.currentDemoId = 'ai_architect';
 
-            // Local registry of greetings to ensure instant UI response (matches backend)
             const PROTOCOL_GREETINGS = {
+                'ai_architect': "Kusmus AI Architect Online. Design matrix synchronized. Ready for system scoping and resource estimation.",
                 'sentinel_monitor': "Sentinel System Online. O-RAN defense perimeter active. Awaiting telemetry logs.",
                 'surge_vla': "VLA Robotics Interface Active. Ready to analyze vision feed for anomalies."
             };
@@ -506,7 +506,7 @@
                 chatWindow.classList.toggle('visible');
                 // If opening empty, trigger default
                 if (chatWindow.classList.contains('visible') && chatBody.children.length === 0) {
-                    window.launchProtocol('sentinel_monitor');
+                    window.launchProtocol('ai_architect');
                 }
             });
 
