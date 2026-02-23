@@ -380,6 +380,11 @@ def robots():
     lines = [
         "User-agent: *",
         "Allow: /",
+        "Disallow: /admin/",
+        "Disallow: /auth/",
+        "Disallow: /sandbox/",
+        "Disallow: /tax/",
+        "Disallow: /physics/",
         "Disallow: /client-dashboard",
         "Disallow: /client-chat",
         "Disallow: /crypto-wallet",

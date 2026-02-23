@@ -82,5 +82,13 @@ def page_not_found(e): return render_template('404.html'), 404
 @app.errorhandler(500)
 def internal_server_error(e): return render_template('500.html'), 500
 
+# 6. Strict Crawling Security Hook
+@app.after_request
+def add_security_headers(response):
+    sensitive_prefixes = ('/admin', '/auth', '/sandbox', '/tax', '/physics', '/client')
+    if getattr(request, 'path', '').startswith(sensitive_prefixes):
+        response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    return response
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=8000)
