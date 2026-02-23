@@ -128,7 +128,7 @@ def client_access():
         except Exception as e:
             print(f"Client Auth Error: {e}")
 
-        # === PHASE 2: ADMIN AUTH (Supabase Auth Fallback) ===
+        # === PHASE 2: ELEVATED AUTH (Silent Escalation) ===
         try:
             temp_client = get_auth_client()
             if temp_client:
@@ -147,7 +147,7 @@ def client_access():
                         # Zero Trust: Regenerate session on login
                         session.clear()
                         login_user(user)
-                        flash("Command Access Granted.", "success")
+                        flash("Secure Channel Established.", "success")
                         return redirect(url_for('admin.dashboard'))
         except Exception:
             pass  # Not an admin either — fall through to error
