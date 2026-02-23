@@ -25,6 +25,10 @@ if os.getenv("PREFERRED_URL_SCHEME"):
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
+# 2. Initialize Extensions
+from extensions import socketio
+socketio.init_app(app)
+
 # 2. Initialize Supabase Client
 from db import supabase_admin
 
@@ -72,7 +76,10 @@ app.register_blueprint(sandbox_bp)
 app.register_blueprint(tax_bp)
 app.register_blueprint(physics_bp)
 
-# 5. Error Handlers
+# 5. Register Socket Events
+import socket_events
+
+# 6. Error Handlers
 @app.errorhandler(403)
 def access_forbidden(e): return render_template('403.html'), 403
 
@@ -82,7 +89,7 @@ def page_not_found(e): return render_template('404.html'), 404
 @app.errorhandler(500)
 def internal_server_error(e): return render_template('500.html'), 500
 
-# 6. Strict Crawling Security Hook
+# 7. Strict Crawling Security Hook
 @app.after_request
 def add_security_headers(response):
     sensitive_prefixes = ('/admin', '/auth', '/sandbox', '/tax', '/physics', '/client')
@@ -91,4 +98,4 @@ def add_security_headers(response):
     return response
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=8000)
+    socketio.run(app, debug=True, host="0.0.0.0", port=8000)

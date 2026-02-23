@@ -1,0 +1,21 @@
+{
+  "name": "Kusmus Tax Agent",
+  "short_name": "Tax Agent",
+  "description": "Premium Tax Compliance and Filing Agent.",
+  "start_url": "/sandbox?demo=tax_compliance_agent",
+  "display": "standalone",
+  "background_color": "#0a0e17",
+  "theme_color": "#58a6ff",
+  "icons": [
+    {
+      "src": "/static/image/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/image/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -4,22 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Kusmus AI - AI Solutions & Technology Innovation{% endblock %}</title>
+    <title>{% block title %}AI Solutions in Nigeria | Sovereign Enterprise Intelligence | Kusmus AI{% endblock %}
+    </title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 
     <!-- SEO & Meta Tags -->
     <meta name="description"
-        content="{% block meta_description %}Kusmus AI engineers certainty through comprehensive AI solutions and technology innovation. We build bespoke AI agents, custom software, and intelligent infrastructure for African enterprises.{% endblock %}">
+        content="{% block meta_description %}Kusmus AI offers the leading AI solutions in Nigeria. We provide sovereign enterprise intelligence using fine-tuned models and private data integration for African market leaders.{% endblock %}">
     <meta name="keywords"
-        content="{% block meta_keywords %}AI Solutions, Technology Innovation, AI Agents, Enterprise Software, Custom Development, Nigeria Tech, African Innovation, Automated Operations, Engineering Certainty{% endblock %}">
+        content="{% block meta_keywords %}AI solutions in Nigeria, Sovereign AI Nigeria, Custom AI Development Lagos, Enterprise AI Africa, Fine-Tuned AI Models, Private Data AI, Kusmus AI{% endblock %}">
     <meta name="author" content="Kusmus AI">
     <meta name="robots" content="index, follow">
+    <meta name="geo.region" content="NG" />
+    <meta name="geo.placename" content="Lagos" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:url" content="{{ request.url }}">
     <meta property="og:title" content="{% block og_title %}Kusmus AI - Engineering Certainty{% endblock %}">
     <meta property="og:description"
-        content="{% block og_description %}Engineering Certainty through advanced AI solutions and technology innovation. We accelerate growth for Tier 1 Enterprises and agile SMEs across Africa.{% endblock %}">
+        content="{% block og_description %}Sovereign Enterprise Intelligence through fine-tuned open-source models. We deliver customized AI solutions that solve complex institutional problems with private data precision.{% endblock %}">
     <meta property="og:image"
         content="{% block og_image %}{{ url_for('static', filename='images/pic01.png', _external=True) }}{% endblock %}">
 
@@ -44,7 +50,15 @@
         "@type": "ContactPoint",
         "telephone": "+234-800-KUSMUS",
         "contactType": "customer service",
-        "areaServed": "NG"
+        "areaServed": "NG",
+        "availableLanguage": "English"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Sovereign Plaza, Victoria Island",
+        "addressLocality": "Lagos",
+        "addressRegion": "LA",
+        "addressCountry": "NG"
       },
       "sameAs": [
         "https://twitter.com/kusmusai",
@@ -279,6 +293,7 @@
 
         <nav>
             <ul id="primary-navigation" data-visible="false">
+                <li><a href="{{ url_for('public.home') }}">Home</a></li>
                 <li><a href="{{ url_for('public.solutions') }}">Solutions</a></li>
                 <li><a href="{{ url_for('public.method') }}">Methodology</a></li>
                 <li><a href="{{ url_for('public.ceo_profile') }}">CEO Profile</a></li>

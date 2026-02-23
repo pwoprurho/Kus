@@ -340,10 +340,24 @@ def send_admin_message():
             attachment_type = 'image' if 'image' in uploaded_file.content_type else 'document'
 
         encrypted_content = encrypt_text(text if text else "[FILE SENT]")
-        supabase_admin.table('secure_chat_messages').insert({
+        insert_res = supabase_admin.table('secure_chat_messages').insert({
             'client_id': client_id, 'admin_id': current_user.id, 'sender_type': 'admin',
             'encrypted_content': encrypted_content, 'attachment_url': attachment_path, 'attachment_type': attachment_type
         }).execute()
+
+        # Emit Socket.IO event for real-time delivery
+        if insert_res.data:
+            new_msg = insert_res.data[0]
+            new_msg['message'] = text if text else "[FILE SENT]"
+            if attachment_path:
+                try:
+                    signed_res = supabase_admin.storage.from_('secure-files').create_signed_url(attachment_path, 3600)
+                    new_msg['signed_attachment'] = signed_res.get('signedURL') if isinstance(signed_res, dict) else signed_res
+                except Exception:
+                    new_msg['signed_attachment'] = None
+            
+            from extensions import socketio
+            socketio.emit('new_message', new_msg, room=f"client_{client_id}")
 
         # Notify Client
         try:

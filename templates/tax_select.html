@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% block title %}Tax Filing — Select Filing Type | Kusmus AI{% endblock %}
+
+{% block content %}
+<style>
+    /* Override base layout */
+    header,
+    footer,
+    #chat-widget-container {
+        display: none !important;
+    }
+
+    body {
+        background-color: #0a0e17;
+        color: #e0e0e0;
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+    }
+
+    .tax-select-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 2rem;
+        background: radial-gradient(ellipse at 30% 20%, rgba(88, 166, 255, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 80%, rgba(255, 215, 0, 0.06) 0%, transparent 50%),
+            #0a0e17;
+    }
+
+    .tax-select-container {
+        text-align: center;
+        max-width: 900px;
+        width: 100%;
+    }
+
+    .select-heading {
+        font-family: 'Garamond', serif;
+        font-size: 2.5rem;
+        color: #fff;
+        margin-bottom: 0.5rem;
+        font-weight: 400;
+    }
+
+    .select-subheading {
+        color: #8b949e;
+        font-size: 1.05rem;
+        margin-bottom: 3rem;
+        line-height: 1.6;
+    }
+
+    .filing-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    .filing-card {
+        background: rgba(22, 27, 34, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.35s cubic-bezier(.4, 0, .2, 1);
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .filing-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 20px 20px 0 0;
+        transition: height 0.3s ease;
+    }
+
+    .filing-card.personal::before {
+        background: linear-gradient(90deg, #58a6ff, #00c6ff);
+    }
+
+    .filing-card.corporate::before {
+        background: linear-gradient(90deg, #ffd700, #ff8c00);
+    }
+
+    .filing-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .filing-card:hover::before {
+        height: 5px;
+    }
+
+    .filing-card.personal:hover {
+        border-color: rgba(88, 166, 255, 0.3);
+    }
+
+    .filing-card.corporate:hover {
+        border-color: rgba(255, 215, 0, 0.3);
+    }
+
+    .card-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .personal .card-icon {
+        background: linear-gradient(135deg, rgba(88, 166, 255, 0.15), rgba(0, 198, 255, 0.08));
+        color: #58a6ff;
+        border: 1px solid rgba(88, 166, 255, 0.2);
+    }
+
+    .corporate .card-icon {
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 140, 0, 0.08));
+        color: #ffd700;
+        border: 1px solid rgba(255, 215, 0, 0.2);
+    }
+
+    .card-title {
+        font-family: 'Garamond', serif;
+        font-size: 1.6rem;
+        color: #fff;
+        font-weight: 400;
+    }
+
+    .card-desc {
+        color: #8b949e;
+        font-size: 0.92rem;
+        line-height: 1.6;
+        max-width: 280px;
+    }
+
+    .card-badge {
+        display: inline-block;
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 0.5rem;
+    }
+
+    .personal .card-badge {
+        background: rgba(88, 166, 255, 0.1);
+        color: #58a6ff;
+        border: 1px solid rgba(88, 166, 255, 0.2);
+    }
+
+    .corporate .card-badge {
+        background: rgba(255, 215, 0, 0.1);
+        color: #ffd700;
+        border: 1px solid rgba(255, 215, 0, 0.2);
+    }
+
+    .card-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 24px;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-top: 1rem;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .personal .card-cta {
+        background: linear-gradient(135deg, #0072ff, #00c6ff);
+        color: #fff;
+    }
+
+    .corporate .card-cta {
+        background: linear-gradient(135deg, #ffd700, #ff8c00);
+        color: #1a1a1a;
+    }
+
+    .filing-card:hover .card-cta {
+        transform: scale(1.05);
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #8b949e;
+        text-decoration: none;
+        font-size: 0.9rem;
+        margin-top: 2.5rem;
+        transition: color 0.2s;
+    }
+
+    .back-link:hover {
+        color: #58a6ff;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .filing-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .select-heading {
+            font-size: 1.8rem;
+        }
+
+        .filing-card {
+            padding: 2rem 1.5rem;
+        }
+    }
+</style>
+
+<div class="tax-select-wrapper">
+    <div class="tax-select-container">
+        <h1 class="select-heading">Tax Compliance Agent</h1>
+        <p class="select-subheading">
+            Select your filing type to begin. Our AI agent will guide you through<br>
+            document analysis, tax calculation, and PDF filing generation.
+        </p>
+
+        <div class="filing-cards">
+            <!-- Personal Filing Card -->
+            <a href="{{ url_for('sandbox.sandbox_view') }}?demo=tax_personal" class="filing-card personal">
+                <div class="card-icon"><i class="fas fa-user-tie"></i></div>
+                <div class="card-title">Personal Filing</div>
+                <div class="card-desc">
+                    Individual income tax returns under the Personal Income Tax Act.
+                    Employment, freelance, rental, and investment income.
+                </div>
+                <span class="card-badge">PIT / PAYE</span>
+                <div class="card-cta">
+                    Start Personal Filing <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+
+            <!-- Corporate Filing Card -->
+            <a href="{{ url_for('sandbox.sandbox_view') }}?demo=tax_corporate" class="filing-card corporate">
+                <div class="card-icon"><i class="fas fa-building"></i></div>
+                <div class="card-title">Corporate Filing</div>
+                <div class="card-desc">
+                    Company income tax returns under the Companies Income Tax Act.
+                    Revenue, expenses, capital allowances, and education tax.
+                </div>
+                <span class="card-badge">CIT / EDT</span>
+                <div class="card-cta">
+                    Start Corporate Filing <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <a href="{{ url_for('sandbox.sandbox_view') }}" class="back-link">
+            <i class="fas fa-chevron-left"></i> Back to Sandbox
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -364,6 +364,129 @@
         color: #8b949e;
         border-left: 0.25em solid #30363d;
     }
+
+    /* --- COMPREHENSIVE FORM MODAL --- */
+    .tax-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        z-index: 2000;
+        display: none;
+        /* Hidden by default */
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .tax-modal-content {
+        background: rgba(22, 27, 34, 0.9);
+        border: 1px solid rgba(88, 166, 255, 0.3);
+        border-radius: 20px;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        padding: 2.5rem;
+        position: relative;
+    }
+
+    .modal-section-title {
+        color: #58a6ff;
+        font-family: 'Garamond', serif;
+        font-size: 1.4rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(88, 166, 255, 0.1);
+        padding-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-group label {
+        display: block;
+        color: #8b949e;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-control-premium {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        color: white;
+        transition: all 0.2s;
+        outline: none;
+    }
+
+    .form-control-premium:focus {
+        border-color: #58a6ff;
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .close-modal-btn {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        background: none;
+        border: none;
+        color: #8b949e;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .close-modal-btn:hover {
+        color: #ff4444;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .tax-modal-content {
+            padding: 1.5rem;
+        }
+    }
 </style>
 
 <div class="tax-agent-container">
@@ -377,56 +500,45 @@
         </div>
         <div class="panel-body">
             <form id="upload-form" enctype="multipart/form-data">
-                <div class="upload-zone" onclick="document.getElementById('statementFile').click()">
-                    <i class="fas fa-file-invoice-dollar fa-2x mb-2" style="color: #58a6ff;"></i>
-                    <p class="mb-1">Upload Bank Statement</p>
-                    <small class="text-muted">Images (PNG, JPG) or PDF</small>
-                    <input type="file" id="statementFile" name="statementFile" accept=".png,.jpg,.jpeg,.pdf" hidden
-                        onchange="handleFileSelect(this)">
+                <div class="upload-zone" id="drop-zone" onclick="document.getElementById('docFiles').click()">
+                    <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color: #58a6ff;"></i>
+                    <p class="mb-1" id="upload-label">Drop files here or click to browse</p>
+                    <small class="text-muted">Bank Statements, Receipts, Payslips — PNG, JPG, PDF (multiple)</small>
+                    <input type="file" id="docFiles" name="documents" accept=".png,.jpg,.jpeg,.pdf" hidden multiple
+                        onchange="handleFilesSelected(this.files)">
                 </div>
 
-                <div class="upload-zone" onclick="document.getElementById('receiptsFile').click()">
-                    <i class="fas fa-receipt fa-2x mb-2" style="color: #58a6ff;"></i>
-                    <p class="mb-1">Upload Receipts</p>
-                    <small class="text-muted">Images (PNG, JPG) or PDF</small>
-                    <input type="file" id="receiptsFile" name="receiptsFile" accept=".png,.jpg,.jpeg,.pdf" hidden
-                        onchange="handleFileSelect(this)">
-                </div>
+                <!-- File queue -->
+                <div id="file-queue" class="mt-3" style="max-height: 180px; overflow-y: auto;"></div>
 
-                <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill">
-                    <i class="fas fa-cloud-upload-alt me-2"></i> Process Documents
+                <button type="submit" id="upload-btn" class="btn btn-primary w-100 py-2 rounded-pill mt-3" disabled>
+                    <i class="fas fa-cloud-upload-alt me-2"></i> Upload All & Analyze (<span id="file-count">0</span>
+                    files)
                 </button>
             </form>
 
-            <!-- Generate Tax Filing Button -->
-            <button id="generate-filing-btn" class="btn btn-success w-100 py-2 rounded-pill mt-3" style="display: none;"
-                onclick="generateTaxFiling()">
-                <i class="fas fa-file-invoice me-2"></i> Generate Tax Filing Document
-            </button>
-
             <div id="upload-status" class="mt-3"></div>
-
-            <div class="mt-4">
-                <h6 class="text-uppercase text-muted small fw-bold mb-3">Uploaded Documents</h6>
-                <div id="mini-table-container">
-                    <!-- File list will be injected here -->
-                </div>
-            </div>
         </div>
     </div>
 
     <!-- Right Panel: Chat Interface -->
     <div class="glass-panel">
         <div class="panel-header d-flex justify-content-between align-items-center">
-            <h3 class="panel-title">
-                <i class="fas fa-robot" style="color: #58a6ff;"></i>
-                Tax Compliance Agent
-            </h3>
-            <span
-                class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 rounded-pill px-3">
-                <span class="spinner-grow spinner-grow-sm me-1" style="width: 6px; height: 6px;"></span>
-                Online
-            </span>
+            <button type="button" class="btn btn-sm btn-outline-success rounded-pill" id="generate-filing-btn"
+                onclick="generateTaxFiling()">
+                <i class="fas fa-file-pdf me-1"></i> Generate Filing
+            </button>
+            <div class="d-flex align-items-center gap-3">
+                <h3 class="panel-title mb-0">
+                    <i class="fas fa-robot" style="color: #58a6ff;"></i>
+                    Tax Compliance Agent
+                </h3>
+                <span
+                    class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 rounded-pill px-3">
+                    <span class="spinner-grow spinner-grow-sm me-1" style="width: 6px; height: 6px;"></span>
+                    Online
+                </span>
+            </div>
         </div>
 
         <div id="chat-box" class="chat-messages">
@@ -460,69 +572,325 @@
     </div>
 </div>
 
+<!-- PERSONAL TAX FORM MODAL -->
+<div id="tax-form-modal" class="tax-modal-overlay">
+    <div class="tax-modal-content">
+        <button class="close-modal-btn" onclick="hideTaxForm()">&times;</button>
+
+        <h2 style="font-family: 'Garamond', serif; color: white; margin-bottom: 2rem;">
+            <i class="fas fa-user-shield" style="color: #58a6ff;"></i> Personal Income Tax Return (2025)
+        </h2>
+
+        <form id="comprehensive-tax-form">
+            <!-- Section 1: Personal Info -->
+            <div class="modal-section-title">
+                <i class="fas fa-user-shield"></i> Personal Information
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="taxpayer_name" class="form-control-premium" placeholder="e.g. John Doe"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Tax Identification Number (TIN)</label>
+                    <input type="text" name="taxpayer_tin" class="form-control-premium" placeholder="e.g. 12345678-0001"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" name="taxpayer_address" class="form-control-premium"
+                        placeholder="e.g. 123 Lagos Way" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" name="taxpayer_phone" class="form-control-premium" placeholder="e.g. +234..."
+                        required>
+                </div>
+            </div>
+
+            <!-- Section 2: Income Details -->
+            <div class="modal-section-title">
+                <i class="fas fa-money-bill-wave"></i> Annual Income Details (₦)
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Employment Income</label>
+                    <input type="number" name="employment_income" class="form-control-premium" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Business Income</label>
+                    <input type="number" name="business_income" class="form-control-premium" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Rental Income</label>
+                    <input type="number" name="rental_income" class="form-control-premium" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Other Income</label>
+                    <input type="number" name="other_income" class="form-control-premium" value="0" step="0.01">
+                </div>
+            </div>
+
+            <!-- Section 3: Deductions & Reliefs -->
+            <div class="modal-section-title">
+                <i class="fas fa-hand-holding-usd"></i> Statutory Deductions (₦)
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Pension Contribution</label>
+                    <input type="number" name="pension_contribution" class="form-control-premium" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>National Housing Fund (NHF)</label>
+                    <input type="number" name="nhf_contribution" class="form-control-premium" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>National Health Insurance (NHIS)</label>
+                    <input type="number" name="nhis_contribution" class="form-control-premium" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>WHT Already Paid</label>
+                    <input type="number" name="wht_paid" class="form-control-premium" value="0" step="0.01">
+                </div>
+            </div>
+
+            <input type="hidden" name="form_type" value="personal">
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline-secondary px-4 rounded-pill"
+                    onclick="hideTaxForm()">Cancel</button>
+                <button type="submit" class="btn btn-primary px-5 rounded-pill">Submit Personal Tax Data</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- CORPORATE TAX FORM MODAL -->
+<div id="corporate-form-modal" class="tax-modal-overlay">
+    <div class="tax-modal-content">
+        <button class="close-modal-btn" onclick="hideTaxForm()">&times;</button>
+
+        <h2 style="font-family: 'Garamond', serif; color: white; margin-bottom: 2rem;">
+            <i class="fas fa-building" style="color: #ffd700;"></i> Company Income Tax Return (2025)
+        </h2>
+
+        <form id="corporate-tax-form">
+            <!-- Section 1: Company Info -->
+            <div class="modal-section-title">
+                <i class="fas fa-landmark"></i> Company Information
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Company Name</label>
+                    <input type="text" name="company_name" class="form-control-premium"
+                        placeholder="e.g. Acme Industries Ltd" required>
+                </div>
+                <div class="form-group">
+                    <label>RC Number</label>
+                    <input type="text" name="rc_number" class="form-control-premium" placeholder="e.g. RC 123456"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Tax Identification Number (TIN)</label>
+                    <input type="text" name="company_tin" class="form-control-premium" placeholder="e.g. 12345678-0001"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Registered Address</label>
+                    <input type="text" name="company_address" class="form-control-premium"
+                        placeholder="e.g. 1 Victoria Island, Lagos" required>
+                </div>
+            </div>
+
+            <!-- Section 2: Revenue -->
+            <div class="modal-section-title">
+                <i class="fas fa-chart-line"></i> Annual Revenue &amp; Expenses (₦)
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Gross Revenue / Turnover</label>
+                    <input type="number" name="gross_revenue" class="form-control-premium" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Cost of Sales</label>
+                    <input type="number" name="cost_of_sales" class="form-control-premium" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Allowable Expenses</label>
+                    <input type="number" name="allowable_expenses" class="form-control-premium" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Other Income</label>
+                    <input type="number" name="other_income" class="form-control-premium" value="0" step="0.01">
+                </div>
+            </div>
+
+            <!-- Section 3: Capital Allowances & Tax Credits -->
+            <div class="modal-section-title">
+                <i class="fas fa-balance-scale"></i> Capital Allowances &amp; Tax Credits (₦)
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Capital Allowance</label>
+                    <input type="number" name="capital_allowance" class="form-control-premium" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>WHT Already Paid</label>
+                    <input type="number" name="wht_paid" class="form-control-premium" value="0" step="0.01">
+                </div>
+            </div>
+
+            <input type="hidden" name="form_type" value="corporate">
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline-secondary px-4 rounded-pill"
+                    onclick="hideTaxForm()">Cancel</button>
+                <button type="submit" class="btn btn-warning px-5 rounded-pill text-dark">Submit Corporate Tax
+                    Data</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script src="{{ url_for('static', filename='js/tax_agent.js') }}"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const isSandbox = "{{ is_sandbox_demo }}" === "True";
+    // --- MULTI-FILE QUEUE WITH DRAG & DROP ---
+    let fileQueue = [];
 
-        if (isSandbox) {
-            // Restrict Upload Functionality for Sandbox Users
-            const zones = document.querySelectorAll('.upload-zone');
-            zones.forEach(zone => {
-                // Override inline onclick
-                zone.removeAttribute('onclick');
-                zone.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const proceed = confirm("File Analysis is a Client Feature.\n\nWould you like to Request an Audit or Log In to access the full product?");
-                    if (proceed) {
-                        window.location.href = "{{ url_for('public.audit_request') }}";
-                    }
-                });
+    function handleFilesSelected(fileList) {
+        for (let i = 0; i < fileList.length; i++) {
+            // Avoid duplicates by name+size
+            const f = fileList[i];
+            const exists = fileQueue.some(q => q.name === f.name && q.size === f.size);
+            if (!exists) fileQueue.push(f);
+        }
+        renderFileQueue();
+        saveQueueToIndexedDB();
+    }
 
-                // Visual indicators
-                zone.style.opacity = '0.7';
-                zone.style.cursor = 'not-allowed';
-                const p = zone.querySelector('p');
-                if (p) p.innerHTML += ' <i class="fas fa-lock small"></i>';
+    function removeFromQueue(index) {
+        fileQueue.splice(index, 1);
+        renderFileQueue();
+        saveQueueToIndexedDB();
+    }
+
+    function renderFileQueue() {
+        const container = document.getElementById('file-queue');
+        const countEl = document.getElementById('file-count');
+        const btn = document.getElementById('upload-btn');
+
+        countEl.textContent = fileQueue.length;
+        btn.disabled = fileQueue.length === 0;
+
+        if (fileQueue.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        fileQueue.forEach((f, i) => {
+            const icon = f.name.match(/\.pdf$/i) ? 'fa-file-pdf text-danger' : 'fa-file-image text-info';
+            const sizeMB = (f.size / (1024 * 1024)).toFixed(2);
+            html += `
+            <div class="d-flex align-items-center justify-content-between p-2 mb-1"
+                 style="background: rgba(255,255,255,0.04); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+                <div class="d-flex align-items-center gap-2" style="min-width: 0;">
+                    <i class="fas ${icon}"></i>
+                    <span class="text-light small text-truncate" style="max-width: 180px;">${f.name}</span>
+                    <span class="text-muted small">${sizeMB} MB</span>
+                </div>
+                <button type="button" class="btn btn-sm p-0" onclick="removeFromQueue(${i})"
+                    style="color: #f85149; background: none; border: none; font-size: 1rem;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    // --- DRAG & DROP ---
+    const dropZone = document.getElementById('drop-zone');
+    if (dropZone) {
+        ['dragenter', 'dragover'].forEach(ev => {
+            dropZone.addEventListener(ev, e => {
+                e.preventDefault(); e.stopPropagation();
+                dropZone.style.borderColor = '#58a6ff';
+                dropZone.style.background = 'rgba(88,166,255,0.08)';
             });
+        });
+        ['dragleave', 'drop'].forEach(ev => {
+            dropZone.addEventListener(ev, e => {
+                e.preventDefault(); e.stopPropagation();
+                dropZone.style.borderColor = '';
+                dropZone.style.background = '';
+            });
+        });
+        dropZone.addEventListener('drop', e => {
+            handleFilesSelected(e.dataTransfer.files);
+        });
+    }
 
-            // Disable Submit Button
-            const btn = document.querySelector('#upload-form button[type="submit"]');
-            if (btn) {
-                btn.disabled = true;
-                btn.classList.replace('btn-primary', 'btn-secondary');
-                btn.innerHTML = '<i class="fas fa-lock me-2"></i> Processing Locked (Demo Mode)';
-            }
+    // --- IndexedDB Temp Storage ---
+    const DB_NAME = 'KusTaxUploads';
+    const STORE_NAME = 'queue';
 
-            // Add Demo Banner
-            const container = document.querySelector('.tax-agent-container');
-            if (container) {
-                const banner = document.createElement('div');
-                banner.style.gridColumn = "1 / -1";
-                banner.style.padding = "10px";
-                banner.style.background = "rgba(255, 170, 0, 0.1)";
-                banner.style.border = "1px solid #ffaa00";
-                banner.style.color = "#ffaa00";
-                banner.style.borderRadius = "8px";
-                banner.style.textAlign = "center";
-                banner.style.marginBottom = "10px";
-                banner.innerHTML = "<strong>DEMO MODE:</strong> You are viewing the Tax Compliance Agent interface. Document upload is disabled.";
-                container.insertBefore(banner, container.firstChild);
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open(DB_NAME, 1);
+            req.onupgradeneeded = () => req.result.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async function saveQueueToIndexedDB() {
+        try {
+            const db = await openDB();
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            store.clear();
+            for (const f of fileQueue) {
+                const buf = await f.arrayBuffer();
+                store.add({ name: f.name, type: f.type, size: f.size, data: buf });
             }
+        } catch (e) { console.warn('IndexedDB save failed:', e); }
+    }
+
+    async function loadQueueFromIndexedDB() {
+        try {
+            const db = await openDB();
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const all = store.getAll();
+            all.onsuccess = () => {
+                const records = all.result || [];
+                if (records.length > 0) {
+                    fileQueue = records.map(r => new File([r.data], r.name, { type: r.type }));
+                    renderFileQueue();
+                }
+            };
+        } catch (e) { console.warn('IndexedDB load failed:', e); }
+    }
+
+    async function clearIndexedDB() {
+        try {
+            const db = await openDB();
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).clear();
+        } catch (e) { /* ignore */ }
+    }
+
+    // Restore queue on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadQueueFromIndexedDB();
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/service-worker.js')
+                    .then(reg => console.log('Service Worker registered with scope:', reg.scope))
+                    .catch(err => console.warn('Service Worker registration failed:', err));
+            });
         }
     });
-
-    // Simple file select handler for visual feedback
-    function handleFileSelect(input) {
-        const zone = input.parentElement;
-        if (input.files.length > 0) {
-            zone.style.borderColor = '#2ea043';
-            zone.style.background = 'rgba(46, 160, 67, 0.1)';
-            const p = zone.querySelector('p');
-            p.textContent = input.files[0].name;
-            p.style.fontWeight = 'bold';
-        }
-    }
 </script>
 {% endblock %}

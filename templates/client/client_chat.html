@@ -421,8 +421,11 @@
     </main>
 </div>
 
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+    integrity="sha384-+2QwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQw=="
+    crossorigin="anonymous"></script>
 <script>
-    // --- Reliable HTTP Polling Chat ---
+    // --- Real-Time Socket.IO Chat ---
     let knownMessageIds = new Set();
     const fileInput = document.getElementById('client-file');
     const attachBtn = document.getElementById('btn-attach');
@@ -442,17 +445,27 @@
         }
     });
 
-    // 2. Fetch & Render Chat History
-    async function syncMessages() {
-        try {
-            const res = await fetch('/client/chat/sync');
-            if (!res.ok) return;
-            const messages = await res.json();
-            renderMessages(messages);
-        } catch (e) {
-            console.error('Sync Error:', e);
+    // 2. Socket.IO Setup
+    const socket = io({ transports: ['websocket'] });
+
+    socket.on('connect', () => {
+        console.log("Connected to Secure Uplink.");
+        socket.emit('join_client_room');
+    });
+
+    // Listen for chat history
+    socket.on('chat_history', (messages) => {
+        renderMessages(messages);
+    });
+
+    // Listen for new messages in real time
+    socket.on('new_message', (msg) => {
+        if (!knownMessageIds.has(msg.id)) {
+            appendMessage(msg);
+            knownMessageIds.add(msg.id);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
         }
-    }
+    });
 
     function renderMessages(messages) {
         if (messages.length > 0 || knownMessageIds.size > 0) {
@@ -503,14 +516,15 @@
         const file = fileInput.files[0];
         if (!text && !file) return;
         // Optimistic Append (Temp ID)
+        const tempId = 'temp-' + Date.now();
         const tempMsg = {
-            id: 'temp-' + Date.now(),
+            id: tempId,
             sender_type: 'client',
             message: text || (file ? `[Uploading ${file.name}...]` : ''),
             signed_attachment: null
         };
         appendMessage(tempMsg);
-        knownMessageIds.add(tempMsg.id);
+        knownMessageIds.add(tempId);
         messagesArea.scrollTop = messagesArea.scrollHeight;
         try {
             const formData = new FormData();
@@ -537,9 +551,5 @@
     textInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendClientMessage();
     });
-
-    // 4. Initialize: Load history and start polling
-    syncMessages();
-    setInterval(syncMessages, 3000);
 </script>
 {% endblock %}

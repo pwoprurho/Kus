@@ -10,6 +10,7 @@ import os
 import csv
 import json
 import secrets
+from datetime import datetime
 from db import supabase_admin
 from utils import get_cipher_suite, encrypt_text, decrypt_text
 from services.mailer import send_notification_email
@@ -19,12 +20,21 @@ tax_bp = Blueprint('tax', __name__)
 
 # In-memory store for demo; replace with DB in production
 CLIENT_TABLES = {}
+
 @tax_bp.route('/tax')
 def tax_agent_ui():
     # Authenticate: Allow Admin (Flask-Login) OR Client (Session)
     if not (current_user.is_authenticated or (session.get('client_access') and session.get('client_id'))):
         return render_template('403.html')
-    return render_template('client/tax_agent.html')
+    return render_template('client/tax_agent.html', is_public=False)
+
+@tax_bp.route('/public/tax')
+def public_tax_agent():
+    """Public access to the Tax Agent — no login required."""
+    # Assign ephemeral session ID for public users
+    if not session.get('public_tax_id'):
+        session['public_tax_id'] = f"pub_{secrets.token_hex(8)}"
+    return render_template('client/tax_agent.html', is_public=True)
 
 def get_auth_context():
     """Helper to get client_id and ensure auth for Tax routes."""
@@ -32,50 +42,91 @@ def get_auth_context():
         return f"admin_{current_user.id}"
     if session.get('client_access') and session.get('client_id'):
         return session.get('client_id')
+    # Public (ephemeral) user
+    if session.get('public_tax_id'):
+        return session.get('public_tax_id')
     return None
+
 
 @tax_bp.route('/api/tax/upload', methods=['POST'])
 def tax_upload():
     client_id = get_auth_context()
     if not client_id:
         return jsonify({'error': 'Authentication required'}), 401
-    statement_file = request.files.get('statementFile')
-    receipts_file = request.files.get('receiptsFile')
+    
+    # Accept multiple files from 'documents' field, with fallback to legacy field names
+    files = request.files.getlist('documents')
+    if not files:
+        # Fallback for legacy single-file uploads
+        sf = request.files.get('statementFile')
+        rf = request.files.get('receiptsFile')
+        files = [f for f in [sf, rf] if f]
+    
+    if not files:
+        return jsonify({'error': 'No files provided'}), 400
     
     uploaded_files = []
 
     try:
-        # Clear previous doc context (using server-side file to avoid cookie limits with 200k chars)
         os.makedirs('data', exist_ok=True)
         cache_file = f"data/tax_ctx_{client_id}.txt"
+        # Clear previous doc context
         with open(cache_file, 'w', encoding='utf-8') as f:
             f.write("")
         
-        for file_obj, label in [(statement_file, 'Bank Statement'), (receipts_file, 'Receipts')]:
-            if file_obj:
-                filename = secure_filename(file_obj.filename)
-                file_path = f"{client_id}/tax_docs/{secrets.token_hex(4)}_{filename}"
-                
-                # Read file content once
-                file_bytes = file_obj.read()
-                
-                # Suggestion: Extract text for RAG context (increased limit to 200k chars)
-                try:
+        for file_obj in files:
+            filename = secure_filename(file_obj.filename)
+            file_path = f"{client_id}/tax_docs/{secrets.token_hex(4)}_{filename}"
+            
+            file_bytes = file_obj.read()
+            
+            # Extract text for RAG context
+            try:
+                text_content = ""
+                if filename.lower().endswith('.pdf'):
+                    import io
+                    import PyPDF2
+                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
+                    for idx, page in enumerate(pdf_reader.pages):
+                        page_text = page.extract_text()
+                        if page_text:
+                            text_content += f"--- Page {idx+1} ---\n{page_text}\n"
+                elif filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    try:
+                        from google import genai
+                        from google.genai import types
+                        from core.key_manager import key_manager
+                        client = genai.Client(api_key=key_manager.get_current_key())
+                        
+                        img_part = types.Part.from_bytes(
+                            data=file_bytes,
+                            mime_type=file_obj.content_type
+                        )
+                        response = client.models.generate_content(
+                            model='gemini-2.5-flash',
+                            contents=['Extract all readable text, line items, amounts, and dates from this financial document exactly as they appear.', img_part]
+                        )
+                        text_content = response.text
+                    except Exception as e:
+                        print(f"Gemini OCR failed: {e}")
+                        text_content = "[Image Document - Failed to extract text automatically. User must provide details.]\n"
+                else:
                     text_content = file_bytes.decode('utf-8', errors='ignore')
-                    with open(cache_file, 'a', encoding='utf-8') as f:
-                        f.write(f"\n\n=== {label} ({filename}) ===\n{text_content[:200000]}\n")
-                except Exception:
-                    pass
+                
+                with open(cache_file, 'a', encoding='utf-8') as f:
+                    f.write(f"\n\n=== Document: {filename} ===\n{text_content[:200000]}\n")
+            except Exception as e:
+                print(f"Extraction error for {filename}: {e}")
 
-                # Upload to Supabase Storage
-                supabase_admin.storage.from_('secure-files').upload(
-                    path=file_path,
-                    file=file_bytes,
-                    file_options={"content-type": file_obj.content_type}
-                )
-                uploaded_files.append({'name': filename, 'type': label, 'path': file_path})
+            # Upload to Supabase Storage
+            supabase_admin.storage.from_('secure-files').upload(
+                path=file_path,
+                file=file_bytes,
+                file_options={"content-type": file_obj.content_type}
+            )
+            uploaded_files.append({'name': filename, 'path': file_path})
 
-        return jsonify({'success': True, 'files': uploaded_files})
+        return jsonify({'success': True, 'files': uploaded_files, 'count': len(uploaded_files)})
     except Exception as e:
         print(f"Tax Upload Error: {e}")
         return jsonify({'error': str(e)}), 400
@@ -315,13 +366,27 @@ def client_chat_send():
         encrypted_content = encrypt_text(text if text else "[FILE SENT]")
 
         # Insert the message record
-        supabase_admin.table('secure_chat_messages').insert({
+        insert_res = supabase_admin.table('secure_chat_messages').insert({
             'client_id': client_id,
             'sender_type': 'client', # Message is FROM the client
             'encrypted_content': encrypted_content,
             'attachment_url': attachment_path,
             'attachment_type': attachment_type
         }).execute()
+
+        # Emit Socket.IO event for real-time delivery
+        if insert_res.data:
+            new_msg = insert_res.data[0]
+            new_msg['message'] = text if text else "[FILE SENT]"
+            if attachment_path:
+                try:
+                    signed_res = supabase_admin.storage.from_('secure-files').create_signed_url(attachment_path, 3600)
+                    new_msg['signed_attachment'] = signed_res.get('signedURL') if isinstance(signed_res, dict) else signed_res
+                except Exception:
+                    new_msg['signed_attachment'] = None
+            
+            from extensions import socketio
+            socketio.emit('new_message', new_msg, room=f"client_{client_id}")
 
         # Notify Admin
         msg_preview = text[:50] + "..." if text and len(text) > 50 else (text or "File Uploaded")
@@ -336,6 +401,71 @@ def client_chat_send():
         return jsonify({'status': 'sent'})
     except Exception as e:
         print(f"Client Chat Send Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@tax_bp.route('/api/tax/submit_comprehensive', methods=['POST'])
+def submit_comprehensive():
+    """Handles submission of the comprehensive tax return form (personal or corporate)."""
+    try:
+        client_id = get_auth_context()
+        if not client_id:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json() or {}
+        form_type = data.get('form_type', 'personal')
+        
+        os.makedirs('data', exist_ok=True)
+        cache_file = f"data/tax_ctx_{client_id}.txt"
+        
+        if form_type == 'corporate':
+            summary = f"""
+=== CORPORATE TAX DATA SUBMISSION ({datetime.now().strftime('%Y-%m-%d %H:%M')}) ===
+Entity Type: CORPORATE (Company Income Tax)
+Company Name: {data.get('company_name', 'N/A')}
+RC Number: {data.get('rc_number', 'N/A')}
+TIN: {data.get('company_tin', 'N/A')}
+Registered Address: {data.get('company_address', 'N/A')}
+
+Revenue & Expenses:
+ - Gross Revenue: ₦ {data.get('gross_revenue', 0):,.2f}
+ - Cost of Sales: ₦ {data.get('cost_of_sales', 0):,.2f}
+ - Allowable Expenses: ₦ {data.get('allowable_expenses', 0):,.2f}
+ - Other Income: ₦ {data.get('other_income', 0):,.2f}
+
+Capital Allowances & Credits:
+ - Capital Allowance: ₦ {data.get('capital_allowance', 0):,.2f}
+ - WHT Already Paid: ₦ {data.get('wht_paid', 0):,.2f}
+=========================================================
+"""
+        else:
+            summary = f"""
+=== PERSONAL TAX DATA SUBMISSION ({datetime.now().strftime('%Y-%m-%d %H:%M')}) ===
+Entity Type: PERSONAL (Personal Income Tax)
+Taxpayer: {data.get('taxpayer_name', 'N/A')}
+TIN: {data.get('taxpayer_tin', 'N/A')}
+Address: {data.get('taxpayer_address', 'N/A')}
+Phone: {data.get('taxpayer_phone', 'N/A')}
+
+Annual Income:
+ - Employment: ₦ {data.get('employment_income', 0):,.2f}
+ - Business: ₦ {data.get('business_income', 0):,.2f}
+ - Rental: ₦ {data.get('rental_income', 0):,.2f}
+ - Other: ₦ {data.get('other_income', 0):,.2f}
+
+Statutory Deductions:
+ - Pension: ₦ {data.get('pension_contribution', 0):,.2f}
+ - NHF: ₦ {data.get('nhf_contribution', 0):,.2f}
+ - NHIS: ₦ {data.get('nhis_contribution', 0):,.2f}
+ - WHT Already Paid: ₦ {data.get('wht_paid', 0):,.2f}
+=========================================================
+"""
+        
+        with open(cache_file, 'a', encoding='utf-8') as f:
+            f.write(summary)
+            
+        return jsonify({'success': True, 'message': 'Data synchronized with terminal context.'})
+    except Exception as e:
+        print(f"Submit Comprehensive Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 @tax_bp.route('/api/tax/generate_filing', methods=['POST'])
@@ -480,6 +610,9 @@ def generate_tax_filing():
 def download_tax_filing(filename):
     """Serve generated tax filing PDFs"""
     try:
+        from flask import current_app, send_from_directory
+        import os
+        
         client_id = get_auth_context()
         if not client_id:
             return jsonify({'error': 'Authentication required'}), 401
@@ -488,12 +621,13 @@ def download_tax_filing(filename):
         if client_id not in filename:
             return jsonify({'error': 'Unauthorized'}), 403
         
-        file_path = f"data/tax_filings/temp/{filename}"
+        directory = os.path.join(current_app.root_path, "data", "tax_filings", "temp")
+        file_path = os.path.join(directory, filename)
+        
         if not os.path.exists(file_path):
             return jsonify({'error': 'File not found'}), 404
         
-        from flask import send_file
-        return send_file(file_path, as_attachment=True, download_name=filename)
+        return send_from_directory(directory, filename, as_attachment=True, download_name=filename, mimetype='application/pdf')
         
     except Exception as e:
         print(f"Download Error: {e}")

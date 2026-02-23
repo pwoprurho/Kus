@@ -137,10 +137,18 @@ def sandbox_view():
     if not selected_demo:
         return render_template("select_demo.html", demos=DEMO_REGISTRY)
 
-    # SPECIAL CASE: Tax Agent Demo (Redirects to restricted Tax UI)
+    # SPECIAL CASE: Tax Agent Demo
     if 'tax' in selected_demo.lower() or 'compliance' in selected_demo.lower():
-        # Render the client template but with a flag that it's in demo/sandbox mode
-        return render_template('client/tax_agent.html', is_sandbox_demo=True, user=session.get('user', {}))
+        # If user selected a specific filing type, go straight to the Tax Agent UI
+        if 'personal' in selected_demo.lower():
+            session['tax_filing_type'] = 'personal'
+            return render_template('client/tax_agent.html', is_sandbox_demo=True, filing_type='personal', user=session.get('user', {}))
+        elif 'corporate' in selected_demo.lower():
+            session['tax_filing_type'] = 'corporate'
+            return render_template('client/tax_agent.html', is_sandbox_demo=True, filing_type='corporate', user=session.get('user', {}))
+        else:
+            # Show the filing type selection screen first
+            return render_template('tax_select.html')
 
     # SPECIAL CASE: Market Sentinel / Investor Demo
     if 'market' in selected_demo.lower() or 'investor' in selected_demo.lower() or 'sentinel_equity' in selected_demo.lower():

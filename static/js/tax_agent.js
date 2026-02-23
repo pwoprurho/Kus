@@ -4,12 +4,27 @@ document.addEventListener('DOMContentLoaded', function () {
     // Handle file uploads
     const uploadForm = document.getElementById('upload-form');
     const uploadStatus = document.getElementById('upload-status');
-    const miniTableContainer = document.getElementById('mini-table-container');
 
     uploadForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-        const formData = new FormData(uploadForm);
-        uploadStatus.textContent = 'Uploading...';
+
+        if (typeof fileQueue === 'undefined' || fileQueue.length === 0) {
+            uploadStatus.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-circle me-2"></i>No files to upload.</span>';
+            return;
+        }
+
+        const formData = new FormData();
+        const descInput = uploadForm.querySelector('input[name="file_description"]');
+        if (descInput && descInput.value) {
+            formData.append('file_description', descInput.value);
+        }
+
+        // Append all files in the queue
+        fileQueue.forEach(f => {
+            formData.append('documents', f);
+        });
+
+        uploadStatus.innerHTML = '<span class="text-info"><i class="fas fa-spinner fa-spin me-2"></i>Uploading & analyzing ' + fileQueue.length + ' document(s)...</span>';
         try {
             const res = await fetch('/api/tax/upload', {
                 method: 'POST',
@@ -17,41 +32,21 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             const data = await res.json();
             if (data.success) {
-                uploadStatus.textContent = 'Files uploaded successfully!';
-                renderFileList(data.files);
+                uploadStatus.innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-2"></i>' + data.count + ' document(s) uploaded and analyzed successfully!</span>';
+
+                // Clear the queue after successful upload
+                fileQueue = [];
+                if (typeof renderFileQueue === 'function') renderFileQueue();
+                if (typeof clearIndexedDB === 'function') clearIndexedDB();
+                if (descInput) descInput.value = '';
+
             } else {
-                uploadStatus.textContent = data.error || 'Upload failed.';
+                uploadStatus.innerHTML = '<span class="text-danger"><i class="fas fa-times-circle me-2"></i>' + (data.error || 'Upload failed.') + '</span>';
             }
         } catch (err) {
-            uploadStatus.textContent = 'Error uploading files.';
+            uploadStatus.innerHTML = '<span class="text-danger"><i class="fas fa-times-circle me-2"></i>Error uploading files.</span>';
         }
     });
-
-    function renderFileList(files) {
-        if (!files || files.length === 0) {
-            miniTableContainer.innerHTML = '<em class="text-muted">No documents uploaded yet.</em>';
-            return;
-        }
-        let html = '<div class="list-group">';
-        files.forEach(f => {
-            let icon = 'fa-file';
-            if (f.name.endsWith('.pdf')) icon = 'fa-file-pdf';
-            else if (f.name.match(/\.(jpg|jpeg|png)$/i)) icon = 'fa-file-image';
-
-            html += `
-        <div class="list-group-item bg-transparent border-secondary text-light d-flex align-items-center">
-            <i class="fas ${icon} fa-lg me-3 text-primary"></i>
-            <div>
-                <div class="fw-bold">${f.type}</div>
-                <small class="text-muted">${f.name}</small>
-            </div>
-            <i class="fas fa-check-circle text-success ms-auto"></i>
-        </div>
-      `;
-        });
-        html += '</div>';
-        miniTableContainer.innerHTML = html;
-    }
 
     // Chat logic
     const chatForm = document.getElementById('chat-form');
@@ -217,7 +212,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     for (const line of lines) {
                         if (line.trim().startsWith('data: ')) {
                             const dataStr = line.replace('data: ', '').trim();
-                            if (dataStr === '[DONE]') break;
+                            if (dataStr === '[DONE]') {
+                                break;
+                            }
 
                             try {
                                 const event = JSON.parse(dataStr);
@@ -267,8 +264,57 @@ document.addEventListener('DOMContentLoaded', function () {
                                 contentDiv.innerHTML += `<div class="text-danger small">Parsing error: ${e.message}</div>`;
                             }
                         }
-                    }
+                    } // end for
                     chatBox.scrollTop = chatBox.scrollHeight;
+                } // end while
+
+                // --- STREAM COMPLETE: FINAL TAG CHECKS ---
+                const personalTrigger = /\[?\[?TRIGGER_FORM_PERSONAL\]?\]?/i;
+                const corporateTrigger = /\[?\[?TRIGGER_FORM_CORPORATE\]?\]?/i;
+                const legacyTrigger = /\[?\[?TRIGGER_FORM\]?\]?/i;
+                const generateFilingTrigger = /\[?\[?GENERATE_FILING\]?\]?/i;
+
+                let detectedForm = null;
+
+                if (generateFilingTrigger.test(accumulatedMarkdown)) {
+                    const cleanText = accumulatedMarkdown.replace(generateFilingTrigger, '').trim();
+                    if (typeof marked !== 'undefined' && marked.parse) {
+                        contentDiv.innerHTML = marked.parse(cleanText) +
+                            '<div id="pdf-gen-status" class="mt-3"><span class="text-info"><i class="fas fa-spinner fa-spin me-2"></i>Generating Official Tax Document...</span></div>';
+                    } else {
+                        contentDiv.innerText = cleanText;
+                    }
+
+                    fetch('/api/tax/generate_filing', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            const statusDiv = contentDiv.querySelector('#pdf-gen-status');
+                            if (data.success && statusDiv) {
+                                statusDiv.innerHTML = `<a href="${data.pdf_url}" class="btn btn-success mt-2" download target="_blank"><i class="fas fa-file-pdf me-2"></i> Download Official Tax Filing Document</a>`;
+                            } else if (statusDiv) {
+                                statusDiv.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Failed to generate document.</span>`;
+                            }
+                        })
+                        .catch(err => {
+                            const statusDiv = contentDiv.querySelector('#pdf-gen-status');
+                            if (statusDiv) statusDiv.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle me-2"></i>Server error during generation.</span>`;
+                        });
+                } else if (personalTrigger.test(accumulatedMarkdown)) {
+                    detectedForm = 'personal';
+                } else if (corporateTrigger.test(accumulatedMarkdown)) {
+                    detectedForm = 'corporate';
+                } else if (legacyTrigger.test(accumulatedMarkdown)) {
+                    detectedForm = 'personal';
+                }
+
+                if (detectedForm) {
+                    const cleanText = accumulatedMarkdown.replace(/\[?\[?TRIGGER_FORM(_PERSONAL|_CORPORATE)?\]?\]?/i, '').trim();
+                    if (typeof marked !== 'undefined' && marked.parse) contentDiv.innerHTML = marked.parse(cleanText);
+                    setTimeout(() => { showTaxForm(detectedForm); }, 800);
                 }
 
                 if (!hasReceivedData && !accumulatedMarkdown) {
@@ -385,16 +431,101 @@ async function generateTaxFiling() {
     }
 }
 
-// Show Generate Filing button after successful upload
-document.addEventListener('DOMContentLoaded', function () {
-    const uploadForm = document.getElementById('upload-form');
-    if (uploadForm) {
-        uploadForm.addEventListener('submit', function () {
-            // Show the Generate Filing button after upload
-            setTimeout(() => {
-                const btn = document.getElementById('generate-filing-btn');
-                if (btn) btn.style.display = 'block';
-            }, 2000); // Show after 2 seconds (after upload completes)
-        });
+
+
+// --- COMPREHENSIVE FORM UTILITIES ---
+
+function showTaxForm(type) {
+    type = type || 'personal';
+    hideTaxForm(); // close any open modal first
+    if (type === 'corporate') {
+        const modal = document.getElementById('corporate-form-modal');
+        if (modal) modal.style.display = 'flex';
+    } else {
+        const modal = document.getElementById('tax-form-modal');
+        if (modal) modal.style.display = 'flex';
     }
+}
+
+function hideTaxForm() {
+    const personal = document.getElementById('tax-form-modal');
+    const corporate = document.getElementById('corporate-form-modal');
+    if (personal) personal.style.display = 'none';
+    if (corporate) corporate.style.display = 'none';
+}
+
+// Generic form submission handler
+async function handleTaxFormSubmit(formElement, formType) {
+    const submitBtn = formElement.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerText;
+    const formData = new FormData(formElement);
+    const data = Object.fromEntries(formData.entries());
+
+    // Convert all number inputs
+    formElement.querySelectorAll('input[type="number"]').forEach(inp => {
+        data[inp.name] = parseFloat(data[inp.name] || 0);
+    });
+
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Syncing...';
+
+        const res = await fetch('/api/tax/submit_comprehensive', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        if (result.success) {
+            hideTaxForm();
+            const chatBox = document.getElementById('chat-box');
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const label = formType === 'corporate' ? 'Corporate Tax Form' : 'Personal Tax Form';
+            chatBox.innerHTML += `
+                <div class="message user" style="margin-bottom: 2rem;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                         <div style="display:flex; align-items:center; gap:8px;">
+                              <div class="user-avatar" style="width:24px; height:24px; background: #6c757d; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                                 <i class="fas fa-user text-white" style="font-size: 12px;"></i>
+                              </div>
+                              <strong>You</strong>
+                          </div>
+                        <span class="text-white-50 small" style="font-size: 0.75rem;">${timeStr}</span>
+                    </div>
+                    <div style="margin-left: 32px; font-size: 0.95rem; font-style: italic; color: #58a6ff;">
+                        [${label} Submitted Successfully]
+                    </div>
+                </div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const chatInput = document.getElementById('chat-input');
+            if (formType === 'corporate') {
+                chatInput.value = "I have submitted the corporate tax form. Please analyze the data and provide the Company Income Tax breakdown.";
+            } else {
+                chatInput.value = "I have submitted the personal tax form. Please analyze the data and provide the Personal Income Tax breakdown.";
+            }
+            document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+        } else {
+            alert("Submission error: " + (result.error || "Unknown error"));
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Failed to connect to secure server.");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+// Personal Form Submission
+document.getElementById('comprehensive-tax-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    handleTaxFormSubmit(e.target, 'personal');
+});
+
+// Corporate Form Submission
+document.getElementById('corporate-tax-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    handleTaxFormSubmit(e.target, 'corporate');
 });

@@ -434,11 +434,13 @@
     {% endif %}
 </div>
 
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+    integrity="sha384-+2QwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQwQw=="
+    crossorigin="anonymous"></script>
 <script>
-    // --- Reliable HTTP Polling Admin Chat ---
+    // --- Real-Time Socket.IO Admin Chat ---
     let currentClientId = null;
     let knownMessageIds = new Set();
-    let pollInterval = null;
     const fileInput = document.getElementById('admin-file');
     const attachBtn = document.getElementById('btn-attach');
     const textInput = document.getElementById('admin-input');
@@ -457,7 +459,13 @@
         }
     });
 
-    // 2. Select Client & Start Polling
+    // 2. Socket.IO Setup
+    const socket = io({ transports: ['websocket'] });
+
+    socket.on('connect', () => {
+        console.log("Admin Terminal Linked via WebSocket.");
+    });
+
     function selectClient(clientId, name, element) {
         currentClientId = clientId;
         document.getElementById('chat-title').innerHTML = `<i class="fas fa-user-shield"></i> ${name}`;
@@ -467,25 +475,25 @@
         messagesArea.innerHTML = '';
         knownMessageIds.clear();
 
-        // Stop any previous polling
-        if (pollInterval) clearInterval(pollInterval);
-
-        // Fetch initial history and start polling
-        syncAdminChat();
-        pollInterval = setInterval(syncAdminChat, 3000);
+        // Join the admin room for this client
+        socket.emit('join_admin_room', { client_id: clientId });
     }
 
-    async function syncAdminChat() {
-        if (!currentClientId) return;
-        try {
-            const res = await fetch(`/admin/api/chat/${currentClientId}`);
-            if (!res.ok) return;
-            const data = await res.json();
-            renderMessages(data.history || [], data.context || {});
-        } catch (e) {
-            console.error('Admin Sync Error:', e);
+    // Listen for chat history
+    socket.on('chat_history', (payload) => {
+        if (!currentClientId || payload.client_id !== currentClientId) return;
+        renderMessages(payload.history, payload.context);
+    });
+
+    // Listen for new messages in real time
+    socket.on('new_message', (msg) => {
+        if (!currentClientId || msg.client_id !== currentClientId) return;
+        if (!knownMessageIds.has(msg.id)) {
+            appendMessage(msg);
+            knownMessageIds.add(msg.id);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
         }
-    }
+    });
 
     function renderMessages(messages, context) {
         const emptyPlaceholder = document.querySelector('.empty-placeholder');
