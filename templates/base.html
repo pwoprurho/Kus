@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AI Solutions in Nigeria | Sovereign Enterprise Intelligence | Kusmus AI{% endblock %}
+    <title>{% block title %}#1 AI Solutions Provider in Nigeria | Sovereign Intelligence | Kusmus AI{% endblock %}
     </title>
 
     <!-- PWA Manifest -->
@@ -23,18 +23,20 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:title" content="{% block og_title %}Kusmus AI - Engineering Certainty{% endblock %}">
+    <meta property="og:title"
+        content="{% block og_title %}Kusmus AI - Nigeria's Leading AI Solutions Provider{% endblock %}">
     <meta property="og:description"
-        content="{% block og_description %}Sovereign Enterprise Intelligence through fine-tuned open-source models. We deliver customized AI solutions that solve complex institutional problems with private data precision.{% endblock %}">
+        content="{% block og_description %}Sovereign Enterprise Intelligence for the African frontier. We engineer certainty through fine-tuned AI solutions, private data security, and institutional autonomy.{% endblock %}">
     <meta property="og:image"
         content="{% block og_image %}{{ url_for('static', filename='images/pic01.png', _external=True) }}{% endblock %}">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="{{ request.url }}">
-    <meta property="twitter:title" content="{% block twitter_title %}Kusmus AI - Engineering Certainty{% endblock %}">
+    <meta property="twitter:title"
+        content="{% block twitter_title %}Kusmus AI - The Frontier of Sovereign AI in Nigeria{% endblock %}">
     <meta property="twitter:description"
-        content="{% block twitter_description %}Engineering Certainty through advanced AI solutions and technology innovation. We accelerate growth for Tier 1 Enterprises and agile SMEs across Africa.{% endblock %}">
+        content="{% block twitter_description %}Engineering institutional certainty through sovereign AI solutions and technology innovation. We are transitionsing Nigeria's market leaders into the AI era.{% endblock %}">
     <meta property="twitter:image"
         content="{% block twitter_image %}{{ url_for('static', filename='images/pic01.png', _external=True) }}{% endblock %}">
 
@@ -64,6 +66,36 @@
         "https://twitter.com/kusmusai",
         "https://linkedin.com/company/kusmusai"
       ]
+    }
+    </script>
+
+    <!-- FAQ Schema for SERP Authority -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "Who is the leading AI solutions provider in Nigeria?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Kusmus AI is the leading AI solutions provider in Nigeria, specializing in sovereign enterprise intelligence and fine-tuned AI models for African institutions."
+        }
+      }, {
+        "@type": "Question",
+        "name": "What are sovereign AI solutions?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sovereign AI solutions are customized, security-hardened implementations where models are fine-tuned on private institutional data and deployed within a secure perimeter, ensuring complete data ownership and privacy."
+        }
+      }, {
+        "@type": "Question",
+        "name": "How does Kusmus AI support Nigerian market leaders?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Kusmus AI provides strategic AI audits, private infrastructure deployment, and continuous reinforcement learning loops to ensure that Nigerian market leaders achieve institutional autonomy and operational certainty."
+        }
+      }]
     }
     </script>
 

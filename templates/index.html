@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}AI Solutions & Technology Innovation | Engineering Certainty | Kusmus{% endblock %}
+{% block title %}#1 AI Solutions Provider in Nigeria | Engineering Certainty | Kusmus{% endblock %}
 
 {% block content %}
 <section id="hero" class="hero-section container">
@@ -9,8 +9,8 @@
             "Sovereign Intelligence"
         </p>
 
-        <h1 class="reveal reveal-alternate">Sovereign <abbr title="Artificial Intelligence">AI</abbr>
-            Solutions in Nigeria.</h1>
+        <h1 class="reveal reveal-alternate">Nigeria's #1 Sovereign <abbr title="Artificial Intelligence">AI</abbr>
+            Solutions Provider.</h1>
         <p class="subtitle reveal reveal-alternate">Engineering institutional certainty with fine-tuned precision. We
             bridge the gap between generic AI and private data security for African market leaders.
         </p>
@@ -31,7 +31,8 @@
     </div>
 
     <div class="trust-bar">
-        <p>Leading the frontier of AI Solutions in Nigeria. Custom fine-tuned models for Africa's leading institutions.
+        <p>The standard for <strong>AI Solutions in Nigeria</strong>. Engineering the future for Africa's leading
+            institutions.
         </p>
     </div>
 </section>
@@ -49,6 +50,25 @@
         <a href="{{ url_for('public.method') }}" class="secondary-button"
             style="background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.3);">Explore Our Doctrine
             &rarr;</a>
+    </div>
+</section>
+
+<!-- LIVE SIGNAL WIDGET (BUZZ ELEMENT) -->
+<section class="container fade-in" style="margin-bottom: 100px;">
+    <div class="glass-panel"
+        style="padding: 30px; border: 1px solid rgba(0, 114, 255, 0.2); background: rgba(0,0,0,0.5); border-radius: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 1.2rem; color: #fff; margin: 0;"><i class="fas fa-satellite-dish"
+                    style="color: #0072ff; margin-right: 10px;"></i> Live Institutional Signal Tracker</h3>
+            <span class="pulse-icon"
+                style="background: #00ff88; width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 10px #00ff88;"></span>
+        </div>
+        <div id="signal-feed"
+            style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #00ff88; height: 120px; overflow-y: hidden; line-height: 1.5;">
+            <div class="signal-line" style="opacity: 0.7;">[INFO] Initializing O-RAN Defense Perimeter...</div>
+            <div class="signal-line" style="opacity: 0.8;">[DATA] Reconciling Private Institutional Weights...</div>
+            <div class="signal-line">[AUTH] Verifying Sovereign Identity Gateway...</div>
+        </div>
     </div>
 </section>
 
@@ -95,13 +115,11 @@
         if (btn && video) {
             btn.addEventListener('click', function () {
                 if (video.muted) {
-                    // Unmute
                     video.muted = false;
                     icon.className = 'fas fa-volume-up';
                     text.textContent = 'Mute Audio';
                     video.volume = 1.0;
                 } else {
-                    // Mute
                     video.muted = true;
                     icon.className = 'fas fa-volume-mute';
                     text.textContent = 'Tap to Listen';
@@ -109,6 +127,33 @@
             });
         }
 
+        // Live Signal Logic
+        const feed = document.getElementById('signal-feed');
+        const lines = [
+            "[DATA] Cross-referencing Nigerian Tax Act 2025 clauses...",
+            "[INFO] Sentinel threat detection active (+12ms latency)",
+            "[DATA] Synthesis Engine: Reconciling multi-path reporting...",
+            "[AUTH] Access granted to Sovereign Education Vault.",
+            "[INFO] Neural weights optimized for Nigerian market context.",
+            "[DATA] Anomaly detected in remote telemetry: Remediation sequence active.",
+            "[INFO] VLA Vision feed synchronized with physical hardware.",
+            "[STATE] Sovereign node heartbeat: Stable @ 99.99% pulse."
+        ];
+
+        setInterval(() => {
+            const line = document.createElement('div');
+            line.className = 'signal-line';
+            line.style.opacity = '0';
+            line.style.transition = 'opacity 0.5s';
+            line.textContent = lines[Math.floor(Math.random() * lines.length)];
+            feed.appendChild(line);
+            setTimeout(() => line.style.opacity = '1', 10);
+
+            if (feed.children.length > 5) {
+                feed.removeChild(feed.firstChild);
+            }
+            feed.style.transform = 'translateY(0)'; // Force repaint
+        }, 3000);
     });
 </script>
 {% endblock %}
