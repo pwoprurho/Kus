@@ -516,7 +516,7 @@
 
 
         <div>
-            <div class="intel-header">Chairman's Log</div>
+            <div class="intel-header">Chief Consultant's Log</div>
             <div id="execution-log"
                 style="font-family: 'JetBrains Mono'; font-size: 0.75rem; color: #666; height: 300px; overflow-y:auto;">
                 <!-- Logs go here -->
@@ -533,7 +533,7 @@
         <input type="text" id="market-input" placeholder="Issue a Sentinel Command (e.g. 'Analyze PLTR')"
             onkeypress="handleInput(event)">
 
-        <!-- THE CHAIRMAN'S GAVEL -->
+        <!-- THE CHIEF CONSULTANT'S GAVEL -->
         <div id="gavel-modal" class="gavel-modal">
             <div class="verdict-header">
                 <div>
@@ -648,7 +648,7 @@
             document.getElementById('crypto-sig-container').style.display = 'block';
 
             // Send execution signal
-            logEvent(`EXEC Order ${ticketId} Signed by Chairman. Hash: ${mockSig.substring(0, 12)}...`);
+            logEvent(`EXEC Order ${ticketId} Signed by Chief Consultant. Hash: ${mockSig.substring(0, 12)}...`);
 
             // Keep modal open briefly to show signature
             setTimeout(() => {
@@ -691,7 +691,7 @@
         const isTicker = !ticker.includes(' ') && ticker.length < 10;
 
         const msg = isTicker ? `Analyze ${ticker}` : ticker;
-        appendChat("Chairman", msg);
+        appendChat("Chief Consultant", msg);
 
         let loadingMsg = `<i class="fas fa-circle-notch fa-spin"></i> Retrieving Insider Filings and Market Narratives...`;
         if (isTicker) {
@@ -790,7 +790,7 @@ ${data.reasoning}`;
         const bubble = document.createElement('div');
 
         // Use new Premium CSS classes
-        if (role === 'Chairman') {
+        if (role === 'Chief Consultant') {
             row.className = 'message-row user';
             bubble.className = 'chat-bubble user';
             bubble.innerHTML = html;
