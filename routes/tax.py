@@ -7,6 +7,7 @@ from services.personas import DEMO_REGISTRY
 from rag_tax_law import tax_rag
 from werkzeug.utils import secure_filename
 import os
+import io
 import csv
 import json
 import secrets
@@ -45,7 +46,11 @@ def get_auth_context():
     # Public (ephemeral) user
     if session.get('public_tax_id'):
         return session.get('public_tax_id')
-    return None
+    # Sandbox/demo fallback: generate a temporary session ID
+    import uuid
+    sandbox_id = f"sandbox_{uuid.uuid4().hex[:8]}"
+    session['public_tax_id'] = sandbox_id
+    return sandbox_id
 
 
 @tax_bp.route('/api/tax/upload', methods=['POST'])
@@ -578,57 +583,23 @@ def generate_tax_filing():
             "citations": tax_result.get('citations', [])
         }
         
-        # Generate PDF
-        os.makedirs('data/tax_filings/temp', exist_ok=True)
-        filename = f"tax_filing_{tax_year}_{client_id}_{secrets.token_hex(4)}.pdf"
-        output_path = f"data/tax_filings/temp/{filename}"
-        
+        # Generate PDF in-memory
+        buffer = io.BytesIO()
         generator = TaxFilingPDFGenerator()
-        generator.generate_tax_filing(output_path, pdf_data)
+        generator.generate_tax_filing(buffer, pdf_data)
+        buffer.seek(0)
         
-        # Return success with download URL
-        return jsonify({
-            'success': True,
-            'pdf_url': f"/downloads/tax_filings/{filename}",
-            'summary': {
-                'gross_income': tax_result['gross_income'],
-                'total_reliefs': tax_result['total_reliefs'],
-                'taxable_income': tax_result['taxable_income'],
-                'tax_due': tax_result['tax_due'],
-                'balance_due': tax_result['tax_due'] - data.get('wht_paid', 0)
-            },
-            'citations': tax_result.get('citations', [])
-        })
+        # Return binary PDF response
+        from flask import send_file
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f"Tax_Filing_{tax_year}_{client_id[:8]}.pdf",
+            mimetype='application/pdf'
+        )
         
     except Exception as e:
         print(f"Tax Filing Generation Error: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': f'Failed to generate tax filing: {str(e)}'}), 500
-
-@tax_bp.route('/downloads/tax_filings/<filename>')
-def download_tax_filing(filename):
-    """Serve generated tax filing PDFs"""
-    try:
-        from flask import current_app, send_from_directory
-        import os
-        
-        client_id = get_auth_context()
-        if not client_id:
-            return jsonify({'error': 'Authentication required'}), 401
-        
-        # Security: Verify filename belongs to this client
-        if client_id not in filename:
-            return jsonify({'error': 'Unauthorized'}), 403
-        
-        directory = os.path.join(current_app.root_path, "data", "tax_filings", "temp")
-        file_path = os.path.join(directory, filename)
-        
-        if not os.path.exists(file_path):
-            return jsonify({'error': 'File not found'}), 404
-        
-        return send_from_directory(directory, filename, as_attachment=True, download_name=filename, mimetype='application/pdf')
-        
-    except Exception as e:
-        print(f"Download Error: {e}")
-        return jsonify({'error': str(e)}), 500

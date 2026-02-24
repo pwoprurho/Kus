@@ -280,28 +280,81 @@ document.addEventListener('DOMContentLoaded', function () {
                     const cleanText = accumulatedMarkdown.replace(generateFilingTrigger, '').trim();
                     if (typeof marked !== 'undefined' && marked.parse) {
                         contentDiv.innerHTML = marked.parse(cleanText) +
-                            '<div id="pdf-gen-status" class="mt-3"><span class="text-info"><i class="fas fa-spinner fa-spin me-2"></i>Generating Official Tax Document...</span></div>';
+                            '<div id="pdf-gen-status" class="mt-4 p-3 border border-success border-opacity-25 rounded-3 bg-success bg-opacity-10">' +
+                            '<span class="text-info"><i class="fas fa-spinner fa-spin me-2"></i>Generating Official Tax Document...</span>' +
+                            '</div>';
                     } else {
                         contentDiv.innerText = cleanText;
+                    }
+
+                    // Prepare generation data
+                    const genPayload = {
+                        tax_year: 2025
+                    };
+
+                    if (lastSubmittedData) {
+                        Object.assign(genPayload, {
+                            taxpayer_name: lastSubmittedData.taxpayer_name || lastSubmittedData.company_name || 'N/A',
+                            taxpayer_tin: lastSubmittedData.taxpayer_tin || lastSubmittedData.company_tin || 'N/A',
+                            taxpayer_address: lastSubmittedData.taxpayer_address || lastSubmittedData.company_address || 'N/A',
+                            taxpayer_phone: lastSubmittedData.taxpayer_phone || 'N/A',
+                            wht_paid: lastSubmittedData.wht_paid || 0,
+                            income_data: {
+                                employment_income: lastSubmittedData.employment_income || 0,
+                                business_income: lastSubmittedData.business_income || 0,
+                                rental_income: lastSubmittedData.rental_income || 0,
+                                other_income: lastSubmittedData.other_income || 0,
+                                pension_contribution: lastSubmittedData.pension_contribution || 0,
+                                nhf_contribution: lastSubmittedData.nhf_contribution || 0,
+                                nhis_contribution: lastSubmittedData.nhis_contribution || 0,
+                                gross_revenue: lastSubmittedData.gross_revenue || 0,
+                                cost_of_sales: lastSubmittedData.cost_of_sales || 0,
+                                allowable_expenses: lastSubmittedData.allowable_expenses || 0,
+                                capital_allowance: lastSubmittedData.capital_allowance || 0
+                            }
+                        });
                     }
 
                     fetch('/api/tax/generate_filing', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({})
+                        body: JSON.stringify(genPayload)
                     })
-                        .then(res => res.json())
-                        .then(data => {
+                        .then(r => {
+                            if (!r.ok) return r.json().then(e => { throw new Error(e.error || 'Generation failed') });
+                            return r.blob();
+                        })
+                        .then(blob => {
                             const statusDiv = contentDiv.querySelector('#pdf-gen-status');
-                            if (data.success && statusDiv) {
-                                statusDiv.innerHTML = `<a href="${data.pdf_url}" class="btn btn-success mt-2" download target="_blank"><i class="fas fa-file-pdf me-2"></i> Download Official Tax Filing Document</a>`;
-                            } else if (statusDiv) {
-                                statusDiv.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Failed to generate document.</span>`;
+                            if (statusDiv) {
+                                statusDiv.innerHTML = `
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        <span class="text-white">Official Tax Document Ready</span>
+                                    </div>
+                                    <button class="btn btn-success rounded-pill px-4" id="stream-download-btn">
+                                        <i class="fas fa-file-pdf me-2"></i> Download Official Tax Filing Document
+                                    </button>
+                                `;
+
+                                document.getElementById('stream-download-btn').addEventListener('click', function () {
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    const name = (lastSubmittedData ? (lastSubmittedData.taxpayer_name || lastSubmittedData.company_name) : 'Tax_Filing').replace(/\s+/g, '_');
+                                    a.download = `Tax_Filing_2025_${name}.pdf`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    window.URL.revokeObjectURL(url);
+                                    a.remove();
+                                });
                             }
                         })
                         .catch(err => {
                             const statusDiv = contentDiv.querySelector('#pdf-gen-status');
-                            if (statusDiv) statusDiv.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle me-2"></i>Server error during generation.</span>`;
+                            if (statusDiv) {
+                                statusDiv.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle me-2"></i>${err.message}</span>`;
+                            }
                         });
                 } else if (personalTrigger.test(accumulatedMarkdown)) {
                     detectedForm = 'personal';
@@ -433,6 +486,10 @@ async function generateTaxFiling() {
 
 
 
+// Global variables for streaming and context
+let accumulatedMarkdown = '';
+let lastSubmittedData = null; // Store for PDF generation trigger
+
 // --- COMPREHENSIVE FORM UTILITIES ---
 
 function showTaxForm(type) {
@@ -499,6 +556,10 @@ async function handleTaxFormSubmit(formElement, formType) {
                 </div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
 
+            // Store data for AI-triggered generation
+            lastSubmittedData = data;
+
+            // Also trigger AI analysis in chat
             const chatInput = document.getElementById('chat-input');
             if (formType === 'corporate') {
                 chatInput.value = "I have submitted the corporate tax form. Please analyze the data and provide the Company Income Tax breakdown.";

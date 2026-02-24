@@ -592,7 +592,7 @@
 
 <script>
     // Set demo lock as a global JS variable for linter compatibility
-    window.IS_DEMO_LOCKED = {{ 'true' if is_sandbox_demo else 'false' }};
+    window.IS_DEMO_LOCKED = JSON.parse('{{ is_sandbox_demo | tojson }}');
 
     document.addEventListener('DOMContentLoaded', () => {
         const IS_DEMO_LOCKED = window.IS_DEMO_LOCKED;
@@ -1224,16 +1224,16 @@ ${data.reasoning}`;
         init3DMarketPulse();
         initIntelScanner();
         // --- SANDBOX DEMO AUTO-START ---
-        {% if is_sandbox_demo %}
-        setTimeout(() => {
-            const tickers = ['NVDA', 'PLTR', 'BTC-USD', 'CL=F', 'GC=F', 'TSLA'];
-            const randomTicker = tickers[Math.floor(Math.random() * tickers.length)];
-            appendChat("System", `<i class='fas fa-magic'></i> Demo Mode Active: Auto-Selecting Random Asset...`);
+        if (JSON.parse('{{ is_sandbox_demo | tojson }}')) {
             setTimeout(() => {
-                handleAssetClick(randomTicker);
+                const tickers = ['NVDA', 'PLTR', 'BTC-USD', 'CL=F', 'GC=F', 'TSLA'];
+                const randomTicker = tickers[Math.floor(Math.random() * tickers.length)];
+                appendChat("System", `<i class='fas fa-magic'></i> Demo Mode Active: Auto-Selecting Random Asset...`);
+                setTimeout(() => {
+                    handleAssetClick(randomTicker);
+                }, 1000);
             }, 1000);
-        }, 1000);
-        {% endif %}
+        }
     });
 </script>
 {% endblock %}

@@ -112,3 +112,6 @@ models_error.txt
 
 # Temporary Reference Files
 temp_*
+
+# Data and Generated Documents
+data/

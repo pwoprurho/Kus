@@ -58,12 +58,12 @@ class TaxFilingPDFGenerator:
             spaceAfter=6
         ))
     
-    def generate_tax_filing(self, output_path: str, data: dict) -> str:
+    def generate_tax_filing(self, output_dest, data: dict):
         """
         Generate tax filing PDF
         
         Args:
-            output_path: Path to save PDF
+            output_dest: Path to save PDF or a file-like object (buffer)
             data: {
                 "taxpayer_info": {...},
                 "income_sources": [...],
@@ -71,13 +71,10 @@ class TaxFilingPDFGenerator:
                 "tax_calculation": {...},
                 "citations": [...]
             }
-        
-        Returns:
-            Path to generated PDF
         """
         # Create PDF document
         doc = SimpleDocTemplate(
-            output_path,
+            output_dest,
             pagesize=A4,
             rightMargin=2*cm,
             leftMargin=2*cm,
@@ -113,8 +110,6 @@ class TaxFilingPDFGenerator:
         
         # Build PDF
         doc.build(story, onFirstPage=self._add_watermark, onLaterPages=self._add_watermark)
-        
-        return output_path
     
     def _build_header(self, data):
         """Build document header"""
