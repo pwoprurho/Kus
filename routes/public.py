@@ -244,12 +244,14 @@ def chat_ai_assistant():
         return jsonify({'error': 'No message provided'}), 400
     
     try:
-        # Initialize Engine with the Client Care Persona
+        # Import the dynamic loader
+        from services.personas import get_main_assistant_instruction, MAIN_ASSISTANT
+        
+        # Initialize Engine with the Client Care Persona (Dynamically loaded)
         engine = KusmusAIEngine(
-            system_instruction=MAIN_ASSISTANT['instruction'],
+            system_instruction=get_main_assistant_instruction(),
             model_name=MAIN_ASSISTANT.get('model', 'gemini-2.5-flash-lite')
         )
-        
         # Maintain Session-based History
         raw_history = session.get('chat_history', [])
         
@@ -349,6 +351,7 @@ def sitemap():
     # 3. Dynamic Blog Posts
     if supabase_admin:
         try:
+            # Fetch from new schema
             response = supabase_admin.table('blog_posts').select("id, published_at").eq('status', 'Published').execute()
             if response.data:
                 for post in response.data:
@@ -359,6 +362,28 @@ def sitemap():
                     raw_date = post.get('published_at')
                     if raw_date:
                         # Handle space vs T vs full timestamp
+                        clean_date = raw_date.replace('T', ' ').split(' ')[0]
+                    else:
+                        clean_date = datetime.now().strftime('%Y-%m-%d')
+                    
+                    xml_sitemap.append(f'  <url>')
+                    xml_sitemap.append(f'    <loc>{escaped_url}</loc>')
+                    xml_sitemap.append(f'    <lastmod>{clean_date}</lastmod>')
+                    xml_sitemap.append(f'    <changefreq>weekly</changefreq>')
+                    xml_sitemap.append(f'    <priority>0.9</priority>')
+                    xml_sitemap.append(f'  </url>')
+        except: pass
+        
+        try:
+            # Fallback for older schema
+            response2 = supabase_admin.table('posts').select("id, created_at, date").eq('published', True).execute()
+            if response2.data:
+                for post in response2.data:
+                    url = url_for('public.blog_post', post_id=post['id'], _external=True)
+                    escaped_url = saxutils.escape(url)
+                    
+                    raw_date = post.get('created_at') or post.get('date')
+                    if raw_date:
                         clean_date = raw_date.replace('T', ' ').split(' ')[0]
                     else:
                         clean_date = datetime.now().strftime('%Y-%m-%d')

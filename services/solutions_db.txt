@@ -1,0 +1,26 @@
+# Kusmus AI Solutions Knowledge Base
+# Explain these products to users exactly as described here. DO NOT use complex technical jargon.
+
+AUTODIDACTIC ACADEMY:
+It was built to use our best AI fine-tuned models to create a personal learning experience.
+
+TAX COMPLIANCE ENGINE:
+It was designed to help corporate organizations and the common man file their tax reports yearly.
+
+DEMOCRACIUS:
+It is a real-time election monitoring tool that gathers evidence in real-time from the polling unit for use in the courtroom.
+
+SENTINEL (O-RAN Defense):
+It is an autonomous security system that works in the background to detect and stop threats before they cause system downtime.
+
+KRAG BOT (Algorithmic Trading):
+It is an AI trading tool that connects to MetaTrader to execute high-speed trades without human emotion.
+
+INTELLIGENCE SYNTHESIS ENGINE:
+It is an advanced research bot that searches the web to build detailed, executive-level reports on any given topic.
+
+SCIENTIFIC SIMULATION (Physics Sandbox):
+It allows users to type out an experiment and instantly see it visualized in a 3D environment, speeding up research.
+
+VLA ROBOTICS (Physical Security):
+It connects to cameras and drones to physically watch over servers and equipment, detecting when someone tampers with them.
