@@ -8,7 +8,7 @@ from flask_login import login_required, current_user
 from flask_mail import Message
 from werkzeug.utils import secure_filename
 from cryptography.fernet import Fernet
-from db import supabase_admin
+from db import supabase_admin, safe_execute
 from utils import role_required, get_cipher_suite, encrypt_text, decrypt_text
 from core.key_manager import key_manager
 from core.gateways import BTCGateway, USSDGateway
@@ -42,15 +42,15 @@ def dashboard():
 
     try:
         # 1. Fetch Audit Requests (Leads)
-        lead_res = supabase_admin.table('audit_requests').select('*').order('created_at', desc=True).limit(5).execute()
+        lead_res = safe_execute(supabase_admin.table('audit_requests').select('*').order('created_at', desc=True).limit(5))
         if lead_res.data: audit_requests = lead_res.data
 
         # 2. FIX: Fetch ALL Blog Posts (Published & Draft)
-        post_res = supabase_admin.table('blog_posts').select('*').order('created_at', desc=True).execute()
+        post_res = safe_execute(supabase_admin.table('blog_posts').select('*').order('created_at', desc=True))
         if post_res.data: draft_posts = post_res.data
 
         # 3. Fetch Paged Sandbox Logs
-        log_res = supabase_admin.table('sandbox_logs').select('*').order('created_at', desc=True).range(start, end).execute()
+        log_res = safe_execute(supabase_admin.table('sandbox_logs').select('*').order('created_at', desc=True).range(start, end))
         if log_res.data: sandbox_logs = log_res.data
 
         # 4. Total Count for Pagination and Stats

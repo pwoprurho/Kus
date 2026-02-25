@@ -14,7 +14,7 @@ from services.krag_bot.ai_analysis import AIAnalyzer
 import pandas as pd
 import numpy as np
 import datetime
-from db import supabase_admin
+from db import supabase_admin, safe_execute
 from services.research_agent import ResearchAgentService
 
 sandbox_bp = Blueprint('sandbox', __name__)
@@ -385,7 +385,7 @@ def sandbox_chat():
             
             if supabase_admin:
                 try:
-                    supabase_admin.table('sandbox_telemetry').insert(telemetry_record).execute()
+                    safe_execute(supabase_admin.table('sandbox_telemetry').insert(telemetry_record))
                     telemetry_saved = True
                 except Exception:
                     telemetry_saved = False
@@ -491,7 +491,7 @@ def persist_telemetry():
         try:
             if supabase_admin:
                 try:
-                    supabase_admin.table('sandbox_telemetry').insert(record).execute()
+                    safe_execute(supabase_admin.table('sandbox_telemetry').insert(record))
                 except Exception:
                     pass
         except Exception:

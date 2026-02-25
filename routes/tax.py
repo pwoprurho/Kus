@@ -12,7 +12,7 @@ import csv
 import json
 import secrets
 from datetime import datetime
-from db import supabase_admin
+from db import supabase_admin, safe_execute
 from utils import get_cipher_suite, encrypt_text, decrypt_text
 from services.mailer import send_notification_email
 ADMIN_EMAIL = os.getenv("MAIL_USERNAME", "notifications@kusmus.ai")
@@ -328,7 +328,7 @@ def client_chat_sync():
         return jsonify({'error': 'Authentication required'}), 401
     
     try:
-        res = supabase_admin.table('secure_chat_messages').select('*').eq('client_id', client_id).order('created_at', desc=False).execute()
+        res = safe_execute(supabase_admin.table('secure_chat_messages').select('*').eq('client_id', client_id).order('created_at', desc=False))
         chat_history = res.data or []
         
         for msg in chat_history:
@@ -371,13 +371,13 @@ def client_chat_send():
         encrypted_content = encrypt_text(text if text else "[FILE SENT]")
 
         # Insert the message record
-        insert_res = supabase_admin.table('secure_chat_messages').insert({
+        insert_res = safe_execute(supabase_admin.table('secure_chat_messages').insert({
             'client_id': client_id,
             'sender_type': 'client', # Message is FROM the client
             'encrypted_content': encrypted_content,
             'attachment_url': attachment_path,
             'attachment_type': attachment_type
-        }).execute()
+        }))
 
         # Emit Socket.IO event for real-time delivery
         if insert_res.data:

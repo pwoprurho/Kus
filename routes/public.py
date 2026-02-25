@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify, session, render_template, redirect, url_for, flash, Response, make_response
 from core.engine import KusmusAIEngine
 from services.personas import MAIN_ASSISTANT, DEMO_REGISTRY
-from db import supabase_admin
+from db import supabase_admin, safe_execute
 
 public_bp = Blueprint('public', __name__)
 
@@ -209,22 +209,14 @@ def audit_request():
             import time
             verification_code = secrets.token_hex(4).upper()
 
-            # Insert into Supabase with retry for transient errors
-            for attempt in range(3):
-                try:
-                    supabase_admin.table('audit_requests').insert({
-                        'name': name,
-                        'email': email,
-                        'phone': phone,
-                        'message': message,
-                        'verification_code': verification_code
-                    }).execute()
-                    break  # Success
-                except Exception as insert_err:
-                    if attempt < 2:
-                        time.sleep(0.5)
-                        continue
-                    raise insert_err  # Re-raise after final attempt
+            # Insert into Supabase with centralized retry
+            safe_execute(supabase_admin.table('audit_requests').insert({
+                'name': name,
+                'email': email,
+                'phone': phone,
+                'message': message,
+                'verification_code': verification_code
+            }))
 
             flash(f"Request Transmitted. Your Identity Token is: {verification_code}. Keep this secure.", "success")
             return redirect(url_for('public.home'))

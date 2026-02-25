@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from supabase import create_client
-from db import supabase_admin
+from db import supabase_admin, safe_execute
 from models import User, ClientUser 
 from services.mailer import send_recovery_otp
 
@@ -20,7 +20,7 @@ def send_recovery():
     
     try:
         # Check if client exists
-        client_res = supabase_admin.table('clients').select('id').eq('email', email).execute()
+        client_res = safe_execute(supabase_admin.table('clients').select('id').eq('email', email))
         if client_res.data and len(client_res.data) > 0:
             # Generate 6-digit OTP
             otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
@@ -79,7 +79,7 @@ def client_access():
 
         # === PHASE 1: CLIENT AUTH (Primary) ===
         try:
-            client_res = supabase_admin.table('clients').select('*').eq('email', email).execute()
+            client_res = safe_execute(supabase_admin.table('clients').select('*').eq('email', email))
 
             if client_res.data and len(client_res.data) > 0:
                 client_data = client_res.data[0]
@@ -114,8 +114,8 @@ def client_access():
                     return redirect(url_for('public.client_dashboard'))
 
             # Case 3: FIRST TIME REGISTRATION (Verification Code)
-            audit_res = supabase_admin.table('audit_requests')\
-                .select('*').eq('email', email).eq('verification_code', auth_input).execute()
+            audit_res = safe_execute(supabase_admin.table('audit_requests')\
+                .select('*').eq('email', email).eq('verification_code', auth_input))
 
             if audit_res.data and len(audit_res.data) > 0:
                 session['temp_client_email'] = email
@@ -136,7 +136,7 @@ def client_access():
                     "email": email, "password": auth_input
                 })
                 if auth_res.user:
-                    response = supabase_admin.table('user_profiles').select('*').eq('id', auth_res.user.id).single().execute()
+                    response = safe_execute(supabase_admin.table('user_profiles').select('*').eq('id', auth_res.user.id).single())
                     if response.data:
                         data = response.data
                         user = User(
@@ -181,34 +181,34 @@ def client_setup():
         
         
         try:
-            existing = supabase_admin.table('clients').select('id').eq('email', email).execute()
+            existing = safe_execute(supabase_admin.table('clients').select('id').eq('email', email))
             client_id = None
             
             if existing.data:
                 # UPDATE (Password Reset)
-                supabase_admin.table('clients').update({
+                safe_execute(supabase_admin.table('clients').update({
                     'password_hash': hashed_pw,
                     'phone': client_phone
-                }).eq('email', email).execute()
+                }).eq('email', email))
                 
                 client_id = existing.data[0]['id']
                 flash("Credentials Updated. Logging in...", "success")
             else:
                 # INSERT (New Registration)
                 # We execute and return data to get the new UUID immediately
-                insert_res = supabase_admin.table('clients').insert({
+                insert_res = safe_execute(supabase_admin.table('clients').insert({
                     'email': email,
                     'password_hash': hashed_pw,
                     'full_name': name,
                     'phone': client_phone,
                     'recovery_key': key
-                }).execute()
+                }))
                 
                 if insert_res.data:
                     client_id = insert_res.data[0]['id']
                 
                 # Mark audit request as registered
-                supabase_admin.table('audit_requests').update({'is_registered': True}).eq('email', email).execute()
+                safe_execute(supabase_admin.table('audit_requests').update({'is_registered': True}).eq('email', email))
                 flash("Protocol Initialized. Account Secured.", "success")
 
             # Finalize Session

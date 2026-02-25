@@ -38,6 +38,24 @@ else:
             print(f"Failed to initialize Supabase client: {e}")
             supabase_admin = None
 
+def safe_execute(query_builder):
+    """
+    Executes a Supabase query with built-in retry logic for transient errors.
+    Usage: safe_execute(supabase_admin.table('name').select('*').eq('id', 1))
+    """
+    import time
+    for attempt in range(3):
+        try:
+            return query_builder.execute()
+        except Exception as e:
+            error_msg = str(e).lower()
+            # Retry on known transient errors
+            if "illegal request line" in error_msg or "connection" in error_msg or "timeout" in error_msg:
+                if attempt < 2:
+                    time.sleep(0.5)
+                    continue
+            raise e
+
 def close_db_connection(e=None):
     """
     Placeholder for database teardown logic.
