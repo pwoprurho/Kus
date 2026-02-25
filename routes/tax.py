@@ -15,7 +15,7 @@ from datetime import datetime
 from db import supabase_admin
 from utils import get_cipher_suite, encrypt_text, decrypt_text
 from services.mailer import send_notification_email
-from supa_addmin import ADMIN_EMAIL
+ADMIN_EMAIL = os.getenv("MAIL_USERNAME", "notifications@kusmus.ai")
 
 tax_bp = Blueprint('tax', __name__)
 
