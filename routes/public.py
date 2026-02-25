@@ -206,22 +206,31 @@ def audit_request():
         try:
             # Generate a simple verification code for the client to use later
             import secrets
+            import time
             verification_code = secrets.token_hex(4).upper()
 
-            # Insert into Supabase
-            supabase_admin.table('audit_requests').insert({
-                'name': name,
-                'email': email,
-                'phone': phone,
-                'message': message,
-                'verification_code': verification_code
-            }).execute()
+            # Insert into Supabase with retry for transient errors
+            for attempt in range(3):
+                try:
+                    supabase_admin.table('audit_requests').insert({
+                        'name': name,
+                        'email': email,
+                        'phone': phone,
+                        'message': message,
+                        'verification_code': verification_code
+                    }).execute()
+                    break  # Success
+                except Exception as insert_err:
+                    if attempt < 2:
+                        time.sleep(0.5)
+                        continue
+                    raise insert_err  # Re-raise after final attempt
 
             flash(f"Request Transmitted. Your Identity Token is: {verification_code}. Keep this secure.", "success")
             return redirect(url_for('public.home'))
 
         except Exception as e:
-            print(f"Audit Request Error: {e}")
+            print(f"Audit Request Error (after retries): {e}")
             flash("Electronic transmission failure. Please try again.", "error")
             return render_template("request_audit.html")
 

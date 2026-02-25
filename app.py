@@ -49,21 +49,26 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
     if not supabase_admin or not user_id: return None
-    try:
-        response = supabase_admin.table('user_profiles').select('*').eq('id', user_id).single().execute()
-        if response.data:
-            data = response.data
-            return User(
-                id=data['id'],
-                full_name=data.get('full_name'),
-                email=data.get('email'),
-                role=data.get('role'),
-                location=data.get('location')
-            )
-        return None
-    except Exception as e:
-        print(f"Session Load Error: {e}")
-        return None
+    import time
+    for attempt in range(3):
+        try:
+            response = supabase_admin.table('user_profiles').select('*').eq('id', user_id).single().execute()
+            if response.data:
+                data = response.data
+                return User(
+                    id=data['id'],
+                    full_name=data.get('full_name'),
+                    email=data.get('email'),
+                    role=data.get('role'),
+                    location=data.get('location')
+                )
+            return None
+        except Exception as e:
+            if attempt < 2:
+                time.sleep(0.5)
+                continue
+            print(f"Session Load Error (after {attempt + 1} attempts): {e}")
+            return None
 
 # --- MOBILE ACCESSIBILITY ENABLED ---
 # Gate removed to allow all devices access to research protocols.

@@ -26,11 +26,13 @@ pip-wheel-metadata/
 
 # Virtual environments
 venv/
+Venv/
 ENV/
 env/
 .env
 .venv/
 venv.bak/
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -115,3 +117,10 @@ temp_*
 
 # Data and Generated Documents
 data/
+docs/
+
+# Private / Sensitive Files
+supa_addmin.py
+services/krag_bot/data/
+tx_*.json
+*.db
