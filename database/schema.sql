@@ -30,6 +30,7 @@ CREATE TABLE public.audit_requests (
     id uuid default gen_random_uuid() primary key,
     name text not null,
     email text not null,
+    phone text,
     message text,
     created_at timestamp with time zone default now()
 );
@@ -234,9 +235,13 @@ $$;
 ALTER TABLE audit_requests 
 ADD COLUMN verification_code TEXT;
 
--- 2. Add a status column to track if they have used it (optional but good practice)
+-- 3. Add access_granted column to audit_requests table
 ALTER TABLE audit_requests 
 ADD COLUMN access_granted BOOLEAN DEFAULT FALSE;
+
+-- 4. Add phone column to audit_requests table (migration)
+ALTER TABLE audit_requests 
+ADD COLUMN IF NOT EXISTS phone TEXT;
 
 -- 1. Ensure the Secure Chat Table exists (Fixes "Disappearing Messages")
 CREATE TABLE IF NOT EXISTS public.secure_chat_messages (
