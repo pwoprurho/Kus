@@ -53,7 +53,9 @@ def client_token():
 def get_auth_client():
     url = os.environ.get("SUPABASE_URL")
     key = os.environ.get("SUPABASE_KEY") 
-    if not url or not key: return None
+    if not url or not key:
+        print(f"DEBUG AUTH: get_auth_client failed - URL: {bool(url)}, KEY: {bool(key)}")
+        return None
     return create_client(url, key)
 
 # --- LEGACY ADMIN LOGIN REDIRECT ---
@@ -80,6 +82,7 @@ def client_access():
         # === PHASE 1: CLIENT AUTH (Primary) ===
         try:
             client_res = safe_execute(supabase_admin.table('clients').select('*').eq('email', email))
+            print(f"DEBUG AUTH: Phase 1 (Client Table) Check for {email} - Found: {len(client_res.data) > 0 if client_res.data else 0}")
 
             if client_res.data and len(client_res.data) > 0:
                 client_data = client_res.data[0]
@@ -136,6 +139,7 @@ def client_access():
                     "email": email, "password": auth_input
                 })
                 if auth_res.user:
+                    print(f"DEBUG AUTH: Phase 2 (Admin Auth) Success for {email}")
                     response = safe_execute(supabase_admin.table('user_profiles').select('*').eq('id', auth_res.user.id).single())
                     if response.data:
                         data = response.data
@@ -149,7 +153,8 @@ def client_access():
                         login_user(user)
                         flash("Secure Channel Established.", "success")
                         return redirect(url_for('admin.dashboard'))
-        except Exception:
+        except Exception as e:
+            print(f"DEBUG AUTH: Phase 2 (Admin Auth) Failure for {email}: {e}")
             pass  # Not an admin either — fall through to error
 
         # === ZERO TRUST: Generic denial (no role leakage) ===
