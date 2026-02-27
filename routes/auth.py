@@ -135,7 +135,13 @@ def client_access():
                 return redirect(url_for('auth.client_setup'))
 
         except Exception as e:
-            print(f"Client Auth Error: {e}")
+            msg = str(e)
+            print(f"DEBUG AUTH: Phase 1 (Client Auth) failure: {msg}")
+            if "illegal request line" in msg.lower():
+                flash("Proxy Error: Illegal Request Line during DB lookup.", "error")
+            else:
+                flash(f"Database Error: {msg}", "error")
+            return render_template('client/client_access.html')
 
         try:
             temp_client = get_auth_client()
@@ -177,12 +183,22 @@ def client_access():
                 elif last_error:
                     raise last_error
         except Exception as e:
-            print(f"DEBUG AUTH: Phase 2 (Admin Auth) failure: {e}")
+            error_msg = str(e)
+            print(f"DEBUG AUTH: Phase 2 (Admin Auth) failure: {error_msg}")
             traceback.print_exc()
-            pass  # Not an admin either — fall through to error
+            
+            # Extract readable message if possible
+            if "illegal request line" in error_msg.lower():
+                flash("Proxy Error: Illegal Request Line. Please retry.", "error")
+            elif "invalid login credentials" in error_msg.lower():
+                 flash("Access Denied: Invalid login credentials.", "error")
+            else:
+                flash(f"System Error: {error_msg}", "error")
+            return render_template('client/client_access.html')
 
-        # === ZERO TRUST: Generic denial (no role leakage) ===
-        flash("Access Denied: Invalid credentials.", "error")
+        # === FINAL FALLBACK ===
+        # If we reached here, both Client DB and Admin Auth failed without raising exceptions.
+        flash("Access Denied: Credentials NOT recognized in any system.", "error")
 
     return render_template('client/client_access.html')
 
