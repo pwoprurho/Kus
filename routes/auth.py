@@ -76,7 +76,7 @@ def client_access():
         auth_input = (request.form.get('auth_input') or '').strip()
 
         # --- ZERO TRUST: Input Validation ---
-        if not email or '@' not in email or not auth_input:
+        if not email_raw or '@' not in email_raw or not auth_input:
             flash("All fields are required.", "error")
             return render_template('client/client_access.html')
 
