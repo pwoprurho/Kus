@@ -1,5 +1,6 @@
 import json
 import os
+import hashlib
 from datetime import datetime
 from flask import Blueprint, request, jsonify, session, render_template, redirect, url_for, flash, Response, make_response
 from core.engine import KusmusAIEngine
@@ -41,9 +42,9 @@ def client_settings():
             risk = request.form.get('risk_tolerance')
             phone = request.form.get('phone')
             
-            # Update phone in DB
+            # Update phone in DB with retry
             try:
-                supabase_admin.table('clients').update({'phone': phone}).eq('id', client_id).execute()
+                safe_execute(supabase_admin.table('clients').update({'phone': phone}).eq('id', client_id))
             except Exception as e:
                 print(f"Phone Update Error: {e}")
 
@@ -156,13 +157,13 @@ def blog():
         try:
             # Fetching published blog posts from Supabase
             # Updated to match Admin schema: table 'blog_posts' and status='Published'
-            response = supabase_admin.table('blog_posts').select("*").eq('status', 'Published').order('published_at', desc=True).execute()
+            response = safe_execute(supabase_admin.table('blog_posts').select("*").eq('status', 'Published').order('published_at', desc=True))
             posts = response.data
         except Exception as e:
             print(f"Blog Fetch Error: {e}")
             # Fallback for older schema if migration isn't complete (optional, but good for safety)
             try:
-                response = supabase_admin.table('posts').select("*").eq('published', True).execute()
+                response = safe_execute(supabase_admin.table('posts').select("*").eq('published', True))
                 if response.data: posts.extend(response.data)
             except: pass
 
@@ -174,12 +175,12 @@ def blog_post(post_id):
     if supabase_admin:
         try:
             # Fetch single post from correct table
-            response = supabase_admin.table('blog_posts').select("*").eq('id', post_id).limit(1).execute()
+            response = safe_execute(supabase_admin.table('blog_posts').select("*").eq('id', post_id).limit(1))
             if response.data:
                 post = response.data[0]
             else:
                  # Fallback check
-                response = supabase_admin.table('posts').select("*").eq('id', post_id).limit(1).execute()
+                response = safe_execute(supabase_admin.table('posts').select("*").eq('id', post_id).limit(1))
                 if response.data: post = response.data[0]
 
         except Exception as e:
@@ -353,7 +354,7 @@ def sitemap():
     if supabase_admin:
         try:
             # Fetch from new schema
-            response = supabase_admin.table('blog_posts').select("id, published_at").eq('status', 'Published').execute()
+            response = safe_execute(supabase_admin.table('blog_posts').select("id, published_at").eq('status', 'Published'))
             if response.data:
                 for post in response.data:
                     url = url_for('public.blog_post', post_id=post['id'], _external=True)
@@ -377,7 +378,7 @@ def sitemap():
         
         try:
             # Fallback for older schema
-            response2 = supabase_admin.table('posts').select("id, created_at, date").eq('published', True).execute()
+            response2 = safe_execute(supabase_admin.table('posts').select("id, created_at, date").eq('published', True))
             if response2.data:
                 for post in response2.data:
                     url = url_for('public.blog_post', post_id=post['id'], _external=True)
@@ -417,3 +418,27 @@ def robots():
         f"Sitemap: {url_for('public.sitemap', _external=True)}"
     ]
     return Response('\n'.join(lines), mimetype='text/plain')
+# === DIAGNOSTIC ROUTE ===
+@public_bp.route('/diag')
+def diag():
+    import hashlib
+    is_dev = os.getenv('FLASK_ENV') == 'development'
+    trigger = request.args.get('trigger') == 'kusmus_diag'
+    if not is_dev and not trigger:
+        return jsonify({'error': 'Unauthorized diagnostic access'}), 401
+    env_summary = {}
+    for key in ['SUPABASE_URL', 'SUPABASE_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'DATABASE_URL', 'FLASK_ENV', 'SECRET_KEY']:
+        val = os.getenv(key)
+        if val:
+            env_summary[key] = {
+                'len': len(val),
+                'hash_8': hashlib.sha256(val.encode()).hexdigest()[:8],
+                'ends_cr': val.endswith('\r'),
+                'ends_space': val.endswith(' ')
+            }
+        else: env_summary[key] = {'present': False}
+    return jsonify({
+        'env': env_summary,
+        'cwd': os.getcwd(),
+        'files': os.listdir('.')[:20] if os.path.exists('.') else []
+    })

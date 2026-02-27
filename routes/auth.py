@@ -2,6 +2,7 @@
 import os
 import secrets
 import random
+import traceback
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -177,6 +178,7 @@ def client_access():
                     raise last_error
         except Exception as e:
             print(f"DEBUG AUTH: Phase 2 (Admin Auth) failure: {e}")
+            traceback.print_exc()
             pass  # Not an admin either — fall through to error
 
         # === ZERO TRUST: Generic denial (no role leakage) ===

@@ -1,4 +1,5 @@
 import os
+import traceback
 from dotenv import load_dotenv
 from flask import Flask, render_template, redirect, url_for, request
 from flask_login import LoginManager
@@ -63,6 +64,7 @@ def load_user(user_id):
         return None
     except Exception as e:
         print(f"Session Load Error: {e}")
+        traceback.print_exc()
         return None
 
 # --- MOBILE ACCESSIBILITY ENABLED ---

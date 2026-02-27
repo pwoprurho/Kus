@@ -7,11 +7,14 @@ import socket
 from urllib.parse import urlparse
 
 # Load Environment Variables
-load_dotenv(override=True)
+# override=False ensures that variables set in the Render/Terminal environment
+# take precedence over any local .env file.
+load_dotenv(override=False)
 
-# Initialize Supabase Client with hostname validation to provide clearer errors
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
+# Initialize Supabase Client with hostname validation
+# We use .strip() and str() to ensure no hidden characters from .env files interfere
+SUPABASE_URL = str(os.getenv("SUPABASE_URL") or "").strip()
+SUPABASE_KEY = str(os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY") or "").strip()
 
 def _resolve_hostname(url: str) -> bool:
     try:
