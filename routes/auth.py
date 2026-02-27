@@ -71,7 +71,8 @@ def login():
 @auth_bp.route('/client-access', methods=['GET', 'POST'])
 def client_access():
     if request.method == 'POST':
-        email = (request.form.get('email') or '').strip().lower()
+        email_raw = (request.form.get('email') or '').strip()
+        email_lower = email_raw.lower()
         auth_input = (request.form.get('auth_input') or '').strip()
 
         # --- ZERO TRUST: Input Validation ---
@@ -81,11 +82,13 @@ def client_access():
 
         # === PHASE 1: CLIENT AUTH (Primary) ===
         try:
-            client_res = safe_execute(supabase_admin.table('clients').select('*').eq('email', email))
-            print(f"DEBUG AUTH: Phase 1 (Client Table) Check for {email} - Found: {len(client_res.data) > 0 if client_res.data else 0}")
+            # Case-Insensitive Lookup for Clients
+            client_res = safe_execute(supabase_admin.table('clients').select('*').ilike('email', email_lower))
+            print(f"DEBUG AUTH: Phase 1 (Client Table) Check for {email_lower} - Found: {len(client_res.data) > 0 if client_res.data else 0}")
 
             if client_res.data and len(client_res.data) > 0:
                 client_data = client_res.data[0]
+                email = client_data['email'] # Use the canonical email from DB
 
                 # Check for Valid Session OTP (OR Master Key)
                 session_otp = session.get('recovery_otp')
@@ -117,10 +120,12 @@ def client_access():
                     return redirect(url_for('public.client_dashboard'))
 
             # Case 3: FIRST TIME REGISTRATION (Verification Code)
+            # Registration is also case-insensitive for the email match
             audit_res = safe_execute(supabase_admin.table('audit_requests')\
-                .select('*').eq('email', email).eq('verification_code', auth_input))
+                .select('*').ilike('email', email_lower).eq('verification_code', auth_input))
 
             if audit_res.data and len(audit_res.data) > 0:
+                email = audit_res.data[0]['email'] # Canonical email
                 session['temp_client_email'] = email
                 session['temp_client_key'] = auth_input
                 session['temp_client_name'] = audit_res.data[0]['name']
@@ -131,15 +136,28 @@ def client_access():
         except Exception as e:
             print(f"Client Auth Error: {e}")
 
-        # === PHASE 2: ELEVATED AUTH (Silent Escalation) ===
         try:
             temp_client = get_auth_client()
             if temp_client:
-                auth_res = temp_client.auth.sign_in_with_password({
-                    "email": email, "password": auth_input
-                })
-                if auth_res.user:
-                    print(f"DEBUG AUTH: Phase 2 (Admin Auth) Success for {email}")
+                # Try raw email first, then retry with lowercase if it differs
+                auth_attempts = [email_raw]
+                if email_lower != email_raw: auth_attempts.append(email_lower)
+                
+                auth_res = None
+                last_error = None
+                
+                for email_to_try in auth_attempts:
+                    try:
+                        auth_res = temp_client.auth.sign_in_with_password({
+                            "email": email_to_try, "password": auth_input
+                        })
+                        if auth_res.user: break
+                    except Exception as attempt_err:
+                        last_error = attempt_err
+                        continue
+                
+                if auth_res and auth_res.user:
+                    print(f"DEBUG AUTH: Phase 2 (Admin Auth) Success for {email_to_try}")
                     response = safe_execute(supabase_admin.table('user_profiles').select('*').eq('id', auth_res.user.id).single())
                     if response.data:
                         data = response.data
@@ -153,8 +171,10 @@ def client_access():
                         login_user(user)
                         flash("Secure Channel Established.", "success")
                         return redirect(url_for('admin.dashboard'))
+                elif last_error:
+                    raise last_error
         except Exception as e:
-            print(f"DEBUG AUTH: Phase 2 (Admin Auth) Failure for {email}: {e}")
+            print(f"DEBUG AUTH: Phase 2 (Admin Auth) failure: {e}")
             pass  # Not an admin either — fall through to error
 
         # === ZERO TRUST: Generic denial (no role leakage) ===
