@@ -308,7 +308,7 @@
                 {% for i in range(12) %}
                 {% set bar_height = (range(20, 90)|random) %}
                 <div
-                    style="width: 100%; background: rgba(0,114,255,0.1); border-radius: 4px 4px 0 0; position: relative; height: {{ bar_height }}%;">
+                    style="--bar-h: {{ bar_height }}%; width: 100%; background: rgba(0,114,255,0.1); border-radius: 4px 4px 0 0; position: relative; height: var(--bar-h);">
                     <div
                         style="position: absolute; bottom: 0; width: 100%; height: 100%; background: linear-gradient(to top, rgba(0,114,255,0.4), transparent);">
                     </div>
@@ -391,7 +391,9 @@
                     <td style="font-family: monospace; font-size: 0.8rem; color: #666;">{{ log.created_at }}</td>
                     <td><span class="badge">{{ log.persona_id }}</span></td>
                     <td>{{ log.user_message_length }} chars</td>
-                    <td><span style="color: {{ '#00ff88' if log.has_attachment else '#333' }};">{{ 'YES' if
+                    <td><span
+                            style="--status-clr: {{ '#00ff88' if log.has_attachment else '#333' }}; color: var(--status-clr);">{{
+                            'YES' if
                             log.has_attachment else 'NO' }}</span></td>
                 </tr>
                 {% endfor %}
@@ -432,7 +434,7 @@
                 <tr>
                     <td>
                         <span class="badge"
-                            style="color: {{ '#0072ff' if post.status == 'Published' else '#ffaa00' }}; border-color: transparent; background: rgba(255,255,255,0.03);">
+                            style="--badge-clr: {{ '#0072ff' if post.status == 'Published' else '#ffaa00' }}; color: var(--badge-clr); border-color: transparent; background: rgba(255,255,255,0.03);">
                             {{ post.status }}
                         </span>
                     </td>
