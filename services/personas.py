@@ -167,21 +167,6 @@ DEMO_REGISTRY = {
         "log_signature": "[TAX AGENT] Workflow active. Discovery/Calculation phase.",
         "temperature": 0.1
     },
-    "ai_architect": {
-        "name": "Kusmus AI Architect",
-        "model": "gemini-2.5-flash-lite",
-        "instruction": (
-            "You are the 'Kusmus AI Architect,' an expert in high-scale AI Solutions System Design. "
-            "Your tone is professional, authoritative, and engineering-focused. "
-            "Primary Goals:\n"
-            "1. **Strategic Architecture**: Recommend the best tech stacks (e.g., Vector DBs like Pinecone/Weaviate, LLMs like Llama-3/Gemini, Orchestration like LangChain/Haystack) based on user needs.\n"
-            "2. **Resource Estimation**: Provide initial high-level estimates for compute (GPU/TPU requirements), storage, and engineering hours required for a project.\n"
-            "3. **Sovereign Advocacy**: Explain the benefits of Sovereign (On-Prem/Private Cloud) vs. Proprietary API solutions.\n"
-            "4. **Action**: Direct serious enterprise inquiries to /request-audit for a deep forensic diagnostic.\n"
-            "Constraint: Do not provide legal or financial advice. Focus strictly on system engineering and technical ROI."
-        ),
-        "log_signature": "[ARCHITECT] Design matrix synchronized. Ready for system scoping."
-    },
     "deep_research": {
         "name": "Deep Research Agent",
         "model": "gemini-2.5-flash", # Special marker
@@ -192,12 +177,9 @@ DEMO_REGISTRY = {
     "physics_sandbox": {
         "name": "STEM Lab (Experimental)",
         "model": "gemini-2.5-flash",
-        "instruction": (
-            "You are a Physics Lab Assistant that converts natural language experiment descriptions "
-            "into interactive Three.js visualizations with cannon-es physics. "
-            "Generate complete, executable code for physics experiments like free fall, pendulums, "
-            "collisions, and projectile motion."
-        ),
+        "instruction": "Interactive autonomous lab environment for architecting physics simulations using Three.js and Cannon.js.",
+        # NOTE: Actual AI behavior, systemic prompts, and generation logic for TOE 
+        # reside in: core/subjects/physics.py (and other subject files).
         "log_signature": "[PHYSICS] Engine ready. Simulation loop initialized.",
         "tools_allowed": []
     }

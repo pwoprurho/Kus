@@ -680,7 +680,10 @@
         try {
             const res = await fetch('/api/stem/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
                 body: JSON.stringify({
                     message: text,
                     subject: ACTIVE_SUBJECT,
@@ -714,7 +717,10 @@
         try {
             const response = await fetch('/api/stem/generate-stream', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
                 body: JSON.stringify({
                     design: designDoc,
                     subject: ACTIVE_SUBJECT,

@@ -412,6 +412,7 @@
     style="background: #222; color: #fff; padding: 20px; border-radius: 8px; max-width: 400px; margin: 40px auto;">
     <h4>Account Management</h4>
     <form method="post" action="{{ url_for('admin.account_action') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="user_id">User ID</label>
             <input type="text" name="user_id" id="user_id" class="form-control" required>
@@ -556,6 +557,7 @@
             if (file) formData.append('file', file);
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/admin/api/chat/send', true);
+            xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token() }}');
             xhr.onload = function () {
                 if (xhr.status === 200) {
                     textInput.value = '';

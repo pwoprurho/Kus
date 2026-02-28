@@ -1056,7 +1056,10 @@
             const t0 = performance.now();
             const response = await fetch('/api/sandbox/chat_stream', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
                 body: JSON.stringify({
                     message: text,
                     demo_id: backendDemoId,
@@ -1255,7 +1258,14 @@
         const end = document.getElementById('sched-end').value || new Date(Date.now() + 3600000).toISOString();
         const event = { summary: summary, start: { 'dateTime': start }, end: { 'dateTime': end }, description: 'Scheduled from Sandbox' };
         try {
-            const res = await fetch('/admin/calendar/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: event }) });
+            const res = await fetch('/admin/calendar/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ event: event })
+            });
             const j = await res.json();
             if (j.error) { alert('Create failed: ' + j.error); return; }
             document.getElementById('scheduler-modal').style.display = 'none';

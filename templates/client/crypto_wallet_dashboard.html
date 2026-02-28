@@ -3,17 +3,21 @@
 {% block content %}
 <div class="container" style="max-width: 700px; margin: 40px auto;">
     <h2 class="text-gradient" style="margin-bottom: 24px;">My Crypto Wallets</h2>
-    <div class="wallet-info-box" style="background: #222; color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+    <div class="wallet-info-box"
+        style="background: #222; color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
         <h4>BTC Wallet</h4>
         <p><strong>Address:</strong> {{ btc_address }}</p>
         <p><strong>Balance:</strong> {{ btc_balance }} BTC</p>
-        <button onclick="navigator.clipboard.writeText('{{ btc_address }}')" class="btn btn-secondary">Copy BTC Address</button>
+        <button onclick="navigator.clipboard.writeText('{{ btc_address }}')" class="btn btn-secondary">Copy BTC
+            Address</button>
         <hr>
         <h4>ETH Wallet</h4>
         <p><strong>Address:</strong> {{ eth_address }}</p>
-        <button onclick="navigator.clipboard.writeText('{{ eth_address }}')" class="btn btn-secondary">Copy ETH Address</button>
+        <button onclick="navigator.clipboard.writeText('{{ eth_address }}')" class="btn btn-secondary">Copy ETH
+            Address</button>
     </div>
     <form method="post" action="{{ url_for('public.crypto_wallet_action') }}" class="wallet-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="action">Action</label>
             <select name="action" id="action" class="form-control">
@@ -54,7 +58,7 @@
     </div>
 </div>
 <script>
-    document.getElementById('action').addEventListener('change', function() {
+    document.getElementById('action').addEventListener('change', function () {
         var btcFields = document.getElementById('btc_fields');
         var ussdFields = document.getElementById('ussd_fields');
         btcFields.style.display = this.value === 'send_btc' ? 'block' : 'none';

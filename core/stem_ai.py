@@ -23,10 +23,14 @@ The available globals are: `THREE` (r128), `CANNON` (0.6.2), and `lil.GUI`. Do N
 - Lighting: Ambient + Directional (5, 10, 5).
 - Controls: Use `lil.GUI` for parameters.
 
-=== OUTPUT FORMAT ===
+=== OUTPUT FORMAT (STRICT) ===
 1. Full JavaScript in a ```javascript``` block.
-2. Metadata in a ```json``` block.
-3. **CRITICAL**: The JS **MUST** end with a top-level return statement: `return { scene, camera, rendererParameters, render, world };`. Do not wrap in a function.
+2. Metadata in a ```json``` block (include "title", "concept", "description").
+3. **CRITICAL**: The JS **MUST** end with a top-level return statement: `return { scene, camera, world, render };`.
+4. **FORBIDDEN**: 
+    - Do NOT create a `WebGLRenderer`.
+    - Do NOT append to `document.body`.
+    - Do NOT use `requestAnimationFrame` (the environment handles the loop via your `render` function).
 """
 
 class StemAIEngine:
@@ -37,8 +41,8 @@ class StemAIEngine:
             "biology": BiologySubject,
             "chemistry": ChemistrySubject
         }
-        self.planning_model = "gemini-2.5-flash"
-        self.generation_model = "gemini-2.5-flash"
+        self.planning_model = "gemini-2.5-flash-lite"
+        self.generation_model = "gemini-2.5-flash-lite"
 
     def get_subject_logic(self, subject_name: str):
         return self.subjects.get(subject_name, PhysicsSubject)

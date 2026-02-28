@@ -26,8 +26,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         uploadStatus.innerHTML = '<span class="text-info"><i class="fas fa-spinner fa-spin me-2"></i>Uploading & analyzing ' + fileQueue.length + ' document(s)...</span>';
         try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
             const res = await fetch('/api/tax/upload', {
                 method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
                 body: formData
             });
             const data = await res.json();
@@ -181,9 +185,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Initiate Stream
             try {
+                const reqHeaders = { 'Content-Type': 'application/json' };
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                if (csrfToken) reqHeaders['X-CSRFToken'] = csrfToken;
+
                 const response = await fetch('/api/tax/chat_stream', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: reqHeaders,
                     body: JSON.stringify({ message: msg, history: history })
                 });
 
@@ -315,9 +323,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         });
                     }
 
+                    const reqHeaders = { 'Content-Type': 'application/json' };
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                    if (csrfToken) reqHeaders['X-CSRFToken'] = csrfToken;
+
                     fetch('/api/tax/generate_filing', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: reqHeaders,
                         body: JSON.stringify(genPayload)
                     })
                         .then(r => {
@@ -412,9 +424,13 @@ async function generateTaxFiling() {
         };
 
         // Call API
+        const reqHeaders = { 'Content-Type': 'application/json' };
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (csrfToken) reqHeaders['X-CSRFToken'] = csrfToken;
+
         const response = await fetch('/api/tax/generate_filing', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: reqHeaders,
             body: JSON.stringify(taxpayerInfo)
         });
 
@@ -527,9 +543,13 @@ async function handleTaxFormSubmit(formElement, formType) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Syncing...';
 
+        const reqHeaders = { 'Content-Type': 'application/json' };
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (csrfToken) reqHeaders['X-CSRFToken'] = csrfToken;
+
         const res = await fetch('/api/tax/submit_comprehensive', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: reqHeaders,
             body: JSON.stringify(data)
         });
 

@@ -47,6 +47,7 @@
         <p style="color:#888; margin-bottom:30px;">Identity Verified. Please set a password for daily access.</p>
 
         <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="password" name="password" class="form-control" placeholder="Set New Password" required>
             <input type="password" name="confirm_password" class="form-control" placeholder="Confirm Password" required>
             <input type="tel" name="phone" class="form-control" placeholder="Contact Phone Number (Tactical Alerts)"

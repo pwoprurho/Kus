@@ -740,7 +740,10 @@ ${data.reasoning}`;
                 // FALLBACK: Generic Chat
                 const res = await fetch('/api/sandbox/chat', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
                     body: JSON.stringify({
                         message: msg,
                         demo_id: 'market_sentinel'

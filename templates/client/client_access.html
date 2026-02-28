@@ -50,6 +50,7 @@
         </div>
 
         <form method="post" id="loginForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="email" id="emailInput" name="email" class="form-control" placeholder="Authorized Email"
                 required>
 
@@ -90,7 +91,10 @@
         try {
             const res = await fetch('/auth/send-recovery', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
                 body: JSON.stringify({ email: email })
             });
             const data = await res.json();

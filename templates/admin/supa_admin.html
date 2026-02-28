@@ -3,19 +3,21 @@
 
 {% block content %}
 <style>
-/* Local overrides for glass UI in Supa Admin */
-.supa-container { padding: 40px; }
+  /* Local overrides for glass UI in Supa Admin */
+  .supa-container {
+    padding: 40px;
+  }
 
-.glass-header-panel {
+  .glass-header-panel {
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
     border: var(--glass-border);
     border-radius: 12px;
     padding: 30px;
     margin-bottom: 30px;
-}
+  }
 
-.user-row {
+  .user-row {
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
@@ -25,14 +27,14 @@
     margin-bottom: 12px;
     border-radius: 8px;
     transition: all 0.2s ease;
-}
+  }
 
-.user-row:hover {
+  .user-row:hover {
     background: rgba(255, 255, 255, 0.04);
     border-color: rgba(0, 114, 255, 0.3);
-}
+  }
 
-.role-badge {
+  .role-badge {
     display: inline-block;
     padding: 4px 12px;
     border-radius: 20px;
@@ -43,101 +45,119 @@
     background: rgba(0, 114, 255, 0.1);
     color: #3b82f6;
     border: 1px solid rgba(0, 114, 255, 0.2);
-}
+  }
 
-.action-group {
+  .action-group {
     display: flex;
     align-items: center;
     gap: 12px;
-}
+  }
 
-select {
+  select {
     background: #000;
     color: #fff;
     border: 1px solid #333;
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 0.9rem;
-}
+  }
 
-.chat-panel {
+  .chat-panel {
     background: var(--glass-bg);
     border: var(--glass-border);
     border-radius: 12px;
     padding: 30px;
     margin-top: 40px;
-}
+  }
 </style>
 
 <div class="supa-container">
-  
+
   <div class="glass-header-panel">
-      <h2 style="margin-bottom: 10px; color: #fff;">Supa Admin Access Control</h2>
-      <p style="color: #94a3b8; font-size: 0.95rem;">Manage platform privileges and user roles. All changes are logged and effective immediately.</p>
+    <h2 style="margin-bottom: 10px; color: #fff;">Supa Admin Access Control</h2>
+    <p style="color: #94a3b8; font-size: 0.95rem;">Manage platform privileges and user roles. All changes are logged and
+      effective immediately.</p>
   </div>
 
   <div id="users-list">
     {% for u in users %}
-      <div class="user-row" data-user-id="{{ u.id }}">
-        <div>
-          <div style="font-weight: 600; font-size: 1.1rem; color: #f1f5f9;">{{ u.full_name or 'Unknown User' }}</div>
-          <div style="font-size: 0.9rem; color: #64748b; margin-top: 4px;">{{ u.email or '—' }} <span style="margin: 0 8px; color: #334155;">|</span> <span style="color: #475569;">ID: {{ u.id }}</span></div>
-        </div>
-        
-        <div class="action-group">
-          <span class="role-badge" id="role-{{ u.id }}">{{ u.role }}</span>
-          
-          <select id="select-{{ u.id }}" style="width: 140px;">
-            <option value="viewer" {% if u.role == 'viewer' %}selected{% endif %}>Viewer</option>
-            <option value="editor" {% if u.role == 'editor' %}selected{% endif %}>Editor</option>
-            <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
-            <option value="supa_admin" {% if u.role == 'supa_admin' %}selected{% endif %}>Supa Admin</option>
-          </select>
-          
-          <button class="btn" onclick="updateRole('{{ u.id }}')" style="padding: 8px 16px; font-size: 0.85rem;">Update</button>
-        </div>
+    <div class="user-row" data-user-id="{{ u.id }}">
+      <div>
+        <div style="font-weight: 600; font-size: 1.1rem; color: #f1f5f9;">{{ u.full_name or 'Unknown User' }}</div>
+        <div style="font-size: 0.9rem; color: #64748b; margin-top: 4px;">{{ u.email or '—' }} <span
+            style="margin: 0 8px; color: #334155;">|</span> <span style="color: #475569;">ID: {{ u.id }}</span></div>
       </div>
+
+      <div class="action-group">
+        <span class="role-badge" id="role-{{ u.id }}">{{ u.role }}</span>
+
+        <select id="select-{{ u.id }}" style="width: 140px;">
+          <option value="viewer" {% if u.role=='viewer' %}selected{% endif %}>Viewer</option>
+          <option value="editor" {% if u.role=='editor' %}selected{% endif %}>Editor</option>
+          <option value="admin" {% if u.role=='admin' %}selected{% endif %}>Admin</option>
+          <option value="supa_admin" {% if u.role=='supa_admin' %}selected{% endif %}>Supa Admin</option>
+        </select>
+
+        <button class="btn" onclick="updateRole('{{ u.id }}')"
+          style="padding: 8px 16px; font-size: 0.85rem;">Update</button>
+      </div>
+    </div>
     {% endfor %}
   </div>
 
   <div class="chat-panel">
     <h3 style="margin-bottom: 10px; color: #fff;">Zoho Direct Comms</h3>
-    <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.9rem;">Dispatch manual verification or secure links via Zoho SMTP relay.</p>
-    
+    <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.9rem;">Dispatch manual verification or secure links via
+      Zoho SMTP relay.</p>
+
     <div style="display: grid; gap: 15px; max-width: 600px;">
-        <input id="zoho-email" class="chat-input" placeholder="Recipient Email (e.g. user@enterprise.com)">
-        <input id="zoho-link" class="chat-input" placeholder="Secure Verification Link (Optional)">
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-            <div id="zoho-status" style="font-size: 0.9rem; color: #64748b;">Ready to transmit.</div>
-            <button class="btn" onclick="sendZoho()">Transmit via Zoho</button>
-        </div>
+      <input id="zoho-email" class="chat-input" placeholder="Recipient Email (e.g. user@enterprise.com)">
+      <input id="zoho-link" class="chat-input" placeholder="Secure Verification Link (Optional)">
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+        <div id="zoho-status" style="font-size: 0.9rem; color: #64748b;">Ready to transmit.</div>
+        <button class="btn" onclick="sendZoho()">Transmit via Zoho</button>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-async function updateRole(userId){
-  const sel = document.getElementById('select-'+userId);
-  const newRole = sel.value;
-  const res = await fetch('/admin/supa-admin/modify-role',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:userId,new_role:newRole})});
-  const j = await res.json();
-  if(j.status === 'updated'){
-    document.getElementById('role-'+userId).innerText = newRole;
-    document.getElementById('zoho-status').innerText = 'Role updated.';
-  } else {
-    document.getElementById('zoho-status').innerText = 'Error: '+(j.error||'unknown');
+  async function updateRole(userId) {
+    const sel = document.getElementById('select-' + userId);
+    const newRole = sel.value;
+    const res = await fetch('/admin/supa-admin/modify-role', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token() }}'
+      },
+      body: JSON.stringify({ user_id: userId, new_role: newRole })
+    });
+    const j = await res.json();
+    if (j.status === 'updated') {
+      document.getElementById('role-' + userId).innerText = newRole;
+      document.getElementById('zoho-status').innerText = 'Role updated.';
+    } else {
+      document.getElementById('zoho-status').innerText = 'Error: ' + (j.error || 'unknown');
+    }
   }
-}
 
-async function sendZoho(){
-  const email = document.getElementById('zoho-email').value;
-  const link = document.getElementById('zoho-link').value;
-  if(!email){ document.getElementById('zoho-status').innerText='Enter an email.'; return; }
-  const res = await fetch('/admin/supa-admin/send-zoho',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,link})});
-  const j = await res.json();
-  document.getElementById('zoho-status').innerText = j.status || j.error || 'unknown';
-}
+  async function sendZoho() {
+    const email = document.getElementById('zoho-email').value;
+    const link = document.getElementById('zoho-link').value;
+    if (!email) { document.getElementById('zoho-status').innerText = 'Enter an email.'; return; }
+    const res = await fetch('/admin/supa-admin/send-zoho', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token() }}'
+      },
+      body: JSON.stringify({ email, link })
+    });
+    const j = await res.json();
+    document.getElementById('zoho-status').innerText = j.status || j.error || 'unknown';
+  }
 </script>
 
 {% endblock %}

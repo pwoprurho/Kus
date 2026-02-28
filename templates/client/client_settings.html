@@ -126,6 +126,7 @@
     {% endwith %}
 
     <form method="POST" action="{{ url_for('public.client_settings') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- KRAG BOT CONFIGURATION -->
         <div class="settings-section">

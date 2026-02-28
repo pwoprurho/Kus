@@ -492,7 +492,10 @@
         try {
             const res = await fetch('/api/research/plan', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
                 body: JSON.stringify({ goal })
             });
 
@@ -544,7 +547,10 @@
         try {
             const res = await fetch('/api/research/execute', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
                 body: JSON.stringify({ plan_id: PLAN_ID, tasks: selected })
             });
             const data = await res.json();
@@ -554,7 +560,10 @@
 
             const reportRes = await fetch('/api/research/report', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
                 body: JSON.stringify({ research_id: data.research_id })
             });
             const reportData = await reportRes.json();

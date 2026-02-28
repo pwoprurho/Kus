@@ -7,7 +7,13 @@
   <p>These are locally persisted event records. Use the edit button to modify the stored metadata.</p>
   <table style="width:100%; border-collapse:collapse; font-family:monospace;">
     <thead>
-      <tr style="text-align:left; border-bottom:1px solid #333;"><th>ID</th><th>Demo</th><th>Summary</th><th>Created</th><th>Actions</th></tr>
+      <tr style="text-align:left; border-bottom:1px solid #333;">
+        <th>ID</th>
+        <th>Demo</th>
+        <th>Summary</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
     </thead>
     <tbody>
       {% for ev in events %}
@@ -27,25 +33,34 @@
     <form id="edit-form" onsubmit="return submitEdit();">
       <input type="hidden" id="edit-id">
       <div><label>Summary</label><br><input id="edit-summary" style="width:100%"></div>
-      <div style="margin-top:8px;"><label>Notes</label><br><textarea id="edit-notes" style="width:100%" rows="4"></textarea></div>
-      <div style="margin-top:8px;"><button type="submit">Save</button> <button type="button" onclick="document.getElementById('editor').style.display='none'">Cancel</button></div>
+      <div style="margin-top:8px;"><label>Notes</label><br><textarea id="edit-notes" style="width:100%"
+          rows="4"></textarea></div>
+      <div style="margin-top:8px;"><button type="submit">Save</button> <button type="button"
+          onclick="document.getElementById('editor').style.display='none'">Cancel</button></div>
     </form>
   </div>
 </div>
 
 <script>
-function editEvent(id){
-  document.getElementById('editor').style.display='block';
-  document.getElementById('edit-id').value = id;
-}
-async function submitEdit(){
-  const id = document.getElementById('edit-id').value;
-  const summary = document.getElementById('edit-summary').value;
-  const notes = document.getElementById('edit-notes').value;
-  const res = await fetch('/calendar/events', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id:id, update:{'event_request': {'summary': summary, 'notes': notes}}}) });
-  const j = await res.json();
-  if(j.status === 'ok') location.reload(); else alert('Failed: '+JSON.stringify(j));
-  return false;
-}
+  function editEvent(id) {
+    document.getElementById('editor').style.display = 'block';
+    document.getElementById('edit-id').value = id;
+  }
+  async function submitEdit() {
+    const id = document.getElementById('edit-id').value;
+    const summary = document.getElementById('edit-summary').value;
+    const notes = document.getElementById('edit-notes').value;
+    const res = await fetch('/calendar/events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token() }}'
+      },
+      body: JSON.stringify({ id: id, update: { 'event_request': { 'summary': summary, 'notes': notes } } })
+    });
+    const j = await res.json();
+    if (j.status === 'ok') location.reload(); else alert('Failed: ' + JSON.stringify(j));
+    return false;
+  }
 </script>
 {% endblock %}

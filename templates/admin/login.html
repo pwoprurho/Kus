@@ -6,20 +6,24 @@
 <style>
     /* --- LOGIN SPECIFIC STYLES --- */
     .login-wrapper {
-        min-height: 80vh; /* Takes up most of the screen */
+        min-height: 80vh;
+        /* Takes up most of the screen */
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
-        z-index: 10; /* Sits above the orbits */
+        z-index: 10;
+        /* Sits above the orbits */
     }
 
     .login-card {
-        background: rgba(10, 10, 10, 0.75); /* Dark Glass */
+        background: rgba(10, 10, 10, 0.75);
+        /* Dark Glass */
         backdrop-filter: blur(15px);
         -webkit-backdrop-filter: blur(15px);
         border: 1px solid #333;
-        border-top: 3px solid #0072ff; /* Kusmus Blue Accent */
+        border-top: 3px solid #0072ff;
+        /* Kusmus Blue Accent */
         padding: 50px 40px;
         width: 100%;
         max-width: 450px;
@@ -121,7 +125,6 @@
     .back-link:hover {
         color: #fff;
     }
-
 </style>
 
 <div class="login-wrapper fade-in">
@@ -132,14 +135,17 @@
         </div>
 
         <form method="post" action="{{ url_for('auth.login') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="email">Operator ID (Email)</label>
-                <input type="email" id="email" name="email" class="form-control" placeholder="admin@kusmus.ai" required autocomplete="off">
+                <input type="email" id="email" name="email" class="form-control" placeholder="admin@kusmus.ai" required
+                    autocomplete="off">
             </div>
 
             <div class="form-group">
                 <label for="password">Security Token</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="••••••••••••" required>
+                <input type="password" id="password" name="password" class="form-control" placeholder="••••••••••••"
+                    required>
             </div>
 
             <button type="submit" class="btn-login">Authenticate</button>
