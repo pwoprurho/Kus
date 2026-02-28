@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from flask import g
 from supabase import create_client
 import socket
+import httpx
+from supabase.lib.client_options import SyncClientOptions
 from urllib.parse import urlparse
 
 # Load Environment Variables
@@ -36,7 +38,9 @@ else:
         supabase_admin = None
     else:
         try:
-            supabase_admin = create_client(SUPABASE_URL, SUPABASE_KEY)
+            # Enforce HTTP/1.1 to prevent "Illegal Request Line" errors on Render's proxy
+            options = SyncClientOptions().replace(httpx_client=httpx.Client(http2=False))
+            supabase_admin = create_client(SUPABASE_URL, SUPABASE_KEY, options=options)
         except Exception as e:
             print(f"Failed to initialize Supabase client: {e}")
             supabase_admin = None

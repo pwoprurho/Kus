@@ -23,4 +23,4 @@ EXPOSE 8000
 
 # Define the command to run the application
 # Assumes your Flask app instance is named 'app' in the 'app.py' file
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
+CMD ["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--bind", "0.0.0.0:8000", "--timeout", "120", "app:app"]
