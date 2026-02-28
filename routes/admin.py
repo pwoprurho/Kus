@@ -67,6 +67,20 @@ def dashboard():
                            sandbox_count=sandbox_count,
                            current_page=page,
                            total_pages=(sandbox_count // per_page) + 1)
+@admin_bp.route('/lead/<uuid:lead_id>')
+@login_required
+@role_required('supa_admin', 'admin', 'editor')
+def lead_detail(lead_id):
+    """Fetch complete details for a specific audit request (lead)."""
+    try:
+        res = safe_execute(supabase_admin.table('audit_requests').select('*').eq('id', lead_id).single())
+        if res.data:
+            return jsonify(res.data)
+        return jsonify({'error': 'Lead not found'}), 404
+    except Exception as e:
+        print(f"Lead Fetch Error: {e}")
+        return jsonify({'error': 'Internal system error'}), 500
+
 # =========================================================
 # === SANDBOX ANALYTICS ===
 # =========================================================

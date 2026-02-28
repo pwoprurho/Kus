@@ -195,13 +195,14 @@ def blog_post(post_id):
 @public_bp.route("/request-audit", methods=['GET', 'POST'])
 def audit_request():
     if request.method == 'POST':
+        company_name = request.form.get('company_name')
         name = request.form.get('name')
         email = request.form.get('email')
         phone = request.form.get('phone')
         message = request.form.get('message')
 
-        if not name or not email or not phone:
-            flash("All secure contact fields are required.", "error")
+        if not company_name or not name or not email or not phone:
+            flash("All secure contact fields (Company, Name, Email, Phone) are required.", "error")
             return render_template("request_audit.html")
 
         try:
@@ -212,6 +213,7 @@ def audit_request():
 
             # Insert into Supabase with centralized retry
             safe_execute(supabase_admin.table('audit_requests').insert({
+                'company_name': company_name,
                 'name': name,
                 'email': email,
                 'phone': phone,
