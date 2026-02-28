@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from supabase import create_client
-from db import supabase_admin, safe_execute, safe_retry
+from db import supabase_admin, safe_execute
 from models import User, ClientUser 
 from services.mailer import send_recovery_otp
 
@@ -155,9 +155,8 @@ def client_access():
                 
                 for email_to_try in auth_attempts:
                     try:
-                        # Use safe_retry to handle proxy errors during auth phase
-                        auth_res = safe_retry(
-                            temp_client.auth.sign_in_with_password,
+                        # Removed safe_retry for sensitive auth check; HTTP/1.1 fix handles proxy stability.
+                        auth_res = temp_client.auth.sign_in_with_password(
                             {"email": email_to_try, "password": auth_input}
                         )
                         if auth_res.user: break
@@ -175,8 +174,9 @@ def client_access():
                             data.get('email'), data.get('role', 'intern'),
                             data.get('location')
                         )
-                        # Zero Trust: Regenerate session on login
+                        # Security Hardening: Regenerate session and store JWT
                         session.clear()
+                        session['supabase_token'] = auth_res.session.access_token
                         login_user(user)
                         flash("Secure Channel Established.", "success")
                         return redirect(url_for('admin.dashboard'))
