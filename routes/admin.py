@@ -73,13 +73,22 @@ def dashboard():
 def lead_detail(lead_id):
     """Fetch complete details for a specific audit request (lead)."""
     try:
-        res = safe_execute(supabase_admin.table('audit_requests').select('*').eq('id', lead_id).single())
-        if res.data:
-            return jsonify(res.data)
-        return jsonify({'error': 'Lead not found'}), 404
+        lead_id_str = str(lead_id)
+        print(f"DEBUG AUTH: Lead Detail Request for {lead_id_str}")
+        
+        # Using .execute() + check is safer than .single() in some client versions
+        res = safe_execute(supabase_admin.table('audit_requests').select('*').eq('id', lead_id_str))
+        
+        if res.data and len(res.data) > 0:
+            return jsonify(res.data[0])
+        
+        print(f"DEBUG AUTH: Lead {lead_id_str} not found in DB")
+        return jsonify({'error': 'Intelligence record not found'}), 404
     except Exception as e:
-        print(f"Lead Fetch Error: {e}")
-        return jsonify({'error': 'Internal system error'}), 500
+        print(f"CRITICAL: Lead Fetch Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Neural transmission failure'}), 500
 
 # =========================================================
 # === SANDBOX ANALYTICS ===
