@@ -24,11 +24,24 @@ app.secret_key = os.getenv("SECRET_KEY", "dev_secret_key_change_in_production")
 if os.getenv("PREFERRED_URL_SCHEME"):
     app.config["PREFERRED_URL_SCHEME"] = os.getenv("PREFERRED_URL_SCHEME")
 
+# --- SESSION & CSRF CONFIGURATION ---
+is_prod = os.getenv('FLASK_ENV', 'development') == 'production'
+
+# Flask-level session cookie settings (authoritative over Talisman)
+app.config['SESSION_COOKIE_SECURE'] = is_prod
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+# CSRF Settings: Disable SSL strict check to avoid issues behind reverse proxies
+# (Railway/Cloudflare terminate SSL, so the app sees HTTP internally)
+app.config['WTF_CSRF_SSL_STRICT'] = False
+# Allow CSRF tokens to remain valid for 2 hours (default is session lifetime)
+app.config['WTF_CSRF_TIME_LIMIT'] = 7200
+
 # --- PRODUCTION SECURITY HARDENING ---
 csrf = CSRFProtect(app)
 # Talisman handles HSTS, HTTPS redirect, and basic security headers.
 # We disable CSP and force_https if not in production to allow local testing.
-is_prod = os.getenv('FLASK_ENV', 'development') == 'production'
 Talisman(app, 
     content_security_policy=None, # Lenient CSP to avoid breaking Socket.IO/Inter
     force_https=is_prod,
