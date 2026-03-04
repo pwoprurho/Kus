@@ -128,6 +128,19 @@
             </div>
 
             <div class="input-group">
+                <label for="hosting_preference">Deployment Model / Hosting Preference</label>
+                <select id="hosting_preference" name="hosting_preference" required
+                    style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid #333; padding: 15px; color: #fff; font-family: 'Inter', sans-serif; font-size: 1rem; border-radius: 2px;">
+                    <option value="Self-Hosted (On-Premise)">Self-Hosted (On-Premise) — Full Air-Gapped Autonomy
+                    </option>
+                    <option value="Help-Hosted (Managed GPU)" selected>Help-Hosted (Managed GPU) — Dedicated Compute
+                        Nodes</option>
+                </select>
+                <p style="font-size: 0.8rem; color: #666; margin-top: 8px;">Managed nodes utilize our Sovereign RunPod
+                    infrastructure for rapid deployment.</p>
+            </div>
+
+            <div class="input-group">
                 <label for="message">Operational Challenge (Brief)</label>
                 <textarea id="message" name="message" rows="5"
                     placeholder="Describe the friction points in your current workflow..."></textarea>

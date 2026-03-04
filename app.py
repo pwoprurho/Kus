@@ -69,6 +69,10 @@ from routes.auth import auth_bp
 from routes.admin import admin_bp
 from routes.tax import tax_bp
 from routes.physics_sandbox import physics_bp
+from routes.sovereign import sovereign_bp, init_csrf_exemptions
+
+# Exempt sovereign API from CSRF (uses Bearer token auth, not browser sessions)
+init_csrf_exemptions(csrf)
 
 # 3. Setup Flask-Login
 login_manager = LoginManager()
@@ -119,6 +123,7 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(sandbox_bp)
 app.register_blueprint(tax_bp)
 app.register_blueprint(physics_bp)
+app.register_blueprint(sovereign_bp)
 
 # 5. Register Socket Events
 import socket_events

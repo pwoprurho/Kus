@@ -7,16 +7,26 @@ import json
 logger = logging.getLogger(__name__)
 
 class AIAnalyzer:
-    def __init__(self, api_key=None, model_name="gemini-2.5-flash"):
+    def __init__(self, api_key=None, model_name="gemini-2.5-flash", base_url=None):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        if not self.api_key:
-            logger.warning("GEMINI_API_KEY not found. AI analysis will be disabled.")
+        self.base_url = base_url
+        self.model_name = model_name
+        
+        if not self.base_url and not self.api_key:
+            logger.warning("No Gemini API Key or Sovereign Base URL found. AI analysis will be disabled.")
             self.model = None
+        elif self.base_url:
+            # Sovereign mode (vLLM/Ollama)
+            from openai import OpenAI
+            self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+            self.model = "sovereign"
+            logger.info(f"AI Analyzer initialized in Sovereign Mode: {base_url}")
         else:
+            # Standard Gemini mode
             try:
                 genai.configure(api_key=self.api_key)
                 self.model = genai.GenerativeModel(model_name)
-                logger.info(f"AI Analyzer initialized with model: {model_name}")
+                logger.info(f"AI Analyzer initialized with cloud model: {model_name}")
             except Exception as e:
                 logger.error(f"Failed to initialize AI Analyzer: {e}")
                 self.model = None
@@ -66,8 +76,22 @@ class AIAnalyzer:
         """
         
         try:
-            response = self.model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
-            result = json.loads(response.text)
+            if self.base_url:
+                # Sovereign mode logic
+                response = self.client.chat.completions.create(
+                    model=self.model_name,
+                    messages=[
+                        {"role": "system", "content": "You are an expert financial market analyst. Return ONLY a valid JSON object."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    response_format={"type": "json_object"}
+                )
+                result = json.loads(response.choices[0].message.content)
+            else:
+                # Standard Gemini logic
+                response = self.model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
+                result = json.loads(response.text)
+                
             logger.info(f"AI Analysis for {symbol}: {result}")
             return result
         except Exception as e:

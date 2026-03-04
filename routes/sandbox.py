@@ -87,9 +87,19 @@ def api_sentinel_analyze(ticker):
             "Volatility": "NORMAL" # Placeholder
         }
         
-        # 3. Call Krag_Bot AI
-        # Note: We rely on correct Gemini version support in AIAnalyzer
-        analyzer = AIAnalyzer(model_name="gemini-2.5-flash-lite") 
+        # 3. Call Sovereign/Krag_Bot AI
+        client_id = session.get('client_id')
+        sovereign_config = {}
+        if client_id:
+            from services.sovereign_node import SovereignNodeManager
+            node = SovereignNodeManager.get_client_node(client_id)
+            if node and node['status'] == 'active' and node.get('node_url'):
+                sovereign_config = {
+                    "base_url": f"{node['node_url']}/v1",
+                    "api_key": node['api_key']
+                }
+
+        analyzer = AIAnalyzer(model_name="gemini-2.5-flash-lite", **sovereign_config) 
         if not analyzer.model:
             # Fallback for demo if key is invalid
             pass 
@@ -196,9 +206,22 @@ def sandbox_chat_stream():
 
         persona = DEMO_REGISTRY.get(demo_id, DEMO_REGISTRY['sentinel_monitor'])
 
+        # --- SOVEREIGN AUTO-ROUTE ---
+        client_id = session.get('client_id')
+        sovereign_config = {}
+        if client_id:
+            from services.sovereign_node import SovereignNodeManager
+            node = SovereignNodeManager.get_client_node(client_id)
+            if node and node['status'] == 'active' and node.get('node_url'):
+                sovereign_config = {
+                    "api_key": node['api_key'],
+                    "base_url": f"{node['node_url']}/v1" # Standard OpenAI/vLLM path
+                }
+
         engine = KusmusAIEngine(
             system_instruction=persona['instruction'],
-            model_name=persona.get('model', 'gemini-2.5-flash-lite')
+            model_name=persona.get('model', 'gemini-2.5-flash-lite'),
+            **sovereign_config
         )
 
         def generate():
@@ -301,11 +324,24 @@ def sandbox_chat():
 
         persona = DEMO_REGISTRY.get(demo_id, DEMO_REGISTRY['sentinel_monitor'])
 
+        # --- SOVEREIGN AUTO-ROUTE ---
+        client_id = session.get('client_id')
+        sovereign_config = {}
+        if client_id:
+            from services.sovereign_node import SovereignNodeManager
+            node = SovereignNodeManager.get_client_node(client_id)
+            if node and node['status'] == 'active' and node.get('node_url'):
+                sovereign_config = {
+                    "api_key": node['api_key'],
+                    "base_url": f"{node['node_url']}/v1"
+                }
+
         user_message_aug = user_message
 
         engine = KusmusAIEngine(
             system_instruction=persona['instruction'],
-            model_name=persona.get('model', 'gemini-2.5-flash-lite')
+            model_name=persona.get('model', 'gemini-2.5-flash-lite'),
+            **sovereign_config
         )
 
         response_text, thought_trace = engine.generate_response(user_message_aug, context_logs=context_logs)
@@ -551,7 +587,16 @@ def research_plan():
     goal = data.get('goal')
     if not goal: return jsonify({'error': 'Goal required'}), 400
     
-    result = ResearchAgentService.create_plan(goal)
+    # Detect Sovereign Node
+    client_id = session.get('client_id')
+    sovereign_config = None
+    if client_id:
+        from services.sovereign_node import SovereignNodeManager
+        node = SovereignNodeManager.get_client_node(client_id)
+        if node and node['status'] == 'active' and node.get('node_url'):
+            sovereign_config = {"base_url": f"{node['node_url']}/v1", "api_key": node['api_key']}
+
+    result = ResearchAgentService.create_plan(goal, sovereign_config=sovereign_config)
     return jsonify(result)
 
 @sandbox_bp.route('/api/research/execute', methods=['POST'])
@@ -561,7 +606,16 @@ def research_execute():
     tasks = data.get('tasks', []) # List of strings
     if not plan_id or not tasks: return jsonify({'error': 'Plan ID and Tasks required'}), 400
     
-    result = ResearchAgentService.execute_research(plan_id, tasks)
+    # Detect Sovereign Node
+    client_id = session.get('client_id')
+    sovereign_config = None
+    if client_id:
+        from services.sovereign_node import SovereignNodeManager
+        node = SovereignNodeManager.get_client_node(client_id)
+        if node and node['status'] == 'active' and node.get('node_url'):
+            sovereign_config = {"base_url": f"{node['node_url']}/v1", "api_key": node['api_key']}
+
+    result = ResearchAgentService.execute_research(plan_id, tasks, sovereign_config=sovereign_config)
     return jsonify(result)
 
 @sandbox_bp.route('/api/research/report', methods=['POST'])
@@ -572,5 +626,14 @@ def research_report():
     # Service implementation handles fetching if we pass ID.
     if not research_id: return jsonify({'error': 'Research ID required'}), 400
     
-    result = ResearchAgentService.generate_report(research_id, "")
+    # Detect Sovereign Node
+    client_id = session.get('client_id')
+    sovereign_config = None
+    if client_id:
+        from services.sovereign_node import SovereignNodeManager
+        node = SovereignNodeManager.get_client_node(client_id)
+        if node and node['status'] == 'active' and node.get('node_url'):
+            sovereign_config = {"base_url": f"{node['node_url']}/v1", "api_key": node['api_key']}
+
+    result = ResearchAgentService.generate_report(research_id, sovereign_config=sovereign_config)
     return jsonify(result)

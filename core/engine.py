@@ -8,10 +8,13 @@ from services.mcp_tools import MCP_TOOLKIT
 from core.key_manager import key_manager
 
 class KusmusAIEngine:
-    def __init__(self, system_instruction, model_name="gemini-2.5-flash", tools=None, enable_google_search=False):
+    def __init__(self, system_instruction, model_name="gemini-2.5-flash", tools=None, enable_google_search=False, api_key=None, base_url=None):
         # Use the provided model name, defaulting to gemini-2.5-flash
         self.model_id = model_name
         self.system_instruction = system_instruction
+        self.api_key = api_key
+        self.base_url = base_url
+        
         # If tools are explicitly provided (even empty list), use them.
         # Otherwise, default to the standard MCP_TOOLKIT.
         if tools is not None:
@@ -19,8 +22,8 @@ class KusmusAIEngine:
         else:
             self.tools = [t for t in MCP_TOOLKIT.values() if t is not None]
         
-        # Add Google Search Tool if enabled
-        if enable_google_search:
+        # Add Google Search Tool if enabled (Only for Gemini)
+        if enable_google_search and not self.base_url:
             try:
                 # Add the Google Search tool configuration
                 # Note: The exact syntax depends on the SDK version, assuming standard Tool object
@@ -30,6 +33,23 @@ class KusmusAIEngine:
                 print(f"Warning: Failed to enable Google Search: {e}")
 
     def generate_response(self, message, history=[], context_logs=[]):
+        # 0. Sovereign Routing
+        if self.base_url:
+            from openai import OpenAI
+            client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+            try:
+                response = client.chat.completions.create(
+                    model=self.model_id,
+                    messages=[
+                        {"role": "system", "content": self.system_instruction},
+                        {"role": "user", "content": message}
+                    ],
+                    timeout=60
+                )
+                return response.choices[0].message.content, []
+            except Exception as e:
+                return f"Sovereign Node Error: {str(e)}", [f"Critical Switch Failure: {str(e)}"]
+
         thought_trace = []
         final_text = ""
 
@@ -154,6 +174,29 @@ class KusmusAIEngine:
         """Generates a streaming response for real-time frontend updates."""
         print(f"DEBUG: Starting stream for model {self.model_id}")
         
+        # 0. Sovereign Routing
+        if self.base_url:
+            from openai import OpenAI
+            client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+            try:
+                yield {"type": "thought", "content": f"Handshaking with Sovereign Node: {self.model_id}..."}
+                stream = client.chat.completions.create(
+                    model=self.model_id,
+                    messages=[
+                        {"role": "system", "content": self.system_instruction},
+                        {"role": "user", "content": message}
+                    ],
+                    stream=True,
+                    timeout=60
+                )
+                for chunk in stream:
+                    if chunk.choices and chunk.choices[0].delta.content:
+                        yield {"type": "content", "content": chunk.choices[0].delta.content}
+                return
+            except Exception as e:
+                yield {"type": "error", "content": f"Sovereign Node Stream Error: {str(e)}"}
+                return
+
         try:
             # 1. Prepare Context (same as generate_response)
             forensic_context = []

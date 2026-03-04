@@ -21,8 +21,30 @@ def parse_tasks(text):
 
 class ResearchAgentService:
     @staticmethod
-    def _call_with_fallback(prompt, config, model_override=None):
-        """Helper to call Gemini with model fallback and key rotation."""
+    def _call_with_fallback(prompt, config, model_override=None, sovereign_config=None):
+        """Helper to call Gemini or Sovereign backend with fallback."""
+        if sovereign_config and sovereign_config.get('base_url'):
+            from openai import OpenAI
+            try:
+                client = OpenAI(
+                    api_key=sovereign_config.get('api_key'),
+                    base_url=sovereign_config.get('base_url')
+                )
+                response = client.chat.completions.create(
+                    model=model_override or "sovereign",
+                    messages=[
+                        {"role": "system", "content": config.system_instruction},
+                        {"role": "user", "content": prompt}
+                    ],
+                    timeout=120
+                )
+                # Mock a Gemini-like response object for compatibility
+                class MockResponse:
+                    def __init__(self, text): self.text = text
+                return MockResponse(response.choices[0].message.content)
+            except Exception as e:
+                print(f"   [Research] Sovereign Node Failed: {e}. Falling back to Gemini...")
+        
         models_to_try = [model_override] if model_override else ["gemini-2.5-flash", "gemini-2.0-flash"]
         
         last_error = None
@@ -49,16 +71,17 @@ class ResearchAgentService:
         return {"error": f"Quota exhausted on all models/keys. Last error: {last_error}"}
 
     @staticmethod
-    def create_plan(goal: str):
+    def create_plan(goal: str, sovereign_config=None):
         try:
             config = types.GenerateContentConfig(
-                tools=[types.Tool(google_search=types.GoogleSearchRetrieval())],
+                tools=[types.Tool(google_search=types.GoogleSearchRetrieval())] if not sovereign_config else None,
                 system_instruction="You are a research architect. Create a detailed research plan with 5-8 numbered tasks."
             )
             
             response = ResearchAgentService._call_with_fallback(
                 f"Create a numbered research plan for: {goal}\n\nFormat: 1. [Task] - [Details]",
-                config
+                config,
+                sovereign_config=sovereign_config
             )
             
             if isinstance(response, dict) and "error" in response:
@@ -76,17 +99,17 @@ class ResearchAgentService:
             return {"error": str(e)}
 
     @staticmethod
-    def execute_research(plan_id: str, selected_tasks: list):
+    def execute_research(plan_id: str, selected_tasks: list, sovereign_config=None):
         try:
             task_list_str = "\n\n".join(selected_tasks)
             prompt = f"Research these tasks thoroughly and provide detailed findings with sources:\n\n{task_list_str}"
             
             config = types.GenerateContentConfig(
-                tools=[types.Tool(google_search=types.GoogleSearchRetrieval())],
+                tools=[types.Tool(google_search=types.GoogleSearchRetrieval())] if not sovereign_config else None,
                 system_instruction="You are a deep research intelligence agent. Provide exhaustive details for each task."
             )
             
-            response = ResearchAgentService._call_with_fallback(prompt, config)
+            response = ResearchAgentService._call_with_fallback(prompt, config, sovereign_config=sovereign_config)
             
             if isinstance(response, dict) and "error" in response:
                 return response
@@ -110,7 +133,7 @@ class ResearchAgentService:
         return {"id": interaction_id, "status": "unknown"}
 
     @staticmethod
-    def generate_report(research_id: str):
+    def generate_report(research_id: str, sovereign_config=None):
         try:
             try:
                 with open(f"data/research/{research_id}.txt", "r", encoding="utf-8") as f:
@@ -124,7 +147,8 @@ class ResearchAgentService:
             
             response = ResearchAgentService._call_with_fallback(
                 f"Based on the following research findings, create a professional executive report. Include a Summary, Key Findings, Recommendations, and Risks.\n\nResearch Findings:\n{research_text}",
-                config
+                config,
+                sovereign_config=sovereign_config
             )
             
             if isinstance(response, dict) and "error" in response:

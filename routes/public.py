@@ -199,6 +199,7 @@ def audit_request():
         name = request.form.get('name')
         email = request.form.get('email')
         phone = request.form.get('phone')
+        hosting_pref = request.form.get('hosting_preference')
         message = request.form.get('message')
 
         if not company_name or not name or not email or not phone:
@@ -217,6 +218,7 @@ def audit_request():
                 'name': name,
                 'email': email,
                 'phone': phone,
+                'hosting_preference': hosting_pref,
                 'message': message,
                 'verification_code': verification_code
             }))

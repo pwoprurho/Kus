@@ -153,6 +153,23 @@
             </div>
         </div>
 
+        <!-- SOVEREIGN INTELLIGENCE NODE -->
+        <div class="settings-section" id="sovereign-section">
+            <div class="section-title"><i class="fas fa-server"></i> Sovereign Intelligence Node</div>
+            <div id="sovereign-loading" style="color:#888; font-size:0.9rem;">
+                <i class="fas fa-spinner fa-spin me-2"></i>Loading node status...
+            </div>
+            <div id="sovereign-content" style="display:none;">
+                <!-- Populated by JS -->
+            </div>
+            <div id="sovereign-empty"
+                style="display:none; color:#888; font-size:0.9rem; padding:20px; border:1px dashed rgba(255,255,255,0.1); border-radius:8px; text-align:center;">
+                <i class="fas fa-cube" style="font-size:2rem; color:#333; margin-bottom:10px; display:block;"></i>
+                <p>No sovereign node provisioned yet.</p>
+                <p class="hint">Contact your account manager or request an upgrade to get a dedicated LLM instance.</p>
+            </div>
+        </div>
+
         <!-- PROFILE SETTINGS -->
         <div class="settings-section">
             <div class="section-title"><i class="fas fa-user-shield"></i> Security & Profile</div>
@@ -190,4 +207,226 @@
         </div>
     </form>
 </div>
+
+<script>
+    // === SOVEREIGN NODE STATUS ===
+    document.addEventListener('DOMContentLoaded', async function () {
+        const loading = document.getElementById('sovereign-loading');
+        const content = document.getElementById('sovereign-content');
+        const empty = document.getElementById('sovereign-empty');
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+        try {
+            const res = await fetch('/sovereign/status');
+            const data = await res.json();
+
+            loading.style.display = 'none';
+
+            if (!data.provisioned) {
+                empty.style.display = 'block';
+                return;
+            }
+
+            // Determine status styling
+            const statusColors = {
+                active: { bg: 'rgba(46,204,113,0.15)', color: '#2ecc71', icon: 'fa-check-circle' },
+                provisioning: { bg: 'rgba(241,196,15,0.15)', color: '#f1c40f', icon: 'fa-clock' },
+                suspended: { bg: 'rgba(231,76,60,0.15)', color: '#e74c3c', icon: 'fa-pause-circle' },
+                offline: { bg: 'rgba(149,165,166,0.15)', color: '#95a5a6', icon: 'fa-times-circle' }
+            };
+            const st = statusColors[data.status] || statusColors.offline;
+            const healthDot = data.health?.online
+                ? '<span style="color:#2ecc71;">● Online</span>'
+                : '<span style="color:#e74c3c;">● Offline</span>';
+
+            const config = data.model_configs;
+            const currentConfig = config[data.model] || {};
+            window.modelConfigs = config; // Store for the helper
+
+            content.innerHTML = `
+            <div style="display:grid; gap:16px;">
+                <!-- Status & Pricing Row -->
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 16px; background:${st.bg}; border-radius:8px; border:1px solid ${st.color}33;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <i class="fas ${st.icon}" style="color:${st.color}; font-size:1.2rem;"></i>
+                        <div>
+                            <div style="font-weight:600; color:${st.color}; text-transform:uppercase; font-size:0.85rem;">${data.status}</div>
+                            <div style="color:#888; font-size:0.75rem;">${healthDot} ${data.health?.latency_ms ? '(' + data.health.latency_ms + 'ms)' : ''}</div>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="color:#fff; font-weight:700; font-size:1rem;">$${data.estimated_cost_hr.toFixed(2)}<span style="font-size:0.7rem; color:#888; font-weight:400;">/hr</span></div>
+                        <div style="color:#888; font-size:0.65rem; text-transform:uppercase;">Est. Burn Rate</div>
+                    </div>
+                </div>
+
+                <!-- Hosting Type Info -->
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Deployment Model</label>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="padding:4px 10px; background:rgba(0,114,255,0.1); border:1px solid rgba(0,114,255,0.3); color:#0072ff; border-radius:12px; font-size:0.75rem; font-weight:600; text-transform:uppercase;">
+                            <i class="fas ${data.hosting_type === 'Managed' ? 'fa-cloud' : 'fa-server'}" style="margin-right:4px;"></i>
+                            ${data.hosting_type}
+                        </span>
+                        <span style="color:#555; font-size:0.75rem;">${currentConfig.gpu_type} (${currentConfig.gpu_count}x)</span>
+                    </div>
+                </div>
+
+                <!-- Model Info & Switcher -->
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Model Selection</label>
+                    <div style="display:flex; gap:8px;">
+                        <select id="model-selector" class="form-control" onchange="updateModelPriceHint()" style="flex:1; background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(255,255,255,0.15); padding:8px 12px; border-radius:6px;">
+                            ${Object.keys(config).map(k => `
+                                <option value="${k}" ${data.model === k ? 'selected' : ''}>
+                                    ${config[k].name} — $${config[k].estimated_cost_hr.toFixed(2)}/hr
+                                </option>
+                            `).join('')}
+                        </select>
+                        <button type="button" onclick="switchModel()" style="background:rgba(0,114,255,0.1); border:1px solid rgba(0,114,255,0.3); color:#0072ff; cursor:pointer; padding:8px 16px; border-radius:6px; font-weight:600; font-size:0.8rem;">
+                            <i class="fas fa-sync-alt"></i> Switch
+                        </button>
+                    </div>
+                    <div id="model-price-hint" class="hint" style="margin-top:6px; font-weight:500; color:#0072ff;">
+                        Specs: ${currentConfig.gpu_count}x ${currentConfig.gpu_type} | ${currentConfig.storage_gb}GB Persistence
+                    </div>
+                </div>
+
+                <!-- Base URL -->
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">API Base URL</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="sovereign-url" class="form-control" value="${window.location.origin}/sovereign/v1/chat/completions" readonly style="opacity:0.8; cursor:default; flex:1;">
+                        <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('sovereign-url').value); this.innerHTML='<i class=\\'fas fa-check\\'></i>'; setTimeout(()=>this.innerHTML='<i class=\\'fas fa-copy\\'></i>',1500);" style="background:rgba(0,114,255,0.1); border:1px solid rgba(0,114,255,0.3); color:#0072ff; cursor:pointer; padding:8px 12px; border-radius:6px;">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="hint">Use this URL in Cursor, Lovable, or any OpenAI-compatible tool.</div>
+                </div>
+
+                <!-- API Key -->
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">API Key</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="password" id="sovereign-key" class="form-control" value="${data.api_key}" readonly style="opacity:0.8; cursor:default; flex:1;">
+                        <button type="button" id="reveal-btn" onclick="revealKey()" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); color:#aaa; cursor:pointer; padding:8px 12px; border-radius:6px;" title="Reveal">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" onclick="regenerateKey()" style="background:rgba(231,76,60,0.1); border:1px solid rgba(231,76,60,0.3); color:#e74c3c; cursor:pointer; padding:8px 12px; border-radius:6px; font-size:0.8rem;" title="Regenerate">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="hint">Your secret API key. Click the eye to reveal, or the sync icon to regenerate.</div>
+                </div>
+
+                <!-- Storage -->
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Allocated Storage</label>
+                    <div style="color:#ccc; font-size:0.95rem;">${data.storage_gb} GB</div>
+                </div>
+
+                <!-- Integration Guide -->
+                <details style="border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px;">
+                    <summary style="cursor:pointer; color:#0072ff; font-weight:600; font-size:0.9rem;">
+                        <i class="fas fa-plug" style="margin-right:6px;"></i>Integration Guide
+                    </summary>
+                    <div style="margin-top:12px; font-size:0.85rem; color:#aaa; line-height:1.6;">
+                        <p><strong>For Cursor / Lovable / any OpenAI-compatible tool:</strong></p>
+                        <ol style="padding-left:20px;">
+                            <li>Open Settings → AI Provider → Custom / OpenAI-compatible</li>
+                            <li>Set <strong>Base URL</strong> to the URL above</li>
+                            <li>Set <strong>API Key</strong> to your sovereign API key</li>
+                            <li>Set <strong>Model</strong> to <code style="color:#58a6ff;">${data.model}</code></li>
+                        </ol>
+                        <p style="margin-top:8px;"><strong>For Python / cURL:</strong></p>
+                        <pre style="background:rgba(0,0,0,0.4); padding:10px; border-radius:6px; overflow-x:auto; font-size:0.8rem; color:#e6edf3;">curl ${window.location.origin}/sovereign/v1/chat/completions \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model":"${data.model}","messages":[{"role":"user","content":"Hello"}]}'</pre>
+                    </div>
+                </details>
+            </div>
+        `;
+            content.style.display = 'block';
+        } catch (err) {
+            loading.innerHTML = '<span style="color:#e74c3c;"><i class="fas fa-exclamation-triangle me-2"></i>Failed to load node status.</span>';
+            console.error('Sovereign status error:', err);
+        }
+    });
+
+    async function revealKey() {
+        const keyInput = document.getElementById('sovereign-key');
+        const btn = document.getElementById('reveal-btn');
+        if (keyInput.type === 'text') {
+            keyInput.type = 'password';
+            btn.innerHTML = '<i class="fas fa-eye"></i>';
+            return;
+        }
+        try {
+            const res = await fetch('/sovereign/reveal-key');
+            const data = await res.json();
+            if (data.api_key) {
+                keyInput.value = data.api_key;
+                keyInput.type = 'text';
+                btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function regenerateKey() {
+        if (!confirm('Are you sure? All existing integrations using the current key will stop working.')) return;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        try {
+            const res = await fetch('/sovereign/regenerate-key', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+            const data = await res.json();
+            if (data.success) {
+                const keyInput = document.getElementById('sovereign-key');
+                keyInput.value = data.api_key;
+                keyInput.type = 'text';
+                alert('API key regenerated successfully. Update your integrations.');
+            } else {
+                alert('Error: ' + (data.error || 'Failed to regenerate key'));
+            }
+        } catch (e) {
+            alert('Network error: ' + e.message);
+        }
+    }
+    async function updateModelPriceHint() {
+        const selector = document.getElementById('model-selector');
+        const hint = document.getElementById('model-price-hint');
+        const config = window.modelConfigs[selector.value];
+        if (config && hint) {
+            hint.innerHTML = `Specs: ${config.gpu_count}x ${config.gpu_type} | ${config.storage_gb}GB Persistence`;
+        }
+    }
+
+    async function switchModel() {
+        const model = document.getElementById('model-selector').value;
+        if (!confirm(`Switching to ${model} will redeploy your node. This process takes a few moments. Proceed?`)) return;
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        try {
+            const res = await fetch('/sovereign/switch-model', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ model: model })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(data.message);
+                window.location.reload(); // Refresh to show provisioning state
+            } else {
+                alert('Error: ' + (data.error || 'Failed to switch model'));
+            }
+        } catch (e) {
+            alert('Network error: ' + e.message);
+        }
+    }
+</script>
 {% endblock %}

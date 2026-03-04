@@ -4,73 +4,209 @@
 
 {% block content %}
 <style>
-  .glass-links {
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .dashboard-card {
+    background: rgba(22, 27, 34, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    color: #fff;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    margin-top: 2rem;
-    max-width: 480px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .glass-link {
-    background: rgba(255,255,255,0.15);
-    border-radius: 18px;
-    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.25);
-    padding: 1.5rem 1.5rem;
-    color: #222;
-    text-decoration: none;
-    transition: box-shadow 0.2s, border 0.2s;
+    justify-content: space-between;
     position: relative;
     overflow: hidden;
-    width: 100%;
-    min-width: 220px;
-    max-width: 100%;
+    height: 100%;
   }
-  .glass-link:hover {
-    box-shadow: 0 12px 40px 0 rgba(31,38,135,0.25);
-    border: 1.5px solid #0072ff;
+
+  .dashboard-card:hover {
+    transform: translateY(-8px);
+    border-color: #0072ff;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .dashboard-card i {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .dashboard-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  .dashboard-card .desc {
+    font-size: 0.9rem;
+    color: #aaa;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .dashboard-card .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
     color: #0072ff;
   }
-  .glass-link .badge {
-    position: absolute;
-    top: 1.2rem;
-    right: 2rem;
-    font-size: 0.9rem;
+
+  .node-banner {
+    background: linear-gradient(90deg, rgba(0, 114, 255, 0.1) 0%, rgba(0, 198, 255, 0.05) 100%);
+    border: 1px solid rgba(0, 114, 255, 0.2);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
   }
-  .glass-link .small {
-    color: #444;
-    margin-top: 0.5rem;
-  }
-  .tax-link {
-    border-left: 6px solid #28a745;
-    background: rgba(40,167,69,0.10);
+
+  .status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(46, 204, 113, 0.15);
+    color: #2ecc71;
   }
 </style>
-<div class="container mt-4">
-  <h2>Welcome to Your Client Dashboard</h2>
-  <div class="alert alert-info">Access all your secure client features below.</div>
-  <div class="glass-links">
-    <a href="/client-chat" class="glass-link">
-      <b>Secure Client Chat</b> <span class="badge bg-primary">Live</span>
-      <div class="small">Chat securely with the AI agent and upload documents.</div>
+
+<div class="container mt-4" style="max-width: 1100px;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 2rem;">
+    <div>
+      <h2 style="font-weight:800; letter-spacing:-0.5px; margin:0;">Command Center</h2>
+      <p style="color:#666; margin:5px 0 0 0;">Institutional Autonomy & Sovereign AI Orchestration</p>
+    </div>
+    <div style="text-align:right;">
+      <span class="status-tag" id="global-status-tag">
+        <i class="fas fa-circle-notch fa-spin"></i> Syncing Node...
+      </span>
+    </div>
+  </div>
+
+  <div id="sovereign-quick-view" class="node-banner" style="display:none;">
+    <div style="display:flex; align-items:center; gap:15px;">
+      <div
+        style="width:40px; height:40px; background:rgba(0,114,255,0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#0072ff;">
+        <i class="fas fa-microchip"></i>
+      </div>
+      <div>
+        <div style="font-size:0.85rem; font-weight:700; color:#fff;" id="active-model-name">Loading Model...</div>
+        <div style="font-size:0.75rem; color:#888;">Active Sovereign Allocation</div>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:0.85rem; font-weight:700; color:#0072ff;" id="burn-rate">Calculating...</div>
+      <div style="font-size:0.7rem; color:#555; text-transform:uppercase;">Burn Rate</div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <a href="/client-chat" class="dashboard-card">
+      <div>
+        <i class="fas fa-comment-alt"></i>
+        <h3>Secure Client Chat</h3>
+        <p class="desc">High-bandwidth direct interface with the Kusmus AI Architect. End-to-end encrypted document
+          audit and tactical planning.</p>
+      </div>
+      <div class="card-footer">
+        <span>Enter Secure Channel</span>
+        <i class="fas fa-chevron-right"></i>
+      </div>
     </a>
-    <a href="/tax" class="glass-link tax-link">
-      <b>Tax Consultant</b> <span class="badge bg-success">AI Tax Agent</span>
-      <div class="small">Upload receipts/statements and get tax reconciliation help from the AI-powered tax consultant.</div>
+
+    <a href="/tax" class="dashboard-card" style="border-top: 4px solid #28a745;">
+      <div>
+        <i class="fas fa-file-invoice-dollar"
+          style="background: linear-gradient(135deg, #28a745 0%, #a8e063 100%); -webkit-background-clip: text; background-clip: text;"></i>
+        <h3>Tax Consultant</h3>
+        <p class="desc">Automated Nigerian Tax reconciliation. Upload receipts and bank statements for immediate
+          liability auditing and filing prep.</p>
+      </div>
+      <div class="card-footer" style="color:#28a745;">
+        <span>Process Reconciliation</span>
+        <i class="fas fa-chevron-right"></i>
+      </div>
     </a>
-    <a href="{{ url_for('sandbox.investor_dashboard') }}" class="glass-link" style="border-left: 6px solid #ffd700; background: rgba(255, 215, 0, 0.05);">
-        <b>Sovereign Vault</b> <span class="badge bg-warning text-dark">Beta</span>
-        <div class="small">Equity intelligence and Market Sentinel execution.</div>
+
+    <a href="{{ url_for('sandbox.investor_dashboard') }}" class="dashboard-card" style="border-top: 4px solid #ffd700;">
+      <div>
+        <i class="fas fa-chart-line"
+          style="background: linear-gradient(135deg, #ffd700 0%, #f7971e 100%); -webkit-background-clip: text; background-clip: text;"></i>
+        <h3>Sovereign Vault</h3>
+        <p class="desc">Equity intelligence and Market Sentinel. Real-time forensic market analysis powered by your
+          dedicated LLM node.</p>
+      </div>
+      <div class="card-footer" style="color:#ffd700;">
+        <span>Launch Terminal</span>
+        <i class="fas fa-chevron-right"></i>
+      </div>
     </a>
-    
-    <a href="{{ url_for('public.client_settings') }}" class="glass-link" style="border-left: 6px solid #666; background: rgba(255, 255, 255, 0.05);">
-        <b>Settings</b> <span class="badge bg-secondary">Config</span>
-        <div class="small">Manage API Keys, Risk Profile & Security.</div>
+
+    <a href="{{ url_for('public.client_settings') }}" class="dashboard-card">
+      <div>
+        <i class="fas fa-sliders-h"
+          style="background: linear-gradient(135deg, #666 0%, #999 100%); -webkit-background-clip: text; background-clip: text;"></i>
+        <h3>System Settings</h3>
+        <p class="desc">Orchestrate your infrastructure. Manage API keys, provision new models, and adjust security
+          protocols.</p>
+      </div>
+      <div class="card-footer" style="color:#fff;">
+        <span>Configure Parameters</span>
+        <i class="fas fa-chevron-right"></i>
+      </div>
     </a>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async function () {
+    try {
+      const res = await fetch('/sovereign/status');
+      const data = await res.json();
+      const tag = document.getElementById('global-status-tag');
+
+      if (data.provisioned) {
+        tag.innerHTML = `<i class="fas fa-check-circle"></i> NODE ${data.status.toUpperCase()}`;
+        tag.style.background = data.status === 'active' ? 'rgba(46,204,113,0.15)' : 'rgba(241,196,15,0.15)';
+        tag.style.color = data.status === 'active' ? '#2ecc71' : '#f1c40f';
+
+        if (data.status === 'active') {
+          document.getElementById('sovereign-quick-view').style.display = 'flex';
+          document.getElementById('active-model-name').textContent = data.model.toUpperCase();
+          document.getElementById('burn-rate').textContent = `$${data.estimated_cost_hr.toFixed(2)}/HR`;
+        }
+      } else {
+        tag.innerHTML = `<i class="fas fa-cube"></i> NO DEDICATED NODE`;
+        tag.style.background = 'rgba(255,255,255,0.05)';
+        tag.style.color = '#666';
+      }
+    } catch (e) {
+      console.error('Failed to sync node status:', e);
+    }
+  });
+</script>
 {% endblock %}
