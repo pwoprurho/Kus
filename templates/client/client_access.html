@@ -55,12 +55,17 @@
                 required>
 
             <div style="position: relative;">
-                <input type="password" name="auth_input" class="form-control" placeholder="Password OR 6-Digit Code"
-                    required autocomplete="off" style="padding-right: 100px;">
-                <button type="button" onclick="requestRecovery()" id="sendBtn"
-                    style="position:absolute; right:12px; top:12px; background:rgba(0,114,255,0.1); border:1px solid rgba(0,114,255,0.3); color:#0072ff; cursor:pointer; font-size:11px; font-weight:bold; padding:4px 8px; border-radius:4px; transition:all 0.2s;">
-                    SEND CODE
-                </button>
+                <input type="password" id="authInput" name="auth_input" class="form-control"
+                    placeholder="Password OR 6-Digit Code" required autocomplete="off" style="padding-right: 130px;">
+                <div
+                    style="position:absolute; right:12px; top:12px; display:flex; gap: 10px; align-items: center; z-index: 10;">
+                    <i class="fas fa-eye" id="toggleIcon" onclick="togglePasswordVisibility('authInput', 'toggleIcon')"
+                        style="color:#888; cursor:pointer; font-size: 14px;" title="Show Password"></i>
+                    <button type="button" onclick="requestRecovery()" id="sendBtn"
+                        style="background:rgba(0,114,255,0.1); border:1px solid rgba(0,114,255,0.3); color:#0072ff; cursor:pointer; font-size:11px; font-weight:bold; padding:4px 8px; border-radius:4px; transition:all 0.2s;">
+                        SEND CODE
+                    </button>
+                </div>
             </div>
 
             <small style="display:block; color:#555; text-align:left; margin-top:-15px; margin-bottom:20px;">
@@ -74,6 +79,20 @@
 </div>
 
 <script>
+    function togglePasswordVisibility(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
     async function requestRecovery() {
         const email = document.getElementById('emailInput').value;
         const btn = document.getElementById('sendBtn');

@@ -48,8 +48,22 @@
 
         <form method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="password" name="password" class="form-control" placeholder="Set New Password" required>
-            <input type="password" name="confirm_password" class="form-control" placeholder="Confirm Password" required>
+            <div style="position: relative;">
+                <input type="password" id="password" name="password" class="form-control" placeholder="Set New Password"
+                    required style="padding-right: 40px;">
+                <button type="button" onclick="togglePasswordVisibility('password', 'toggleIcon1')"
+                    style="position:absolute; right:15px; top:15px; background:none; border:none; color:#888; cursor:pointer; padding:0;">
+                    <i class="fas fa-eye" id="toggleIcon1" title="Show Password"></i>
+                </button>
+            </div>
+            <div style="position: relative;">
+                <input type="password" id="confirm_password" name="confirm_password" class="form-control"
+                    placeholder="Confirm Password" required style="padding-right: 40px;">
+                <button type="button" onclick="togglePasswordVisibility('confirm_password', 'toggleIcon2')"
+                    style="position:absolute; right:15px; top:15px; background:none; border:none; color:#888; cursor:pointer; padding:0;">
+                    <i class="fas fa-eye" id="toggleIcon2" title="Show Password"></i>
+                </button>
+            </div>
             <input type="tel" name="phone" class="form-control" placeholder="Contact Phone Number (Tactical Alerts)"
                 value="{{ session.get('temp_client_phone') or '' }}" required>
 
@@ -57,4 +71,20 @@
         </form>
     </div>
 </div>
+
+<script>
+    function togglePasswordVisibility(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>
 {% endblock %}

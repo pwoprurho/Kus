@@ -60,13 +60,15 @@ def dashboard():
     except Exception as e:
         print(f"Dashboard Data Error: {e}")
     
+    from services.model_config import MODEL_CONFIGS
     return render_template('admin/dashboard.html', 
                            audit_requests=audit_requests, 
                            draft_posts=draft_posts, 
                            sandbox_logs=sandbox_logs,
                            sandbox_count=sandbox_count,
                            current_page=page,
-                           total_pages=(sandbox_count // per_page) + 1)
+                           total_pages=(sandbox_count // per_page) + 1,
+                           model_configs=MODEL_CONFIGS)
 @admin_bp.route('/lead/<uuid:lead_id>')
 @login_required
 @role_required('supa_admin', 'admin', 'editor')
@@ -76,11 +78,18 @@ def lead_detail(lead_id):
         lead_id_str = str(lead_id)
         print(f"DEBUG AUTH: Lead Detail Request for {lead_id_str}")
         
-        # Using .execute() + check is safer than .single() in some client versions
         res = safe_execute(supabase_admin.table('audit_requests').select('*').eq('id', lead_id_str))
         
         if res.data and len(res.data) > 0:
-            return jsonify(res.data[0])
+            lead = res.data[0]
+            # Cross-reference: find the registered client by email
+            try:
+                client_res = safe_execute(supabase_admin.table('clients').select('id').ilike('email', lead.get('email', '')))
+                if client_res.data and len(client_res.data) > 0:
+                    lead['client_id'] = client_res.data[0]['id']
+            except Exception:
+                pass  # Non-critical: provisioning will alert if client_id is missing
+            return jsonify(lead)
         
         print(f"DEBUG AUTH: Lead {lead_id_str} not found in DB")
         return jsonify({'error': 'Intelligence record not found'}), 404

@@ -216,15 +216,22 @@ def admin_provision_node():
         return jsonify({"error": "Admin access required"}), 403
 
     data = request.get_json()
-    if not data or not data.get('client_id') or not data.get('node_url'):
-        return jsonify({"error": "client_id and node_url are required"}), 400
+    if not data or not data.get('client_id'):
+        return jsonify({"error": "client_id is required"}), 400
+
+    hosting_type = data.get('hosting_type', 'Managed')
+    node_url = data.get('node_url', '')
+
+    # Self-Hosted nodes need a URL; Managed nodes get one from RunPod
+    if hosting_type == 'Self-Hosted' and not node_url:
+        return jsonify({"error": "node_url is required for Self-Hosted nodes"}), 400
 
     result = node_mgr.provision_node(
         client_id=data['client_id'],
-        node_url=data.get('node_url'), # Optional if using cloud
+        node_url=node_url or None,
         model_name=data.get('model_name', 'llama3:8b'),
         storage_gb=data.get('storage_gb', 20),
-        hosting_type=data.get('hosting_type', 'Managed')
+        hosting_type=hosting_type
     )
 
     if result['success']:

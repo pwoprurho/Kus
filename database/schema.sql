@@ -291,3 +291,100 @@ ALTER TABLE public.sandbox_logs ENABLE ROW LEVEL SECURITY;
 -- Allow the Service Role (Admin App) to manage logs
 CREATE POLICY "Admin full access to logs" ON public.sandbox_logs
     FOR ALL USING (true);
+
+-- has_attachment column for sandbox_logs
+ALTER TABLE public.sandbox_logs
+ADD COLUMN IF NOT EXISTS has_attachment boolean DEFAULT false;
+
+
+-- =========================================================
+-- MIGRATION: Clients Table Restructure
+-- The application's auth system uses clients as a login table,
+-- not the original CRM structure. These columns are required.
+-- =========================================================
+
+-- Core auth fields used by routes/auth.py
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS email text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS full_name text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS password_hash text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS recovery_key text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS phone text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS is_active boolean DEFAULT true;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS updated_at timestamp with time zone DEFAULT now();
+
+-- Make company_name nullable (clients register with email, not company)
+ALTER TABLE public.clients ALTER COLUMN company_name DROP NOT NULL;
+-- Remove the strict tier/status constraints for auth-based clients
+ALTER TABLE public.clients ALTER COLUMN tier DROP NOT NULL;
+ALTER TABLE public.clients ALTER COLUMN status DROP NOT NULL;
+
+-- Index for fast email-based auth lookups
+CREATE UNIQUE INDEX IF NOT EXISTS clients_email_idx ON public.clients (email);
+
+-- Policy: Allow service role to manage all client records
+CREATE POLICY "Service role manages clients" ON public.clients
+    FOR ALL USING (true);
+
+
+-- =========================================================
+-- MIGRATION: Audit Requests — Missing Columns
+-- =========================================================
+
+ALTER TABLE public.audit_requests
+ADD COLUMN IF NOT EXISTS company_name text;
+
+ALTER TABLE public.audit_requests
+ADD COLUMN IF NOT EXISTS hosting_preference text;
+
+ALTER TABLE public.audit_requests
+ADD COLUMN IF NOT EXISTS is_registered boolean DEFAULT false;
+
+
+-- =========================================================
+-- NEW TABLE: Sovereign Nodes
+-- Tracks dedicated GPU instances provisioned for clients.
+-- Used by services/sovereign_node.py and routes/sovereign.py
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS public.sovereign_nodes (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    client_id uuid REFERENCES public.clients(id) NOT NULL,
+
+    -- Node connection details
+    node_url text,
+    api_key text NOT NULL,
+
+    -- Model & hardware configuration
+    model_name text NOT NULL DEFAULT 'llama3:8b',
+    storage_gb integer DEFAULT 20,
+
+    -- Lifecycle
+    status text NOT NULL DEFAULT 'provisioning'
+        CHECK (status IN ('provisioning', 'active', 'offline', 'terminated')),
+    hosting_type text DEFAULT 'Managed'
+        CHECK (hosting_type IN ('Managed', 'Self-Hosted')),
+
+    -- RunPod integration
+    pod_id text,  -- RunPod pod identifier (NULL for self-hosted)
+
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+-- One node per client (enforced at DB level)
+CREATE UNIQUE INDEX IF NOT EXISTS sovereign_nodes_client_idx
+    ON public.sovereign_nodes (client_id);
+
+-- Enable RLS
+ALTER TABLE public.sovereign_nodes ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Service role full access (backend manages all nodes)
+CREATE POLICY "Service role manages sovereign nodes" ON public.sovereign_nodes
+    FOR ALL USING (true);
+
+-- Policy: Admins can view all nodes
+CREATE POLICY "Admins view sovereign nodes" ON public.sovereign_nodes
+    FOR SELECT USING (
+        (SELECT role FROM public.user_profiles WHERE id = auth.uid())
+        IN ('supa_admin', 'admin')
+    );
