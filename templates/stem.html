@@ -850,6 +850,10 @@
     }
 
     let engineState = { meshes: [], bodies: [] };
+    let engineCamera = null;
+    let engineControls = null;
+    let engineRenderer = null;
+    let engineGui = null;
 
     function executeEngine(config) {
         const container = document.getElementById('canvas-container');
@@ -858,7 +862,6 @@
 
         // Cleanup
         if (animationId) cancelAnimationFrame(animationId);
-        container.innerHTML = '';
         engineState.meshes = [];
         engineState.bodies = [];
         currentSim = { reset: () => executeEngine(config) };
@@ -868,25 +871,37 @@
             const scene = new THREE.Scene();
             scene.background = new THREE.Color(0xcccccc);
 
-            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            const camPos = config.config?.cameraPos || [0, 5, 15];
-            const lookAt = config.config?.lookAt || [0, 0, 0];
-            camera.position.set(...camPos);
-            camera.lookAt(...lookAt);
+            // Persist Camera and Renderer across updates so user zoom/pan is preserved
+            if (!engineCamera) {
+                engineCamera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+                const camPos = config.config?.cameraPos || [0, 5, 15];
+                const lookAt = config.config?.lookAt || [0, 0, 0];
+                engineCamera.position.set(...camPos);
+                engineCamera.lookAt(...lookAt);
+            }
 
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.shadowMap.enabled = true;
-            container.appendChild(renderer.domElement);
+            if (!engineRenderer) {
+                engineRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                engineRenderer.setSize(container.clientWidth, container.clientHeight);
+                engineRenderer.setPixelRatio(window.devicePixelRatio);
+                engineRenderer.shadowMap.enabled = true;
+                container.innerHTML = '';
+                container.appendChild(engineRenderer.domElement);
+            }
 
-            const controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
+            if (!engineControls) {
+                engineControls = new THREE.OrbitControls(engineCamera, engineRenderer.domElement);
+                engineControls.enableDamping = true;
+            }
 
-            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            const camera = engineCamera;
+            const renderer = engineRenderer;
+            const controls = engineControls;
+
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.2);
             scene.add(ambientLight);
 
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.4);
             dirLight.position.set(5, 10, 5);
             dirLight.castShadow = true;
             scene.add(dirLight);
@@ -899,6 +914,23 @@
             const defaultMaterial = new CANNON.Material();
             const contactMat = new CANNON.ContactMaterial(defaultMaterial, defaultMaterial, { friction: 0.3, restitution: 0.5 });
             world.addContactMaterial(contactMat);
+
+            // 2.5 Setup Environment GUI
+            if (engineGui) engineGui.destroy();
+            engineGui = new lil.GUI({ title: 'Environment Controls' });
+            engineGui.domElement.style.position = 'absolute';
+            engineGui.domElement.style.top = '10px';
+            engineGui.domElement.style.right = '10px';
+            container.appendChild(engineGui.domElement);
+
+            const ptLights = engineGui.addFolder('Lighting');
+            ptLights.add(ambientLight, 'intensity', 0, 2, 0.1).name('Ambient Light');
+            ptLights.add(dirLight, 'intensity', 0, 2, 0.1).name('Directional Light');
+
+            const ptPhys = engineGui.addFolder('Physics');
+            ptPhys.add(world.gravity, 'y', -30, 30, 0.1).name('Gravity Y');
+            ptPhys.add(world.gravity, 'x', -30, 30, 0.1).name('Gravity X');
+            ptPhys.add(world.gravity, 'z', -30, 30, 0.1).name('Gravity Z');
 
             // 3. Parse Entities
             const entities = config.entities || [];
@@ -923,8 +955,11 @@
                 }
 
                 // Three.js Mesh
-                const colorHex = parseInt(String(ent.color || "0xffffff").replace('#', '0x'), 16);
-                const mat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.4, metalness: 0.3 });
+                let colorVal = ent.color !== undefined ? ent.color : 0xffffff;
+                if (typeof colorVal === 'string' && colorVal.startsWith('0x')) {
+                    colorVal = parseInt(colorVal, 16);
+                }
+                const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(colorVal), roughness: 0.4, metalness: 0.3 });
                 const mesh = new THREE.Mesh(geometry, mat);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
@@ -1092,6 +1127,13 @@
         document.getElementById('canvas-container').innerHTML = '';
         document.getElementById('sim-title').textContent = "Lab Architect";
         document.getElementById('sim-subtitle').textContent = "Engine Latent";
+        engineCamera = null;
+        engineControls = null;
+        engineRenderer = null;
+        if (engineGui) {
+            engineGui.destroy();
+            engineGui = null;
+        }
         sessionId = 'stem_' + Math.random().toString(36).substr(2, 9); // Reset session on close too
     };
 </script>

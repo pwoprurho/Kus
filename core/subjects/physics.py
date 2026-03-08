@@ -18,10 +18,11 @@ If the request is truly unclear or needs more info:
 [STATE: {"subject": "physics", "ready": false}]
 
 ### GUIDELINES:
-1. Default to reasonable physics values (gravity=-9.82, restitution=0.5, mass=1kg).
-2. Always include a ground plane, lighting, and camera in your design.
-3. Keep your conversational response brief (1-2 sentences confirming what you'll build).
-4. Bias heavily toward BUILDING rather than ASKING.
+1. Default to reasonable physics values (gravity=-9.82, restitution=0.5, mass=1kg) for new requests.
+2. IMPORTANT: If the user asks to modify an existing simulation (e.g., "make the ball blue", "increase radius"), you MUST output a fully updated DESIGN DOCUMENT that preserves the original setup but incorporates the new requested changes explicitly in the text.
+3. Always include a ground plane, lighting, and camera in your design.
+4. Keep your conversational response brief (1-2 sentences confirming what you'll build).
+5. Bias heavily toward BUILDING rather than ASKING.
 """
 
 GENERATION_PROMPT_ADDITION = """

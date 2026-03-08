@@ -115,7 +115,7 @@ class StemAIEngine:
         
         return {"errors": [f"Deep Generation Failed. Last error: {last_error}"]}
 
-    def generate_simulation_stream(self, design_doc: str, subject_name: str = "physics"):
+    def generate_simulation_stream(self, design_doc: str, subject_name: str = "physics", chat_context: str = ""):
         """
         Stream the high-fidelity code generation for real-time visualization.
         """
@@ -128,7 +128,9 @@ class StemAIEngine:
             tools=[]
         )
         
-        prompt = f"Generate the full {subject_name.upper()} simulation code for this design: {design_doc}"
+        prompt = f"Generate the full {subject_name.upper()} structured JSON blueprint for this design: {design_doc}"
+        if chat_context:
+            prompt += f"\n\nHere is the recent conversation history for context on exactly what the user wants to change or build:\n{chat_context}"
         
         for chunk in engine.generate_response_stream(prompt):
             yield chunk

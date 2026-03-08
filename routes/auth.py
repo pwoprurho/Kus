@@ -11,6 +11,26 @@ from db import supabase_admin, safe_execute
 from models import User, ClientUser 
 from services.mailer import send_recovery_otp
 
+
+def rotate_session():
+    """
+    Production-grade session rotation for login.
+    Prevents session fixation attacks by clearing user data,
+    while preserving framework state (CSRF token, flash queue)
+    that must survive across the redirect.
+    """
+    # Preserve CSRF token and pending flash messages
+    csrf_token = session.get('csrf_token')
+    flashes = session.get('_flashes', [])
+    
+    session.clear()
+    
+    # Restore framework state
+    if csrf_token:
+        session['csrf_token'] = csrf_token
+    if flashes:
+        session['_flashes'] = flashes
+
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 # === RECOVERY OTP ENDPOINT ===
@@ -112,8 +132,8 @@ def client_access():
 
                 # Case 2: PASSWORD LOGIN
                 if client_data.get('password_hash') and check_password_hash(client_data['password_hash'], auth_input):
-                    # Zero Trust: Regenerate session on login
-                    session.clear()
+                    # Zero Trust: Rotate session to prevent fixation, preserve CSRF
+                    rotate_session()
                     session['client_access'] = True
                     session['client_id'] = client_data['id']
                     session['client_email'] = email
@@ -174,8 +194,8 @@ def client_access():
                             data.get('email'), data.get('role', 'intern'),
                             data.get('location')
                         )
-                        # Security Hardening: Regenerate session and store JWT
-                        session.clear()
+                        # Security Hardening: Rotate session, preserve CSRF, store JWT
+                        rotate_session()
                         session['supabase_token'] = auth_res.session.access_token
                         login_user(user)
                         flash("Secure Channel Established.", "success")
