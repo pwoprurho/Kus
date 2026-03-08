@@ -635,11 +635,157 @@ footer {
     z-index: 10;
 }
 
-.hero-content {
-    max-width: 900px;
-    margin: 0 auto;
+z-index: 20;
+}
+
+/* --- REVEAL EFFECTS (IntersectionObserver based) --- */
+.reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+}
+
+.reveal-alternate {
+    transform: translateY(40px);
+}
+
+.reveal-scale {
+    transform: scale(0.95);
+}
+
+.reveal.in-view {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.hero-os-headline {
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, #0072ff, #00c6ff, #0072ff);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s linear infinite;
+    margin-bottom: 10px;
+    display: block;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 0% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
+}
+
+/* --- ECOSYSTEM SECTION --- */
+.ecosystem-section {
+    padding: 80px 0;
     position: relative;
-    z-index: 20;
+    overflow: hidden;
+}
+
+.infra-layer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 114, 255, 0.1);
+    border: 1px solid rgba(0, 114, 255, 0.2);
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #0072ff;
+    margin-bottom: 30px;
+}
+
+.agent-carousel-wrapper {
+    position: relative;
+    width: 100%;
+    padding: 20px 0;
+}
+
+.agent-carousel {
+    display: flex;
+    overflow-x: auto;
+    gap: 30px;
+    padding: 20px 40px;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    /* Hide scrollbar Firefox */
+}
+
+.agent-carousel::-webkit-scrollbar {
+    display: none;
+    /* Hide scrollbar Chrome/Safari */
+}
+
+.agent-card-glass {
+    min-width: 320px;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 30px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.agent-card-glass:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(0, 114, 255, 0.3);
+    transform: translateY(-5px);
+}
+
+.agent-icon {
+    font-size: 2rem;
+    color: #ffe600;
+    margin-bottom: 20px;
+}
+
+.agent-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.agent-desc {
+    font-size: 0.9rem;
+    color: #888;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.pod-tag {
+    margin-top: auto;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #0072ff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pod-tag .dot {
+    width: 5px;
+    height: 5px;
+    background: #0072ff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #0072ff;
 }
 
 .hero-section h1 {

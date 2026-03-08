@@ -505,7 +505,23 @@
                 }
             }
 
-            // --- 4. EVENT LISTENERS ---
+            // --- 0. REVEAL ANIMATIONS (IntersectionObserver) ---
+            const revealObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('in-view');
+                        // No need to keep observing once revealed
+                        revealObserver.unobserve(entry.target);
+                    }
+                });
+            }, { 
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px' // Reveal slightly before it hits the bottom
+            });
+
+            document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+            // --- 1. CHAT TOGGLE LOGIC ---
             chatToggleBtn.addEventListener('click', () => {
                 chatWindow.classList.toggle('visible');
                 // If opening empty, trigger default
