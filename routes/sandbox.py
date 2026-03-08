@@ -196,6 +196,20 @@ def sandbox_view():
     return render_template('sandbox.html', demo_key=backend_id, demo=demo_info)
 
 
+@sandbox_bp.route('/api/stem/fix', methods=['POST'])
+def stem_fix():
+    data = request.get_json() or {}
+    failed_code = data.get('failed_code')
+    error_msg = data.get('error_msg')
+    subject = data.get('subject', 'physics')
+    
+    if not failed_code or not error_msg:
+        return jsonify({'error': 'Failed code and error message required'}), 400
+        
+    engine = StemAIEngine()
+    result = engine.fix_simulation(failed_code, error_msg, subject_name=subject)
+    return jsonify({'success': True, 'result': result})
+
 @sandbox_bp.route("/api/sandbox/chat_stream", methods=["POST"])
 def sandbox_chat_stream():
     try:
@@ -599,6 +613,28 @@ def research_plan():
     result = ResearchAgentService.create_plan(goal, sovereign_config=sovereign_config)
     return jsonify(result)
 
+@sandbox_bp.route('/api/research/execute_task', methods=['POST'])
+def research_execute_task():
+    data = request.get_json() or {}
+    plan_id = data.get('plan_id')
+    task_text = data.get('task_text')
+    previous_context = data.get('previous_context', '')
+    
+    if not plan_id or not task_text: 
+        return jsonify({'error': 'Plan ID and Task Text required'}), 400
+    
+    # Detect Sovereign Node
+    client_id = session.get('client_id')
+    sovereign_config = None
+    if client_id:
+        from services.sovereign_node import SovereignNodeManager
+        node = SovereignNodeManager.get_client_node(client_id)
+        if node and node['status'] == 'active' and node.get('node_url'):
+            sovereign_config = {"base_url": f"{node['node_url']}/v1", "api_key": node['api_key']}
+
+    result = ResearchAgentService.execute_research_task(plan_id, task_text, previous_context, sovereign_config=sovereign_config)
+    return jsonify(result)
+
 @sandbox_bp.route('/api/research/execute', methods=['POST'])
 def research_execute():
     data = request.get_json() or {}
@@ -622,9 +658,10 @@ def research_execute():
 def research_report():
     data = request.get_json() or {}
     research_id = data.get('research_id')
-    # research_text provided by client if they polled it, OR backend fetches it.
-    # Service implementation handles fetching if we pass ID.
-    if not research_id: return jsonify({'error': 'Research ID required'}), 400
+    plan_id = data.get('plan_id')
+    
+    if not research_id and not plan_id: 
+        return jsonify({'error': 'Research ID or Plan ID required'}), 400
     
     # Detect Sovereign Node
     client_id = session.get('client_id')
@@ -635,5 +672,5 @@ def research_report():
         if node and node['status'] == 'active' and node.get('node_url'):
             sovereign_config = {"base_url": f"{node['node_url']}/v1", "api_key": node['api_key']}
 
-    result = ResearchAgentService.generate_report(research_id, sovereign_config=sovereign_config)
+    result = ResearchAgentService.generate_report(research_id, plan_id=plan_id, sovereign_config=sovereign_config)
     return jsonify(result)

@@ -99,7 +99,66 @@ class ResearchAgentService:
             return {"error": str(e)}
 
     @staticmethod
+    def execute_research_task(plan_id: str, task_text: str, previous_context: str = "", sovereign_config=None):
+        """Executes a single research task with context of previous findings."""
+        try:
+            prompt = f"""
+            TASK: {task_text}
+            
+            CONTEXT FROM PREVIOUS VECTORS:
+            {previous_context or "No previous context."}
+            
+            INSTRUCTIONS:
+            1. Research the task thoroughly using available tools.
+            2. Provide a detailed, technical breakdown of findings.
+            3. CRITICAL: Identify 2-3 'Emergent Sub-Vectors' (highly specific follow-up areas) based on your findings.
+            
+            FORMAT:
+            --- FINDINGS ---
+            [Detailed findings here]
+            
+            --- EMERGENT SUB-VECTORS ---
+            1. [Sub-Vector Title] - [Reasoning]
+            2. [Sub-Vector Title] - [Reasoning]
+            """
+            
+            config = types.GenerateContentConfig(
+                tools=[types.Tool(google_search=types.GoogleSearchRetrieval())] if not sovereign_config else None,
+                system_instruction="You are a deep research intelligence agent. Focus on granular technical details and identifying high-value follow-up vectors."
+            )
+            
+            response = ResearchAgentService._call_with_fallback(prompt, config, sovereign_config=sovereign_config)
+            
+            if isinstance(response, dict) and "error" in response:
+                return response
+
+            findings_text = response.text
+            
+            # Parse sub-vectors for dynamic expansion
+            sub_vectors = []
+            sv_match = re.search(r'--- EMERGENT SUB-VECTORS ---\n(.*?)(?=\Z|---)', findings_text, re.DOTALL)
+            if sv_match:
+                sub_vectors = parse_tasks(sv_match.group(1))
+
+            # Store incremental findings
+            task_id = str(uuid.uuid4())[:8]
+            result_dir = f"data/research/{plan_id}"
+            os.makedirs(result_dir, exist_ok=True)
+            with open(f"{result_dir}/{task_id}.txt", "w", encoding="utf-8") as f:
+                f.write(findings_text)
+            
+            return {
+                "task_id": task_id,
+                "findings": findings_text,
+                "sub_vectors": sub_vectors
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    @staticmethod
     def execute_research(plan_id: str, selected_tasks: list, sovereign_config=None):
+        # Legacy entry point - redirected to task-by-task if possible or kept for bulk
+        # For now, keeping as a bulk fallback but recommending the task-specific route
         try:
             task_list_str = "\n\n".join(selected_tasks)
             prompt = f"Research these tasks thoroughly and provide detailed findings with sources:\n\n{task_list_str}"
@@ -133,20 +192,33 @@ class ResearchAgentService:
         return {"id": interaction_id, "status": "unknown"}
 
     @staticmethod
-    def generate_report(research_id: str, sovereign_config=None):
+    def generate_report(research_id: str, plan_id: str = None, sovereign_config=None):
         try:
-            try:
-                with open(f"data/research/{research_id}.txt", "r", encoding="utf-8") as f:
-                    research_text = f.read()
-            except FileNotFoundError:
-                return {"error": "Research findings not found"}
+            research_text = ""
+            if plan_id:
+                # Synthesize from incremental task files
+                result_dir = f"data/research/{plan_id}"
+                if os.path.exists(result_dir):
+                    files = sorted(os.listdir(result_dir))
+                    for filename in files:
+                        if filename.endswith(".txt"):
+                            with open(f"{result_dir}/{filename}", "r", encoding="utf-8") as f:
+                                research_text += f"\n\n--- TASK FINDINGS ---\n{f.read()}"
+            
+            if not research_text:
+                # Fallback to single file
+                try:
+                    with open(f"data/research/{research_id}.txt", "r", encoding="utf-8") as f:
+                        research_text = f.read()
+                except FileNotFoundError:
+                    return {"error": "Research findings not found"}
 
             config = types.GenerateContentConfig(
-                system_instruction="You are a senior analyst. Write a concise, high-impact executive report in Markdown."
+                system_instruction="You are a senior analyst. Write a concise, high-impact executive report in Markdown. Synthesize the findings into a cohesive narrative."
             )
             
             response = ResearchAgentService._call_with_fallback(
-                f"Based on the following research findings, create a professional executive report. Include a Summary, Key Findings, Recommendations, and Risks.\n\nResearch Findings:\n{research_text}",
+                f"Based on the following research findings, create a professional executive report. Include a Summary, Strategic Implications (how this affects institutional autonomy), Detailed Analysis, and Risks.\n\nResearch Findings:\n{research_text}",
                 config,
                 sovereign_config=sovereign_config
             )

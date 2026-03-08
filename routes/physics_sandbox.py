@@ -124,11 +124,12 @@ def generate_stem_experiment_stream():
     try:
         data = request.get_json()
         design_doc = data.get('design', '')
+        subject = data.get('subject', 'physics').lower()
         session_id = data.get('session_id', 'default')
         
         if not design_doc:
-            session = sessions["default"] # quick hack for fallback
-            if session:
+            session = sessions.get(session_id)
+            if session and session.get("history"):
                 design_doc = "\n".join([f"{h['role']}: {h['content']}" for h in session["history"]])
             else:
                 return jsonify({"error": "No design context found"}), 400
@@ -137,7 +138,7 @@ def generate_stem_experiment_stream():
             yield f"data: {json.dumps({'type': 'start'})}\n\n"
             try:
                 # We need to manually construct the generator since stem_engine is global
-                for chunk in stem_engine.generate_simulation_stream(design_doc):
+                for chunk in stem_engine.generate_simulation_stream(design_doc, subject_name=subject):
                     if chunk["type"] == "content":
                         # Send content chunk
                         yield f"data: {json.dumps({'type': 'chunk', 'content': chunk['content']})}\n\n"

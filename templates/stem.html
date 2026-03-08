@@ -593,6 +593,13 @@
                 <div id="canvas-container"></div>
 
                 <div class="hud-controls">
+                    <button class="hud-btn" id="btn-seed" title="Seed from Research Intelligence">
+                        <i class="fas fa-database"></i> RESEARCH SEED
+                    </button>
+                    <button class="hud-btn" id="btn-fix"
+                        style="display: none; background: rgba(220, 38, 38, 0.8); border-color: rgba(255, 255, 255, 0.4);">
+                        <i class="fas fa-magic"></i> AUTO-FIX
+                    </button>
                     <button class="hud-btn" id="btn-reset"><i class="fas fa-sync-alt"></i> RESET</button>
                     <button class="hud-btn" id="btn-close"><i class="fas fa-times"></i> DISMISS</button>
                 </div>
@@ -613,7 +620,66 @@
         setupTabs();
         setupInput();
         setupScrollWatcher();
+        setupExtraButtons();
     });
+
+    function setupExtraButtons() {
+        document.getElementById('btn-seed').onclick = seedFromResearch;
+        document.getElementById('btn-fix').onclick = runAutoFix;
+    }
+
+    async function seedFromResearch() {
+        setLoading(true, "Synchronizing with Research Hub...");
+        try {
+            // Assume we pull the most recent completed research summary
+            appendMessage('ai', "Consulting deep research databases for environmental constants...");
+
+            // In a real scenario, we'd list recent reports. For now, we simulate a seed.
+            const prompt = `Based on the most recent deep research on ${ACTIVE_SUBJECT}, extract 3-5 physical/technical constants and design a specialized simulation using them.`;
+            document.getElementById('chat-input').value = prompt;
+            handleSend();
+        } catch (e) {
+            appendMessage('ai', "Synergy Error: Failed to bridge research data.");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    let lastFailedCode = "";
+    let lastErrorMsg = "";
+
+    async function runAutoFix() {
+        if (!lastFailedCode || !lastErrorMsg) return;
+
+        setLoading(true, "AI Architect analyzing fault vectors...");
+        document.getElementById('btn-fix').style.display = 'none';
+
+        try {
+            const res = await fetch('/api/stem/fix', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    failed_code: lastFailedCode,
+                    error_msg: lastErrorMsg,
+                    subject: ACTIVE_SUBJECT
+                })
+            });
+            const data = await res.json();
+            if (data.success && data.result.threejs_code) {
+                appendMessage('ai', "Fault corrected. Re-initializing simulation vectors.");
+                executeEngine(data.result.threejs_code, data.result.title || "Fixed Experiment", data.result.concept || ACTIVE_SUBJECT);
+            } else {
+                appendMessage('ai', "Neural repair failed. Try re-articulating the experiment parameters.");
+            }
+        } catch (e) {
+            appendMessage('ai', "Repair Loop Interrupted: " + e.message);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     function setupTabs() {
         const tabsContainer = document.querySelector('.subject-tabs');
@@ -756,27 +822,25 @@
 
             setLoading(false);
 
-            // Extract code and metadata
-            const codeMatch = fullResponse.match(/```(?:javascript|js)\s*([\s\S]*?)\s*```/);
+            // Extract JSON code
             const jsonMatch = fullResponse.match(/```json\s*([\s\S]*?)\s*```/);
+            let configJson = null;
 
-            if (codeMatch) {
-                const code = codeMatch[1];
-                let title = "Experiment";
-                let concept = ACTIVE_SUBJECT;
+            if (jsonMatch) {
+                configJson = jsonMatch[1];
+            } else if (fullResponse.trim().startsWith("{") && fullResponse.trim().endsWith("}")) {
+                configJson = fullResponse.trim();
+            }
 
-                if (jsonMatch) {
-                    try {
-                        const meta = JSON.parse(jsonMatch[1]);
-                        title = meta.title || title;
-                        concept = meta.concept || concept;
-                        currentExperiment = { ...meta, threejs_code: code };
-                    } catch (e) { }
+            if (configJson) {
+                try {
+                    const config = JSON.parse(configJson);
+                    executeEngine(config);
+                } catch (e) {
+                    appendMessage('ai', "Error parsing JSON architect blueprint: " + e.message + "\n\nBlueprint:\n" + configJson);
                 }
-
-                executeEngine(code, title, concept);
             } else {
-                appendMessage('ai', "Error: Lab Architect failed to provide valid 3D logic.");
+                appendMessage('ai', "Error: Lab Architect failed to provide a valid JSON blueprint.");
             }
 
         } catch (e) {
@@ -785,76 +849,178 @@
         }
     }
 
-    function executeEngine(code, title, concept) {
+    let engineState = { meshes: [], bodies: [] };
+
+    function executeEngine(config) {
         const container = document.getElementById('canvas-container');
-        document.getElementById('sim-title').textContent = title;
-        document.getElementById('sim-subtitle').textContent = concept.toUpperCase();
+        document.getElementById('sim-title').textContent = config.title || "Experiment";
+        document.getElementById('sim-subtitle').textContent = (config.concept || ACTIVE_SUBJECT).toUpperCase();
 
         // Cleanup
         if (animationId) cancelAnimationFrame(animationId);
         container.innerHTML = '';
+        engineState.meshes = [];
+        engineState.bodies = [];
+        currentSim = { reset: () => executeEngine(config) };
 
         try {
-            // Setup GUI
-            if (window.gui) window.gui.destroy();
-            window.gui = new lil.GUI({ container: container, autoPlace: false });
-            window.gui.domElement.style.position = 'absolute';
-            window.gui.domElement.style.top = '20px';
-            window.gui.domElement.style.right = '20px';
-            container.appendChild(window.gui.domElement);
+            // 1. Setup canonical Three.js
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xcccccc);
 
-            const execute = new Function('THREE', 'CANNON', 'GUI', `
-                "use strict";
-                try {
-                    ${code}
-                    
-                    // Auto-invoke if wrapped in function
-                    if (typeof createSimulation === 'function') {
-                        return createSimulation();
-                    }
-                } catch(e) { 
-                    console.error("Simulation Execution Error:", e);
-                    throw e;
-                }
-            `);
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const camPos = config.config?.cameraPos || [0, 5, 15];
+            const lookAt = config.config?.lookAt || [0, 0, 0];
+            camera.position.set(...camPos);
+            camera.lookAt(...lookAt);
 
-            const sim = execute(window.THREE, window.CANNON, window.gui);
-            if (!sim) throw new Error("Null logic returned. Ensure the script returns the sim objects.");
-
-            currentSim = sim;
-            const { scene, camera } = sim;
-
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.shadowMap.enabled = true;
             container.appendChild(renderer.domElement);
 
-            if (sim.controls) {
-                // Sim provided its own controls
-            } else {
-                const controls = new THREE.OrbitControls(camera, renderer.domElement);
-                controls.enableDamping = true;
-            }
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
 
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(5, 10, 5);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            // 2. Setup canonical Cannon.js
+            const world = new CANNON.World();
+            const grav = config.config?.gravity || [0, -9.82, 0];
+            world.gravity.set(...grav);
+
+            const defaultMaterial = new CANNON.Material();
+            const contactMat = new CANNON.ContactMaterial(defaultMaterial, defaultMaterial, { friction: 0.3, restitution: 0.5 });
+            world.addContactMaterial(contactMat);
+
+            // 3. Parse Entities
+            const entities = config.entities || [];
+            const bodyMap = {}; // Maps id to CANNON.Body
+
+            entities.forEach(ent => {
+                let geometry, shape;
+                if (ent.type === 'sphere') {
+                    geometry = new THREE.SphereGeometry(ent.radius || 0.5, 32, 32);
+                    shape = new CANNON.Sphere(ent.radius || 0.5);
+                } else if (ent.type === 'box') {
+                    const s = ent.size || [1, 1, 1];
+                    geometry = new THREE.BoxGeometry(s[0], s[1], s[2]);
+                    shape = new CANNON.Box(new CANNON.Vec3(s[0] / 2, s[1] / 2, s[2] / 2));
+                } else if (ent.type === 'cylinder') {
+                    geometry = new THREE.CylinderGeometry(ent.radiusTop || 0.5, ent.radiusBottom || 0.5, ent.height || 1, 32);
+                    shape = new CANNON.Cylinder(ent.radiusTop || 0.5, ent.radiusBottom || 0.5, ent.height || 1, 32);
+                } else if (ent.type === 'plane') {
+                    const s = ent.size || [100, 100];
+                    geometry = new THREE.PlaneGeometry(s[0], s[1]);
+                    shape = new CANNON.Plane();
+                }
+
+                // Three.js Mesh
+                const colorHex = parseInt(String(ent.color || "0xffffff").replace('#', '0x'), 16);
+                const mat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.4, metalness: 0.3 });
+                const mesh = new THREE.Mesh(geometry, mat);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+
+                const pos = ent.position || [0, 0, 0];
+                mesh.position.set(...pos);
+                if (ent.rotation) {
+                    mesh.rotation.set(...ent.rotation);
+                }
+                scene.add(mesh);
+
+                // Cannon.js Body
+                const body = new CANNON.Body({
+                    mass: ent.mass !== undefined ? ent.mass : 1.0,
+                    material: defaultMaterial,
+                    position: new CANNON.Vec3(...pos)
+                });
+                body.addShape(shape);
+
+                if (ent.rotation) {
+                    body.quaternion.setFromEuler(ent.rotation[0], ent.rotation[1], ent.rotation[2]);
+                }
+                if (ent.restitution !== undefined || ent.friction !== undefined) {
+                    body.material = new CANNON.Material({
+                        restitution: ent.restitution !== undefined ? ent.restitution : 0.5,
+                        friction: ent.friction !== undefined ? ent.friction : 0.3
+                    });
+                }
+
+                world.addBody(body);
+                bodyMap[ent.id] = body;
+
+                if (body.mass > 0) {
+                    engineState.meshes.push(mesh);
+                    engineState.bodies.push(body);
+                }
+            });
+
+            // 4. Parse Constraints
+            const constraints = config.constraints || [];
+            constraints.forEach(c => {
+                const bA = bodyMap[c.bodyA];
+                const bB = bodyMap[c.bodyB];
+                if (!bA || !bB) return;
+
+                if (c.type === 'pointToPoint') {
+                    const pA = new CANNON.Vec3(...(c.pivotA || [0, 0, 0]));
+                    const pB = new CANNON.Vec3(...(c.pivotB || [0, 0, 0]));
+                    const constraint = new CANNON.PointToPointConstraint(bA, pA, bB, pB);
+                    world.addConstraint(constraint);
+                } else if (c.type === 'distance') {
+                    const constraint = new CANNON.DistanceConstraint(bA, bB, c.distance || 1);
+                    world.addConstraint(constraint);
+                } else if (c.type === 'hinge') {
+                    const pA = new CANNON.Vec3(...(c.pivotA || [0, 0, 0]));
+                    const pB = new CANNON.Vec3(...(c.pivotB || [0, 0, 0]));
+                    const aA = new CANNON.Vec3(...(c.axisA || [1, 0, 0]));
+                    const aB = new CANNON.Vec3(...(c.axisB || [1, 0, 0]));
+                    const constraint = new CANNON.HingeConstraint(bA, bB, { pivotA: pA, pivotB: pB, axisA: aA, axisB: aB });
+                    world.addConstraint(constraint);
+                }
+            });
+
+            // Auto-resize handler
+            window.addEventListener('resize', () => {
+                if (container.clientWidth && container.clientHeight) {
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            });
+
+            const timeStep = 1 / 60;
             function animate() {
                 animationId = requestAnimationFrame(animate);
-                if (sim.render) sim.render();
-                if (renderer) renderer.render(scene, camera);
+                controls.update();
+                world.step(timeStep);
+
+                for (let i = 0; i < engineState.meshes.length; i++) {
+                    engineState.meshes[i].position.copy(engineState.bodies[i].position);
+                    engineState.meshes[i].quaternion.copy(engineState.bodies[i].quaternion);
+                }
+
+                renderer.render(scene, camera);
             }
             animate();
 
-            // Handle Resize
-            window.addEventListener('resize', () => {
-                if (!renderer || !camera) return;
-                camera.aspect = container.clientWidth / container.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(container.clientWidth, container.clientHeight);
-            });
+            document.getElementById('btn-fix').style.display = 'none';
 
         } catch (e) {
-            console.error(e);
-            appendMessage('ai', "Execution Error: " + e.message);
+            console.error("STEM Engine Execution Error:", e);
+            appendMessage('ai', `<strong style="color: #ef4444;">ENGINE FAULT:</strong> ${e.message}. <br>The Architect can attempt an <strong>Auto-Fix</strong>.`);
+
+            lastFailedCode = JSON.stringify(config);
+            lastErrorMsg = e.stack || e.message;
+            document.getElementById('btn-fix').style.display = 'flex';
         }
     }
 

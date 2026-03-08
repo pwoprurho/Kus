@@ -218,6 +218,26 @@
         color: #64748b;
         height: 200px;
         overflow-y: auto;
+        padding-right: 8px;
+    }
+
+    /* PREMIUM SCROLLBAR */
+    .trace-log::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .trace-log::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 10px;
+    }
+
+    .trace-log::-webkit-scrollbar-thumb {
+        background: rgba(167, 139, 250, 0.2);
+        border-radius: 10px;
+    }
+
+    .trace-log::-webkit-scrollbar-thumb:hover {
+        background: var(--accent);
     }
 
     /* FORMS & INPUTS */
@@ -306,6 +326,47 @@
         border-radius: 6px;
         cursor: pointer;
         accent-color: var(--accent);
+    }
+
+    .task-status {
+        font-size: 0.65rem;
+        font-weight: 800;
+        font-family: 'JetBrains Mono';
+        padding: 2px 8px;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+
+    .status-pending {
+        color: #64748b;
+        border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+
+    .status-active {
+        color: var(--accent);
+        border: 1px solid var(--accent-glow);
+        animation: pulse 2s infinite;
+    }
+
+    .status-done {
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .sub-vector-tag {
+        display: inline-block;
+        font-size: 0.65rem;
+        background: rgba(167, 139, 250, 0.1);
+        color: var(--accent);
+        border: 1px solid var(--border);
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin-top: 8px;
+        cursor: pointer;
+    }
+
+    .sub-vector-tag:hover {
+        background: rgba(167, 139, 250, 0.2);
     }
 
     /* LOADER */
@@ -533,59 +594,138 @@
     }
 
     async function startResearch() {
-        const selected = Array.from(document.querySelectorAll('#tasks-container input:checked')).map(cb => {
-            const t = TASKS.find(x => x.num == cb.value);
-            return `${t.num}. ${t.text}`;
-        });
+        const checkboxes = Array.from(document.querySelectorAll('#tasks-container input:checked'));
+        if (checkboxes.length === 0) return alert("Select investigation vectors.");
 
-        if (selected.length === 0) return alert("Select investigation vectors.");
-
-        setLoading(true, "EXECUTING DEEP RESEARCH...");
+        setLoading(true, "INITIALIZING COLLABORATIVE EXECUTION...");
         startTimer();
-        logTrace(`Executing research on ${selected.length} nodes...`);
+        logTrace(`Initializing sequential investigation on ${checkboxes.length} nodes...`);
 
+        // Switch to Execution Tab
+        document.getElementById('tab-execution').click();
+
+        let accumulatedContext = "";
+
+        for (const cb of checkboxes) {
+            const taskId = cb.value;
+            const taskText = TASKS.find(x => x.num == taskId).text;
+            const item = cb.closest('.task-item');
+            const statusEl = item.querySelector('.task-status');
+
+            // Set Active
+            statusEl.className = 'task-status status-active';
+            statusEl.textContent = 'Active';
+            logTrace(`Investigating Vector ${taskId}...`);
+
+            try {
+                const res = await fetch('/api/research/execute_task', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        plan_id: PLAN_ID,
+                        task_text: taskText,
+                        previous_context: accumulatedContext
+                    })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                accumulatedContext += `\n\nVECTOR ${taskId} FINDINGS:\n${data.findings}`;
+
+                // Mark Done
+                statusEl.className = 'task-status status-done';
+                statusEl.textContent = 'Secured';
+                logTrace(`Vector ${taskId} secured. Data integrated.`);
+
+                // Add Sub-Vectors if any
+                if (data.sub_vectors && data.sub_vectors.length > 0) {
+                    const tagContainer = document.createElement('div');
+                    data.sub_vectors.forEach(sv => {
+                        const tag = document.createElement('div');
+                        tag.className = 'sub-vector-tag';
+                        tag.innerHTML = `<i class="fas fa-plus"></i> ${sv.text.substring(0, 30)}...`;
+                        tag.title = sv.text;
+                        tag.onclick = () => addSubVector(sv);
+                        tagContainer.appendChild(tag);
+                    });
+                    item.querySelector('.task-details').appendChild(tagContainer);
+                }
+
+            } catch (e) {
+                statusEl.className = 'task-status status-pending';
+                statusEl.textContent = 'Error';
+                logTrace(`NODE ERROR on Vector ${taskId}: ${e.message}`);
+            }
+        }
+
+        logTrace(`Primary ingestion complete. Finalizing synthesis...`);
+        await finalizeReport();
+        setLoading(false);
+        stopTimer();
+    }
+
+    function addSubVector(sv) {
+        // Find highest existing num
+        const nextNum = Math.max(...TASKS.map(t => parseInt(t.num))) + 1;
+        const newTask = { num: nextNum, text: sv.text };
+        TASKS.push(newTask);
+
+        const container = document.getElementById('tasks-container');
+        const div = document.createElement('div');
+        div.className = 'task-item';
+        div.innerHTML = `
+            <input type="checkbox" checked value="${nextNum}">
+            <div style="flex: 1" class="task-details">
+                <div style="display: flex; justify-content: space-between; align-items: center">
+                    <div style="font-size: 0.65rem; color: var(--accent); font-weight: 800; font-family: 'JetBrains Mono'">SUB-VECTOR ${nextNum.toString().padStart(2, '0')}</div>
+                    <span class="task-status status-pending">Queued</span>
+                </div>
+                <div style="font-size: 0.9rem; color: #fff; margin-top: 4px">${sv.text}</div>
+            </div>
+        `;
+        container.appendChild(div);
+        logTrace(`New investigative branch identified: ${sv.text.substring(0, 40)}...`);
+    }
+
+    async function finalizeReport() {
+        setLoading(true, "SYNTHESIZING FINAL INTELLIGENCE...");
         try {
-            const res = await fetch('/api/research/execute', {
+            const res = await fetch('/api/research/report', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({ plan_id: PLAN_ID, tasks: selected })
+                body: JSON.stringify({ plan_id: PLAN_ID })
             });
             const data = await res.json();
             if (data.error) throw new Error(data.error);
 
-            logTrace(`Data ingestion complete. Finalizing intelligence report...`);
-
-            const reportRes = await fetch('/api/research/report', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ research_id: data.research_id })
-            });
-            const reportData = await reportRes.json();
-
-            if (reportData.error) throw new Error(reportData.error);
-
-            document.getElementById('report-content').innerHTML = marked.parse(reportData.report_text);
-            if (reportData.infographic) {
-                document.getElementById('infographic-img').src = "data:image/png;base64," + reportData.infographic;
-                document.getElementById('infographic-area').style.display = 'block';
-            }
-
-            logTrace(`Report generated. Switching to Intelligence tab.`);
+            document.getElementById('report-content').innerHTML = marked.parse(data.report_text);
             document.getElementById('tab-intelligence').click();
-
+            logTrace(`Intelligence synthesis complete.`);
         } catch (e) {
-            logTrace(`CORE ERROR: ${e.message}`);
-            alert("Neural Core Fault: " + e.message);
-        } finally {
-            setLoading(false);
-            stopTimer();
+            logTrace(`SYNTHESIS ERROR: ${e.message}`);
         }
+    }
+
+    function renderTasks(tasks) {
+        const container = document.getElementById('tasks-container');
+        container.innerHTML = tasks.map(t => `
+            <div class="task-item">
+                <input type="checkbox" checked value="${t.num}">
+                <div style="flex: 1" class="task-details">
+                    <div style="display: flex; justify-content: space-between; align-items: center">
+                        <div style="font-size: 0.65rem; color: var(--accent); font-weight: 800; font-family: 'JetBrains Mono'">VECTOR ${t.num.toString().padStart(2, '0')}</div>
+                        <span class="task-status status-pending">Queued</span>
+                    </div>
+                    <div style="font-size: 0.9rem; color: #fff; margin-top: 4px">${t.text}</div>
+                </div>
+            </div>
+        `).join('');
     }
 
     function setLoading(active, msg) {
@@ -595,8 +735,15 @@
 
     function logTrace(msg) {
         const log = document.getElementById('trace-log');
-        log.innerHTML += `<br>> ${msg}`;
-        log.scrollTop = log.scrollHeight;
+        const entry = document.createElement('div');
+        entry.style.marginBottom = '4px';
+        entry.innerHTML = `<span style="color: var(--accent); opacity: 0.5;">></span> ${msg}`;
+        log.appendChild(entry);
+
+        // Smother auto-scroll
+        requestAnimationFrame(() => {
+            log.scrollTop = log.scrollHeight;
+        });
     }
 
     let timerInterval;

@@ -376,7 +376,7 @@
         <div id="chat-window" class="chat-window">
             <div class="chat-header">
                 <span><i class="fas fa-circle" style="color:#00ff88; font-size: 8px; margin-right: 8px;"></i> Kusmus AI
-                    Architect</span>
+                    Systems Architect</span>
                 <i class="fas fa-times" onclick="document.getElementById('chat-toggle-btn').click()"
                     style="cursor:pointer; opacity: 0.7;"></i>
             </div>
@@ -386,7 +386,7 @@
                 <button id="chat-send-btn"><i class="fas fa-arrow-up"></i></button>
             </div>
         </div>
-        <button id="chat-toggle-btn" class="chat-toggle"><i class="fas fa-robot"></i></button>
+        <button id="chat-toggle-btn" class="chat-toggle"><i class="fas fa-project-diagram"></i></button>
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
@@ -405,7 +405,7 @@
             window.currentDemoId = 'ai_architect';
 
             const PROTOCOL_GREETINGS = {
-                'ai_architect': "Kusmus AI Architect Online. Design matrix synchronized. Ready for system scoping and resource estimation.",
+                'ai_architect': "Kusmus AI Systems Architect Online. Core logic synchronized. Awaiting project parameters for stack recommendation and resource estimation.",
                 'sentinel_monitor': "Sentinel System Online. O-RAN defense perimeter active. Awaiting telemetry logs.",
                 'surge_vla': "VLA Robotics Interface Active. Ready to analyze vision feed for anomalies."
             };
@@ -514,7 +514,7 @@
                         revealObserver.unobserve(entry.target);
                     }
                 });
-            }, { 
+            }, {
                 threshold: 0.1,
                 rootMargin: '0px 0px -50px 0px' // Reveal slightly before it hits the bottom
             });

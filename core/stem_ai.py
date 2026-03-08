@@ -12,25 +12,40 @@ from core.maths_ai import MathsSubject
 from core.biology_ai import BiologySubject
 from core.chemistry_ai import ChemistrySubject
 
-# Shared base for generation
 BASE_GENERATION_PROMPT = """
-You are a STEM Simulation Architect. Generate 100% executable Three.js + Cannon.js code.
-The available globals are: `THREE` (r128), `CANNON` (0.6.2), and `lil.GUI`. Do NOT use import/export.
+You are a STEM Simulation Architect building structured JSON blueprints. 
+You will not write Javascript code. Instead, you will define the environment, entities, and physics rules in a strictly formatted JSON object. 
+
+=== ARCHITECTURAL LAYERS ===
+1. **Config**: Define gravity, camera position, and renderer settings.
+2. **Entities**: Define objects (spheres, boxes, planes). Every entity has an id, type, mass (0 for static), dimensions, position, and color.
+3. **Constraints**: Define mechanical links (e.g., pointToPoint) between entities.
 
 === UNIVERSAL STANDARDS ===
-- Materials: `THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.3 })`.
-- Shadows: `castShadow = true` and `receiveShadow = true`.
-- Lighting: Ambient + Directional (5, 10, 5).
-- Controls: Use `lil.GUI` for parameters.
+- Physics Engine: Cannon.js concepts apply (restitution, friction, mass).
+- Graphics: Three.js concepts apply.
+- Use metric units (meters, kg).
 
-=== OUTPUT FORMAT (STRICT) ===
-1. Full JavaScript in a ```javascript``` block.
-2. Metadata in a ```json``` block (include "title", "concept", "description").
-3. **CRITICAL**: The JS **MUST** end with a top-level return statement: `return { scene, camera, world, render };`.
-4. **FORBIDDEN**: 
-    - Do NOT create a `WebGLRenderer`.
-    - Do NOT append to `document.body`.
-    - Do NOT use `requestAnimationFrame` (the environment handles the loop via your `render` function).
+=== STRICT OUTPUT FORMAT ===
+Your response MUST be valid, parseable JSON wrapped in a ```json``` block. Do not include any Javascript.
+
+{
+  "title": "Simulation Title",
+  "concept": "Core scientific concept",
+  "description": "Detailed explanation",
+  "config": {
+    "gravity": [0, -9.82, 0],
+    "cameraPos": [0, 5, 15],
+    "lookAt": [0, 0, 0]
+  },
+  "entities": [
+    { "id": "ground", "type": "plane", "mass": 0, "size": [100, 100], "position": [0, 0, 0], "rotation": [-1.5708, 0, 0], "color": "0x808080" },
+    { "id": "bob", "type": "sphere", "mass": 1.0, "radius": 0.5, "position": [0, 3, 0], "color": "0xff0000", "restitution": 0.7 }
+  ],
+  "constraints": [
+    { "id": "hinge", "type": "pointToPoint", "bodyA": "bob", "bodyB": "pivot", "pivotA": [0, 0, 0], "pivotB": [0, 0, 0] }
+  ]
+}
 """
 
 class StemAIEngine:
@@ -41,8 +56,8 @@ class StemAIEngine:
             "biology": BiologySubject,
             "chemistry": ChemistrySubject
         }
-        self.planning_model = "gemini-2.5-flash-lite"
-        self.generation_model = "gemini-2.5-flash-lite"
+        self.planning_model = "gemini-2.5-flash"
+        self.generation_model = "gemini-2.5-flash"
 
     def get_subject_logic(self, subject_name: str):
         return self.subjects.get(subject_name, PhysicsSubject)
@@ -118,11 +133,43 @@ class StemAIEngine:
         for chunk in engine.generate_response_stream(prompt):
             yield chunk
 
+    def fix_simulation(self, failed_code: str, error_msg: str, subject_name: str = "physics") -> dict:
+        """
+        Self-healing loop: Analyze error and re-generate code.
+        """
+        subject = self.get_subject_logic(subject_name)
+        prompt = f"""
+        ERROR DETECTED IN SIMULATION CODE:
+        {error_msg}
+
+        FAILING CODE:
+        {failed_code}
+
+        STRICT INSTRUCTION:
+        1. Identify what caused the error (e.g., missing entity ID, invalid number, bad constraint type).
+        2. Re-write the JSON blueprint to FIX the error while maintaining the original simulation intent.
+        3. Ensure the output is strictly valid JSON format mapping to the STEM Engine JSON schema.
+        """
+        
+        engine = KusmusAIEngine(
+            system_instruction=BASE_GENERATION_PROMPT + "\n" + subject.GENERATION_PROMPT_ADDITION,
+            model_name=self.generation_model
+        )
+        
+        response_text, thought_trace = engine.generate_response(prompt)
+        result = self._parse_json(response_text)
+        if "errors" not in result:
+            result["thought_trace"] = thought_trace
+            result["model_used"] = self.generation_model
+        return result
+
     def _parse_state(self, text: str, default_subject: str) -> dict:
-        match = re.search(r'\[STATE:\s*({.*?})\s*\]', text)
+        # Improved parsing for complex design docs
+        match = re.search(r'\[STATE:\s*({.*?})\s*\]', text, re.DOTALL)
         if match:
             try:
-                state = json.loads(match.group(1))
+                state_str = match.group(1).replace('\n', ' ')
+                state = json.loads(state_str)
                 if 'subject' not in state: state['subject'] = default_subject
                 return state
             except:
@@ -133,7 +180,7 @@ class StemAIEngine:
         result = {}
         code_match = re.search(r'```(?:javascript|js)\s*(.*?)\s*```', text, flags=re.DOTALL)
         if code_match:
-            result["threejs_code"] = code_match.group(1)
+            result["threejs_code"] = code_match.group(1).strip()
         
         json_match = re.search(r'```json\s*({.*?})\s*```', text, flags=re.DOTALL)
         if json_match:
