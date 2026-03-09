@@ -17,34 +17,41 @@ You are a STEM Simulation Architect building structured JSON blueprints.
 You will not write Javascript code. Instead, you will define the environment, entities, and physics rules in a strictly formatted JSON object. 
 
 === ARCHITECTURAL LAYERS ===
-1. **Config**: Define gravity, camera position, and renderer settings.
-2. **Entities**: Define objects (spheres, boxes, planes). Every entity has an id, type, mass (0 for static), dimensions, position, and color.
-3. **Constraints**: Define mechanical links (e.g., pointToPoint) between entities.
+1. **Config**: Define gravity and world settings. (Camera is AUTO-FIT by default).
+2. **Entities**: Define objects (spheres, boxes, planes). 
+   - Attributes: `id`, `type`, `mass`, `size` or `radius`, `position`, `rotation`, `color` (hex), `label` (optional text), `opacity` (0.0-1.0).
+   - INTERACTIVITY: All objects with `mass > 0` are automatically DRAGGABLE by the user.
+3. **Constraints**: Define mechanical links between entities.
+4. **Vectors**: Visualize quantities like `velocity` or `force` using Arrow overlays.
+5. **Reveal**: ALWAYS include a `reveal` object with `title` and `text` explaining the science.
 
 === UNIVERSAL STANDARDS ===
-- Physics Engine: Cannon.js concepts apply (restitution, friction, mass).
+- Physics Engine: Cannon.js concepts apply.
 - Graphics: Three.js concepts apply.
-- Use metric units (meters, kg).
+- Interactive Feedback: Prefer using labels, vectors, and draggable components to create a PhET-like exploratory environment.
 
 === STRICT OUTPUT FORMAT ===
-Your response MUST be valid, parseable JSON wrapped in a ```json``` block. Do not include any Javascript.
+Your response MUST be valid, parseable JSON wrapped in a ```json``` block.
 
 {
   "title": "Simulation Title",
   "concept": "Core scientific concept",
   "description": "Detailed explanation",
   "config": {
-    "gravity": [0, -9.82, 0],
-    "cameraPos": [0, 5, 15],
-    "lookAt": [0, 0, 0]
+    "gravity": [0, -9.82, 0]
   },
   "entities": [
-    { "id": "ground", "type": "plane", "mass": 0, "size": [100, 100], "position": [0, 0, 0], "rotation": [-1.5708, 0, 0], "color": "0x808080" },
-    { "id": "bob", "type": "sphere", "mass": 1.0, "radius": 0.5, "position": [0, 3, 0], "color": "0xff0000", "restitution": 0.7 }
+    { "id": "ground", "type": "plane", "mass": 0, "size": [20, 20], "position": [0, 0, 0], "color": "0x333333", "label": "Ground" },
+    { "id": "bob", "type": "sphere", "mass": 1.0, "radius": 1.0, "position": [0, 5, 0], "color": "0x0072ff", "label": "Interactive Sphere" }
   ],
-  "constraints": [
-    { "id": "hinge", "type": "pointToPoint", "bodyA": "bob", "bodyB": "pivot", "pivotA": [0, 0, 0], "pivotB": [0, 0, 0] }
-  ]
+  "vectors": [
+    { "entity": "bob", "type": "velocity", "color": "0x00ff00" }
+  ],
+  "constraints": [],
+  "reveal": {
+    "title": "Exploring Motion",
+    "text": "This simulation allows you to drag the sphere and observe its velocity vector in real-time."
+  }
 }
 """
 
@@ -166,7 +173,7 @@ class StemAIEngine:
         return result
 
     def _parse_state(self, text: str, default_subject: str) -> dict:
-        # Improved parsing for complex design docs
+        # Try explicit [STATE: {...}] tag
         match = re.search(r'\[STATE:\s*({.*?})\s*\]', text, re.DOTALL)
         if match:
             try:
@@ -176,23 +183,41 @@ class StemAIEngine:
                 return state
             except:
                 pass
+        
+        # Fallback: If the response contains a design document pattern, mark as ready
+        if 'SIMULATION:' in text or 'OBJECTS:' in text or '"title"' in text:
+            # Extract the design from the full response
+            return {"subject": default_subject, "ready": True, "design": text}
+        
         return {"subject": default_subject, "ready": False}
 
     def _parse_json(self, text: str) -> dict:
         result = {}
-        code_match = re.search(r'```(?:javascript|js)\s*(.*?)\s*```', text, flags=re.DOTALL)
-        if code_match:
-            result["threejs_code"] = code_match.group(1).strip()
         
+        # Try JSON blueprint first (new format)
         json_match = re.search(r'```json\s*({.*?})\s*```', text, flags=re.DOTALL)
         if json_match:
             try:
                 metadata = json.loads(json_match.group(1))
                 result.update(metadata)
+                return result
             except:
                 pass
         
-        if "threejs_code" in result:
-             return result
-
+        # Try raw JSON (no code fences)
+        stripped = text.strip()
+        if stripped.startswith('{') and stripped.endswith('}'):
+            try:
+                metadata = json.loads(stripped)
+                result.update(metadata)
+                return result
+            except:
+                pass
+        
+        # Legacy: Try old JS code format
+        code_match = re.search(r'```(?:javascript|js)\s*(.*?)\s*```', text, flags=re.DOTALL)
+        if code_match:
+            result["threejs_code"] = code_match.group(1).strip()
+            return result
+        
         return {"errors": ["Could not parse code or metadata from response"]}
