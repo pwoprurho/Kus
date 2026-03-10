@@ -339,6 +339,8 @@ def sitemap():
     pages = [
         'public.home', 
         'public.solutions', 
+        'public.infrastructure',
+        'public.compliance',
         'public.method', 
         'public.ceo_profile', 
         'public.team', 
