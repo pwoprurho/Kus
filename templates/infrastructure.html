@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block title %}Sovereign AI Infrastructure | Independence from Big Tech | Kusmus{% endblock %}
+
+{% block content %}
+<header class="page-header container fade-in">
+    <h1 class="text-gradient" style="font-size: 3.5rem; margin-bottom: 24px;">Sovereign Infrastructure: Targeted
+        Industry Implementations</h1>
+    <p style="font-size: 1.25rem; color: #94a3b8; max-width: 800px; margin: 0 auto;">
+        Engineering the foundation for institutional autonomy. We provide the <strong>Independence Stack</strong>
+        tailored for high-stakes sectors through private, NVIDIA-grade orchestration.
+    </p>
+    <p
+        style="font-size: 0.85rem; color: #64748b; margin-top: 25px; font-style: italic; max-width: 700px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+        * Procurement Notice: Fixed-rate licensing is not available. Compute costs (On-Prem or Cloud-Optimized via
+        AWS/GCP)
+        and stack engineering are customized to the scale of your local residency requirements. Final budgets are
+        drafted post-Technical Audit.
+    </p>
+</header>
+
+<section class="container fade-in" style="margin-bottom: 100px;">
+    <!-- THE SOVEREIGN DATA FLOW VISUAL -->
+    <div class="glass-panel"
+        style="padding: 60px; border-radius: 24px; background: rgba(255,255,255,0.02); border: 1px solid rgba(0,255,136,0.05); margin-bottom: 80px;">
+        <div style="text-align: center; margin-bottom: 50px;">
+            <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 15px;">Sovereign System Architecture</h2>
+            <p style="color: #94a3b8; max-width: 700px; margin: 0 auto;">
+                A high-fidelity visualization of how data moves from your perimeter to autonomous execution.
+            </p>
+        </div>
+
+        <div class="architecture-flow"
+            style="display: flex; justify-content: space-between; align-items: center; position: relative; padding: 40px 0;">
+            <!-- Node 1: Local Infrastructure -->
+            <div class="arch-node" style="flex: 1; text-align: center; z-index: 2;">
+                <div
+                    style="width: 120px; height: 120px; background: rgba(0, 255, 136, 0.1); border: 2px solid #00ff88; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);">
+                    <i class="fas fa-server" style="font-size: 3rem; color: #00ff88;"></i>
+                </div>
+                <h4 style="color: #fff; margin-bottom: 8px;">Local Infrastructure</h4>
+                <p style="font-size: 0.8rem; color: #94a3b8;">On-Prem/Air-Gapped Node</p>
+            </div>
+
+            <!-- Connector line 1 -->
+            <div
+                style="flex: 0.5; height: 2px; background: linear-gradient(to right, #00ff88, #0072ff); position: relative; margin-top: -60px;">
+                <div style="position: absolute; right: 0; top: -4px; color: #0072ff;"><i
+                        class="fas fa-chevron-right"></i></div>
+                <div
+                    style="position: absolute; width: 100%; text-align: center; top: -25px; font-size: 0.7rem; color: #00ff88; font-family: monospace;">
+                    Telemetric Feed</div>
+            </div>
+
+            <!-- Node 2: Sentinel Remediation -->
+            <div class="arch-node" style="flex: 1; text-align: center; z-index: 2;">
+                <div
+                    style="width: 120px; height: 120px; background: rgba(0, 114, 255, 0.1); border: 2px solid #0072ff; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 0 30px rgba(0, 114, 255, 0.2); transform: rotate(45deg);">
+                    <i class="fas fa-shield-halved"
+                        style="font-size: 3rem; color: #0072ff; transform: rotate(-45deg);"></i>
+                </div>
+                <h4 style="color: #fff; margin-bottom: 8px;">Sentinel Remediation</h4>
+                <p style="font-size: 0.8rem; color: #94a3b8;">Autonomous Governance Layer</p>
+            </div>
+
+            <!-- Connector line 2 -->
+            <div
+                style="flex: 0.5; height: 2px; background: linear-gradient(to right, #0072ff, #ffe600); position: relative; margin-top: -60px;">
+                <div style="position: absolute; right: 0; top: -4px; color: #ffe600;"><i
+                        class="fas fa-chevron-right"></i></div>
+                <div
+                    style="position: absolute; width: 100%; text-align: center; top: -25px; font-size: 0.7rem; color: #0072ff; font-family: monospace;">
+                    Validated Signal</div>
+            </div>
+
+            <!-- Node 3: Sovereign Vault -->
+            <div class="arch-node" style="flex: 1; text-align: center; z-index: 2;">
+                <div
+                    style="width: 140px; height: 140px; background: rgba(255, 230, 0, 0.1); border: 2px solid #ffe600; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 0 40px rgba(255, 230, 0, 0.3);">
+                    <i class="fas fa-vault" style="font-size: 3.5rem; color: #ffe600;"></i>
+                </div>
+                <h4 style="color: #fff; margin-bottom: 8px;">Sovereign Vault</h4>
+                <p style="font-size: 0.8rem; color: #94a3b8;">High-Fidelity Execution</p>
+            </div>
+        </div>
+
+        <div style="margin-top: 50px; padding: 30px; border-top: 1px solid rgba(255,255,255,0.05); text-align: center;">
+            <p style="color: #64748b; font-size: 0.9rem; line-height: 1.6;">
+                <i class="fas fa-info-circle"></i> <strong>CTO Briefing</strong>: The data flow is unidirectional and
+                air-gap compatible.
+                Raw telemetry enters the <strong>Sentinel</strong> layer for autonomous validation against your
+                institutional policy weights,
+                propagating a cryptographically signed signal to the <strong>Sovereign Vault</strong> for execution.
+            </p>
+        </div>
+    </div>
+
+    <!-- TECHNICAL PILLARS -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
+        <!-- NVIDIA NeMo/NIMs -->
+        <div class="glass-panel" style="padding: 40px; border-radius: 20px;">
+            <i class="fas fa-bolt" style="font-size: 2.5rem; color: #00ff88; margin-bottom: 25px;"></i>
+            <h3 style="color: #fff; margin-bottom: 15px;">NVIDIA-Grade Orchestration</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">
+                We leverage <strong>NVIDIA NeMo</strong> and <strong>NVIDIA NIMs</strong> to provide
+                enterprise-ready inference and fine-tuning. This ensures high-fidelity
+                reasoning and low-latency execution across distributed GPU nodes.
+            </p>
+        </div>
+
+        <!-- Passive Data / GET-only RL -->
+        <div class="glass-panel" style="padding: 40px; border-radius: 20px;">
+            <i class="fas fa-shield-alt" style="font-size: 2.5rem; color: #0072ff; margin-bottom: 25px;"></i>
+            <h3 style="color: #fff; margin-bottom: 15px;">Passive Data Harvesting</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">
+                Our <strong>Sovereign RL</strong> protocols use strictly <strong>GET-only</strong> requests to gather
+                environmental data. This passive approach ensures that your system evolves
+                without opening risky write-paths or compromising data residency.
+            </p>
+        </div>
+
+        <!-- Data Orchestration (Kus_org) -->
+        <div class="glass-panel" style="padding: 40px; border-radius: 20px;">
+            <i class="fas fa-layer-group" style="font-size: 2.5rem; color: #ffe600; margin-bottom: 25px;"></i>
+            <h3 style="color: #fff; margin-bottom: 15px;">Kus_org Data Engine</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">
+                Integration with the <strong>Kus_org</strong> framework allows for seamless
+                orchestration of private datasets. We fine-tune your models locally
+                to ensure peak performance on industry-specific objectives.
+            </p>
+        </div>
+    </div>
+    <!-- TARGETED INDUSTRY IMPLEMENTATIONS -->
+    <div style="margin-top: 100px; margin-bottom: 60px; text-align: center;">
+        <h2 class="text-gradient" style="font-size: 2.5rem;">Industries Supported</h2>
+        <p style="color: #94a3b8; max-width: 850px; margin: 20px auto 0; font-size: 1.15rem; line-height: 1.6;">
+            The Core Infrastructure for Autonomous Agents. One infrastructure layer. Infinite agent realizations.
+            Every specialized agent below is powered directly by your private Sovereign Pod.
+        </p>
+    </div>
+
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; margin-bottom: 100px;">
+
+        <!-- TELECOM SECTOR -->
+        <div class="glass-panel" style="padding: 40px; border-radius: 24px; border-top: 5px solid #ffcc00;">
+            <div style="display: flex; gap: 20px; align-items: start; margin-bottom: 30px;">
+                <i class="fas fa-tower-broadcast" style="font-size: 2.5rem; color: #ffcc00;"></i>
+                <div>
+                    <h3 style="color: #fff; margin-bottom: 5px;">Telecommunications</h3>
+                    <span
+                        style="color: #ffcc00; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Sovereignty
+                        & Uptime</span>
+                </div>
+            </div>
+            <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.7; margin-bottom: 25px;">
+                Signal integrity for regional giants like <strong>MTN Group</strong>. Our <strong>Sentinel</strong>
+                agents provide autonomous O-RAN defense, remediating threats and optimizing signal paths in real-time.
+            </p>
+            <ul
+                style="color: #fff; font-size: 0.85rem; list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; opacity: 0.8;">
+                <li><i class="fas fa-user-gear" style="color: #ffcc00; margin-right: 10px;"></i> <strong>Field-Force
+                        AI</strong>: Real-time support for distributed technicians.</li>
+            </ul>
+        </div>
+
+        <!-- BANKING & FINANCE -->
+        <div class="glass-panel" style="padding: 40px; border-radius: 24px; border-top: 5px solid #0072ff;">
+            <div style="display: flex; gap: 20px; align-items: start; margin-bottom: 30px;">
+                <i class="fas fa-vault" style="font-size: 2.5rem; color: #0072ff;"></i>
+                <div>
+                    <h3 style="color: #fff; margin-bottom: 5px;">Banking & Finance</h3>
+                    <span
+                        style="color: #0072ff; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Execution
+                        & Compliance</span>
+                </div>
+            </div>
+            <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.7; margin-bottom: 25px;">
+                The <strong>Sovereign Vault</strong> correlates insider data with public signals, while our
+                <strong>Sovereign Tax Engine</strong> provides 100% statutory adherence within air-gapped environments.
+            </p>
+            <ul
+                style="color: #fff; font-size: 0.85rem; list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; opacity: 0.8;">
+                <li><i class="fas fa-user-shield" style="color: #0072ff; margin-right: 10px;"></i> <strong>Talent
+                        Intelligence</strong>: Private HR reasoning for high-stakes roles.</li>
+            </ul>
+        </div>
+
+        <!-- RETAIL & WHOLESALE -->
+        <div class="glass-panel" style="padding: 40px; border-radius: 24px; border-top: 5px solid #00ff88;">
+            <div style="display: flex; gap: 20px; align-items: start; margin-bottom: 30px;">
+                <i class="fas fa-shopping-cart" style="font-size: 2.5rem; color: #00ff88;"></i>
+                <div>
+                    <h3 style="color: #fff; margin-bottom: 5px;">Retail & Wholesale</h3>
+                    <span
+                        style="color: #00ff88; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Integrity
+                        & Efficiency</span>
+                </div>
+            </div>
+            <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.7; margin-bottom: 25px;">
+                Autonomous inventory integrity via <strong>VLA Robotics</strong> and large-scale VAT/CITA automation
+                through the infrastructure-integrated <strong>Tax Engine</strong>.
+            </p>
+            <ul
+                style="color: #fff; font-size: 0.85rem; list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; opacity: 0.8;">
+                <li><i class="fas fa-users-viewfinder" style="color: #00ff88; margin-right: 10px;"></i>
+                    <strong>Frontline Support</strong>: Adaptive labor optimization and shift intelligence.
+                </li>
+            </ul>
+        </div>
+
+        <!-- INTEGRATED SECURITY -->
+        <div class="glass-panel" style="padding: 40px; border-radius: 24px; border-top: 5px solid #ff4444;">
+            <div style="display: flex; gap: 20px; align-items: start; margin-bottom: 30px;">
+                <i class="fas fa-shield-halved" style="font-size: 2.5rem; color: #ff4444;"></i>
+                <div>
+                    <h3 style="color: #fff; margin-bottom: 5px;">Critical Infrastructure</h3>
+                    <span
+                        style="color: #ff4444; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Unified
+                        Defense</span>
+                </div>
+            </div>
+            <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.7; margin-bottom: 25px;">
+                Combining <strong>Sentinel's</strong> digital response with <strong>VLA Robotics'</strong> vision
+                diagnostics to create a multi-layer perimeter for private data centers.
+            </p>
+            <ul
+                style="color: #fff; font-size: 0.85rem; list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; opacity: 0.8;">
+                <li><i class="fas fa-id-card-clip" style="color: #ff4444; margin-right: 10px;"></i> <strong>Integrity
+                        Vetting</strong>: Secure personnel reliability and clearance monitoring.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- AIR-GAPPED & SECURITY SECTION -->
+<section style="background: rgba(0,0,0,0.4); padding: 100px 0;">
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h2 class="text-gradient" style="font-size: 2.5rem;">Extreme Security. Zero Compromise.</h2>
+            <p style="color: #94a3b8; max-width: 700px; margin: 20px auto 0;">
+                For government and defense sectors, we provide the ultimate in data sovereignty.
+            </p>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+            <div class="glass-panel" style="padding: 40px; border-radius: 24px;">
+                <h4 style="color: #fff; margin-bottom: 15px;">Level 1: Sovereign Cloud (Help-Hosted)</h4>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Managed deployment within dedicated VPCs on AWS or Google
+                    Cloud. You own the compute and weights; we handle the orchestration.</p>
+            </div>
+            <div class="glass-panel" style="padding: 40px; border-radius: 24px;">
+                <h4 style="color: #fff; margin-bottom: 15px;"><i class="fas fa-lock"></i> Level 2: Air-Gapped
+                    Deployments</h4>
+                <p style="color: #94a3b8; font-size: 0.9rem;">
+                    Deploy your intelligence nodes in physically isolated environments.
+                    No external internet access required for inference or operation.
+                </p>
+            </div>
+            <div class="glass-panel" style="padding: 40px; border-left: 4px solid #00ff88;">
+                <h4 style="color: #fff; margin-bottom: 15px;"><i class="fas fa-map-marker-alt"></i> Local Data Residency
+                </h4>
+                <p style="color: #94a3b8; font-size: 0.9rem;">
+                    Full compliance with <strong>NITDA</strong> and regional data laws.
+                    Your data never leaves your jurisdiction, or even your building.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container" style="text-align: center; padding: 100px 0;">
+    <h3 style="color: #fff; font-size: 2rem; margin-bottom: 30px;">Ready for Sovereign Independence?</h3>
+    <p style="color: #94a3b8; margin-bottom: 40px;">Request a forensic audit of your current infrastructure.</p>
+    <a href="{{ url_for('public.audit_request') }}" class="cta-button"
+        style="padding: 16px 40px; font-size: 1.1rem;">Request Technical Audit &rarr;</a>
+</section>
+
+{% endblock %}

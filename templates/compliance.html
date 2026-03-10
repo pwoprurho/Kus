@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Data Residency & Statutory Compliance | Sovereign AI | Kusmus{% endblock %}
+
+{% block content %}
+<header class="page-header container fade-in">
+    <div class="infra-layer-badge" style="margin-bottom: 20px; display: inline-block;">
+        <i class="fas fa-certificate"></i> STATUTORY CERTAINTY
+    </div>
+    <h1 class="text-gradient" style="font-size: 3.5rem; margin-bottom: 24px;">Data Residency & <br>Sovereign Compliance
+    </h1>
+    <p style="font-size: 1.25rem; color: #94a3b8; max-width: 800px; margin: 0 auto;">
+        In a world of borderless data, we provide the anchors. Total adherence to regional laws,
+        NITDA guidelines, and the rigorous standards of **GDPR (Europe)** and **UK Data Protection**.
+    </p>
+</header>
+
+<section class="container fade-in" style="margin-bottom: 100px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 60px;">
+        <!-- NITDA Compliance -->
+        <div class="glass-panel" style="padding: 40px; border-radius: 20px; border: 1px solid rgba(0, 255, 136, 0.2);">
+            <i class="fas fa-building-shield" style="font-size: 2.5rem; color: #00ff88; margin-bottom: 25px;"></i>
+            <h3 style="color: #fff; margin-bottom: 15px;">NITDA NDPA Readiness</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">
+                Engineered for full compliance with the <strong>Nigeria Data Protection Act (NDPA)</strong>.
+                Our sovereign pods ensure that sensitive citizen data never leaves the national perimeter,
+                eliminating cross-border jurisdictional risks.
+            </p>
+        </div>
+
+        <!-- Statutory Accuracy -->
+        <div class="glass-panel" style="padding: 40px; border-radius: 20px; border: 1px solid rgba(0, 114, 255, 0.2);">
+            <i class="fas fa-scale-balanced" style="font-size: 2.5rem; color: #0072ff; margin-bottom: 25px;"></i>
+            <h3 style="color: #fff; margin-bottom: 15px;">100% Statutory Accuracy</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">
+                Our <strong>Sovereign Tax & Audit Engines</strong> are updated in real-time with the latest Finance Acts
+                and Circulars.
+                We guarantee that every autonomous execution meets the highest standard of legal and fiscal certainty.
+            </p>
+        </div>
+
+        <!-- International Standards -->
+        <div class="glass-panel"
+            style="grid-column: span 2; padding: 40px; border-radius: 20px; border: 1px solid rgba(148, 163, 184, 0.2); background: rgba(255,255,255,0.01);">
+            <div style="display: flex; align-items: center; gap: 30px;">
+                <i class="fas fa-globe-europe" style="font-size: 3rem; color: #94a3b8;"></i>
+                <div>
+                    <h3 style="color: #fff; margin-bottom: 10px;">Global-Tier Compliance: EU & UK GDPR</h3>
+                    <p style="color: #94a3b8; font-size: 1rem; line-height: 1.6;">
+                        Kusmus infrastructure is engineered to exceed local requirements by adhering to the world's most
+                        stringent data privacy frameworks. We implement <strong>Privacy-by-Design</strong> and
+                        <strong>Privacy-by-Default</strong> as mandated by the <strong>EU GDPR</strong> and the
+                        <strong>UK Data Protection Act</strong>, ensuring institutional readiness for global audits.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATA RESIDENCY MODES -->
+    <div style="margin-top: 100px; text-align: center;">
+        <h2 style="color: #fff; margin-bottom: 60px;">Residency Deployment Architectures</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+            <div class="glass-panel" style="padding: 40px; border-radius: 24px;">
+                <h4 style="color: #fff; margin-bottom: 15px;">Level 1: Sovereign Cloud (Help-Hosted)</h4>
+                <p style="color: #888; font-size: 0.9rem;">Deployment within dedicated VPCs on <strong>AWS</strong> or
+                    <strong>Google Cloud</strong>. You own the compute and weights; we manage the orchestration and
+                    security.
+                </p>
+            </div>
+            <div class="glass-panel" style="padding: 40px; border-radius: 24px; border: 1px solid #ffe600;">
+                <h4 style="color: #fff; margin-bottom: 15px;">Level 2: Institutional Perimeter (On-Prem)</h4>
+                <p style="color: #888; font-size: 0.9rem;">Data resides on your own physical bare-metal servers. Kusmus
+                    provides the Independence Stack via secure local node deployment.</p>
+            </div>
+            <div class="glass-panel" style="padding: 40px; border-radius: 24px; border: 1px solid #ff4444;">
+                <h4 style="color: #fff; margin-bottom: 15px;">Level 3: Air-Gapped (Defense)</h4>
+                <p style="color: #888; font-size: 0.9rem;">Total physical isolation. No external network connectivity.
+                    Systems are deployed and updated via secure physical hand-off.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="expertise-teaser container glass-panel" style="margin-bottom: 80px; text-align: center; padding: 80px;">
+    <h2 class="text-gradient">Zero-Cloud Mandate.</h2>
+    <p style="color: #94a3b8; max-width: 700px; margin: 20px auto 40px; font-size: 1.15rem;">
+        Your metadata is as valuable as your raw data. By eliminating third-party cloud dependencies,
+        we remove the "Metadata Harvest" currently performed by Big Tech providers.
+    </p>
+    <a href="{{ url_for('public.audit_request') }}" class="cta-button">Request Compliance Audit &rarr;</a>
+</section>
+{% endblock %}

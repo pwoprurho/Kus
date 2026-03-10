@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}#1 Sovereign AI Provider in Nigeria | Enterprise Intelligence | Kusmus AI{% endblock %}
+    <title>{% block title %}Independence from Big Tech | Sovereign AI for Africa | Kusmus AI{% endblock %}
     </title>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -28,7 +28,7 @@
     <meta property="og:title"
         content="{% block og_title %}Kusmus AI - Nigeria's Leading AI Solutions Provider{% endblock %}">
     <meta property="og:description"
-        content="{% block og_description %}Sovereign Enterprise Intelligence for the African frontier. We engineer certainty through fine-tuned AI solutions, private data security, and institutional autonomy.{% endblock %}">
+        content="{% block og_description %}Independence from Big Tech. We provide the NVIDIA-grade stack for institutional autonomy, sovereign data residency, and high-performance AI orchestration.{% endblock %}">
     <meta property="og:image"
         content="{% block og_image %}{{ url_for('static', filename='images/pic01.png', _external=True) }}{% endblock %}">
 
@@ -329,6 +329,8 @@
             <ul id="primary-navigation" data-visible="false">
                 <li><a href="{{ url_for('public.home') }}">Home</a></li>
                 <li><a href="{{ url_for('public.solutions') }}">Solutions</a></li>
+                <li><a href="{{ url_for('public.infrastructure') }}">Infrastructure</a></li>
+                <li><a href="{{ url_for('public.compliance') }}">Compliance</a></li>
                 <li><a href="{{ url_for('public.method') }}">Methodology</a></li>
                 <li><a href="{{ url_for('public.ceo_profile') }}">CSE Profile</a></li>
                 <li><a href="{{ url_for('public.chairman') }}">Chief's Bio</a></li>

@@ -110,9 +110,17 @@ def home():
 def solutions():
     return render_template("solutions.html")
 
+@public_bp.route("/infrastructure")
+def infrastructure():
+    return render_template("infrastructure.html")
+
 @public_bp.route("/method")
 def method():
     return render_template("method.html")
+
+@public_bp.route("/compliance")
+def compliance():
+    return render_template("compliance.html")
 
 @public_bp.route("/ceo-profile")
 def ceo_profile():
