@@ -132,7 +132,9 @@ def community_download(platform):
     filename_map = {
         'android': 'kusmus-ai-community.apk',
         'windows': 'kusmus-ai-community-windows.zip',
-        'ios': 'kusmus-ai-community.ipa'
+        'ios': 'kusmus-ai-community.ipa',
+        'macos': 'kusmus-ai-community-macos.zip',
+        'linux': 'kusmus-ai-community-linux.zip'
     }
     filename = filename_map.get(platform)
     if not filename:
