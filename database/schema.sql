@@ -157,7 +157,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION public.is_staff()
+CREATE OR REPLACE FUNCTION public.is_kus_bot_member()
 RETURNS boolean AS $$
 BEGIN
   RETURN EXISTS (
@@ -178,12 +178,12 @@ CREATE POLICY "Public insert leads" ON public.audit_requests FOR INSERT WITH CHE
 CREATE POLICY "Admins view leads" ON public.audit_requests FOR SELECT USING (public.is_admin() OR (SELECT role FROM public.user_profiles WHERE id = auth.uid()) = 'editor');
 
 -- POLICIES: CLIENTS
-CREATE POLICY "Staff view clients" ON public.clients FOR SELECT USING ((SELECT role FROM public.user_profiles WHERE id = auth.uid()) IN ('supa_admin', 'admin', 'editor'));
+CREATE POLICY "kus_bot members view clients" ON public.clients FOR SELECT USING ((SELECT role FROM public.user_profiles WHERE id = auth.uid()) IN ('supa_admin', 'admin', 'editor'));
 CREATE POLICY "Admins manage clients" ON public.clients FOR ALL USING (public.is_admin());
 
 -- POLICIES: BLOG POSTS
 CREATE POLICY "Public read published posts" ON public.blog_posts FOR SELECT USING (status = 'Published');
-CREATE POLICY "Staff read all posts" ON public.blog_posts FOR SELECT USING (public.is_staff());
+CREATE POLICY "kus_bot members read all posts" ON public.blog_posts FOR SELECT USING (public.is_kus_bot_member());
 CREATE POLICY "Authors edit own posts" ON public.blog_posts FOR UPDATE USING (auth.uid() = author_id);
 CREATE POLICY "Editors manage all posts" ON public.blog_posts FOR ALL USING ((SELECT role FROM public.user_profiles WHERE id = auth.uid()) IN ('supa_admin', 'admin', 'editor'));
 
@@ -193,7 +193,7 @@ CREATE POLICY "Public insert messages" ON public.chat_messages FOR INSERT WITH C
 CREATE POLICY "Admins read chats" ON public.chat_messages FOR SELECT USING (public.is_admin());
 
 -- POLICIES: TAX LAW CHUNKS
-CREATE POLICY "Staff manage tax law chunks" ON public.tax_law_chunks
+CREATE POLICY "kus_bot members manage tax law chunks" ON public.tax_law_chunks
     FOR ALL USING (
         (SELECT role FROM public.user_profiles WHERE id = auth.uid()) 
         IN ('supa_admin', 'admin', 'editor')
@@ -262,8 +262,8 @@ CREATE TABLE IF NOT EXISTS public.secure_chat_messages (
 -- 2. Enable Security (RLS)
 ALTER TABLE public.secure_chat_messages ENABLE ROW LEVEL SECURITY;
 
--- 3. Policy: Allow Staff to view/manage all secure chats
-CREATE POLICY "Staff manage secure chats" ON public.secure_chat_messages
+-- 3. Policy: Allow kus_bot members to view/manage all secure chats
+CREATE POLICY "kus_bot members manage secure chats" ON public.secure_chat_messages
     FOR ALL USING (
         (SELECT role FROM public.user_profiles WHERE id = auth.uid()) 
         IN ('supa_admin', 'admin', 'editor')

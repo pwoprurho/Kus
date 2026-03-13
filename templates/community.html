@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Kusmus AI Community Edition{% endblock %}
+
+{% block content %}
+<div class="community-hero">
+    <div class="container">
+        <span class="badge">Community Edition</span>
+        <h1>Open-Source Intelligence for Everyone</h1>
+        <p class="lead">Kusmus AI (formerly PocketPal) is our gift to the world. A powerful, mobile-first LLM
+            orchestrator that puts AI in your pocket, not in the cloud.</p>
+
+        <div class="download-grid">
+            <div class="download-card">
+                <i class="fab fa-apple"></i>
+                <h3>iOS</h3>
+                <p>Enterprise Distribution / TestFlight</p>
+                <a href="{{ url_for('public.community_download', platform='ios') }}" class="btn btn-primary">Download
+                    .IPA</a>
+            </div>
+            <div class="download-card">
+                <i class="fab fa-android"></i>
+                <h3>Android</h3>
+                <p>Direct APK Download</p>
+                <a href="{{ url_for('public.community_download', platform='android') }}"
+                    class="btn btn-primary">Download .APK</a>
+            </div>
+            <div class="download-card">
+                <i class="fab fa-windows"></i>
+                <h3>Windows</h3>
+                <p>Community Desktop (Beta)</p>
+                <a href="{{ url_for('public.community_download', platform='windows') }}"
+                    class="btn btn-primary">Download .EXE</a>
+            </div>
+            <div class="download-card">
+                <i class="fab fa-github"></i>
+                <h3>Source Code</h3>
+                <p>MIT Licensed Repository</p>
+                <a href="https://github.com/a-ghorbani/pocketpal-ai" target="_blank" class="btn btn-outline">View
+                    GitHub</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="manifesto-section">
+    <div class="container">
+        <div class="manifesto-grid">
+            <div class="manifesto-text">
+                <h2>The Open Manifest</h2>
+                <p>At Kusmus, we believe in <strong>Engineering Certainty</strong>. While our Sovereign kus_bots provide
+                    institutional-grade security, we believe every individual should have access to local, private
+                    intelligence.</p>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <i class="fas fa-lock"></i>
+                        <div>
+                            <h4>100% Offline</h4>
+                            <p>No data leaves your device. Ever. Private by design.</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-microchip"></i>
+                        <div>
+                            <h4>Edge Inference</h4>
+                            <p>Optimized for mobile chips including Apple M-Series and Snapdragon.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="manifesto-visual">
+                <!-- Visual representing community cloud/nexus -->
+                <div class="nexus-glow"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="upgrade-section">
+    <div class="container text-center">
+        <p>For enterprises requiring statutory certainty, air-gapped security, and specialized financial or
+            administrative kus_bots.</p>
+        <a href="{{ url_for('public.infrastructure') }}" class="btn btn-premium">Explore Sovereign kus_bots</a>
+    </div>
+</section>
+
+<style>
+    .community-hero {
+        padding: 120px 0 80px;
+        background: radial-gradient(circle at center, rgba(0, 114, 255, 0.1) 0%, transparent 70%);
+        text-align: center;
+    }
+
+    .community-hero h1 {
+        font-size: 4rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #fff 0%, #0072ff 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .download-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        margin-top: 60px;
+    }
+
+    .download-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 40px;
+        transition: all 0.3s ease;
+    }
+
+    .download-card:hover {
+        transform: translateY(-10px);
+        border-color: #0072ff;
+        box-shadow: 0 10px 30px rgba(0, 114, 255, 0.1);
+    }
+
+    .download-card i {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        color: #0072ff;
+    }
+
+    .manifesto-section {
+        padding: 100px 0;
+        background: #050505;
+    }
+
+    .manifesto-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 80px;
+        align-items: center;
+    }
+
+    .feature-item {
+        display: flex;
+        gap: 20px;
+        margin-top: 40px;
+    }
+
+    .feature-item i {
+        font-size: 1.5rem;
+        color: #00ff88;
+    }
+
+    .nexus-glow {
+        width: 300px;
+        height: 300px;
+        background: #0072ff;
+        filter: blur(100px);
+        border-radius: 50%;
+        margin: 0 auto;
+        opacity: 0.3;
+    }
+
+    .upgrade-section {
+        padding: 80px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-premium {
+        background: linear-gradient(135deg, #ffe600 0%, #ff9900 100%);
+        color: #000;
+        padding: 15px 40px;
+        font-weight: 700;
+        border-radius: 50px;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 30px;
+    }
+
+    .btn-premium:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(255, 230, 0, 0.3);
+    }
+
+    @media (max-width: 768px) {
+        .manifesto-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .community-hero h1 {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+{% endblock %}

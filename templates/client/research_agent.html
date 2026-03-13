@@ -418,7 +418,7 @@
             <div class="brand-icon"><i class="fas fa-microscope"></i></div>
             <div class="brand-text">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <h1>DEEP RESEARCH AGENT</h1>
+                    <h1>DEEP RESEARCH kus_bot</h1>
                     <span
                         style="color: var(--accent); font-size: 0.6rem; border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; font-weight: 800; letter-spacing: 1px;">BETA</span>
                 </div>
@@ -453,10 +453,16 @@
                     <textarea id="goal-input" class="premium-textarea" rows="8"
                         placeholder="e.g., Analyze the impact of quantum computing on modern cryptography..."></textarea>
                 </div>
-                <button class="btn-action" onclick="generatePlan()">
-                    <span>INITIALIZE PLANNING</span>
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button class="btn-action" onclick="generatePlan()">
+                        <span>INITIALIZE PLANNING</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <a href="{{ url_for('public.client_settings') }}"
+                        style="color: var(--text-secondary); font-size: 1.2rem;" title="Configure Krag_bot">
+                        <i class="fas fa-cog"></i>
+                    </a>
+                </div>
             </div>
 
             <!-- TAB: EXECUTION -->
@@ -491,7 +497,7 @@
         <!-- SIDEBAR -->
         <div class="sidebar">
             <div class="sidebar-block">
-                <h3>AGENT STATUS</h3>
+                <h3>kus_bot STATUS</h3>
                 <div class="status-card">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px">
                         <div

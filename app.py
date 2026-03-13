@@ -163,7 +163,7 @@ def internal_server_error(e):
 def add_security_headers(response):
     """
     Enforce noindex on all sensitive routes so search engines
-    never crawl admin, auth, or internal agent endpoints.
+    never crawl admin, auth, or internal kus_bot endpoints.
     """
     sensitive_prefixes = ('/admin', '/auth', '/sandbox', '/tax', '/physics', '/client')
     if getattr(request, 'path', '').startswith(sensitive_prefixes):

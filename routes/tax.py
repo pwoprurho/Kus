@@ -1,5 +1,5 @@
 # routes/tax.py
-"""Authenticated client route for secure tax agent chat."""
+"""Authenticated client route for secure tax kus_bot chat."""
 from flask import Blueprint, request, jsonify, session, render_template, Response, stream_with_context
 from flask_login import current_user
 from core.engine import KusmusAIEngine
@@ -31,7 +31,7 @@ def tax_agent_ui():
 
 @tax_bp.route('/public/tax')
 def public_tax_agent():
-    """Public access to the Tax Agent — no login required."""
+    """Public access to the Tax kus_bot — no login required."""
     # Assign ephemeral session ID for public users
     if not session.get('public_tax_id'):
         session['public_tax_id'] = f"pub_{secrets.token_hex(8)}"
@@ -152,9 +152,9 @@ def tax_chat():
         history = data.get('history', [])
         
         # --- MODIFICATION: RAG Integration ---
-        persona = DEMO_REGISTRY.get('tax_compliance_agent')
+        persona = DEMO_REGISTRY.get('tax_compliance_agent') # Keep internal key for now to avoid registry mismatch
         if not persona:
-            return jsonify({'error': 'Tax agent persona not found.'}), 500
+            return jsonify({'error': 'Tax kus_bot persona not found.'}), 500
             
         tools_allowed = persona.get('tools_allowed', [])
 
@@ -230,7 +230,7 @@ def tax_chat():
 
         # --- END MODIFICATION ---
 
-        # Explicitly pass empty tools list (initially) to isolate Tax Agent from Sandbox tools
+        # Explicitly pass empty tools list (initially) to isolate Tax kus_bot from Sandbox tools
         # BUT enable Google Search for dynamic lookups
         engine = KusmusAIEngine(
             system_instruction=persona['instruction'],
@@ -266,7 +266,7 @@ def tax_chat_stream():
         history = data.get('history', [])
         context_logs = data.get('context_logs', [])
         
-        persona = DEMO_REGISTRY.get('tax_compliance_agent')
+        persona = DEMO_REGISTRY.get('tax_compliance_agent') # Keep internal key for now to avoid registry mismatch
         
         # ... [RAG Context Construction - same as before] ...
         # (Simplified for brevity, assuming we reuse the logic or refactor it. 
@@ -501,7 +501,7 @@ def generate_tax_filing():
         income_data = data.get('income_data')
         if not income_data and user_docs:
             # Use Gemini to extract financial data from uploaded documents
-            persona = DEMO_REGISTRY.get('tax_compliance_agent')
+            persona = DEMO_REGISTRY.get('tax_compliance_agent') # Keep internal key for now to avoid registry mismatch
             engine = KusmusAIEngine(
                 system_instruction=persona['instruction'],
                 model_name=persona.get('model', 'gemini-2.5-flash')

@@ -19,7 +19,7 @@ def parse_tasks(text):
     return [{"num": m.group(1), "text": m.group(2).strip().replace('\n', ' ')} 
             for m in re.finditer(r'^(\d+)[\.\)\-]\s*(.+?)(?=\n\d+[\.\)\-]|\n\n|\Z)', text, re.MULTILINE | re.DOTALL)]
 
-class ResearchAgentService:
+class ResearchKusBotService:
     @staticmethod
     def _call_with_fallback(prompt, config, model_override=None, sovereign_config=None):
         """Helper to call Gemini or Sovereign backend with fallback."""
@@ -78,7 +78,7 @@ class ResearchAgentService:
                 system_instruction="You are a research architect. Create a detailed research plan with 5-8 numbered tasks."
             )
             
-            response = ResearchAgentService._call_with_fallback(
+            response = ResearchKusBotService._call_with_fallback(
                 f"Create a numbered research plan for: {goal}\n\nFormat: 1. [Task] - [Details]",
                 config,
                 sovereign_config=sovereign_config
@@ -124,10 +124,10 @@ class ResearchAgentService:
             
             config = types.GenerateContentConfig(
                 tools=[types.Tool(google_search=types.GoogleSearchRetrieval())] if not sovereign_config else None,
-                system_instruction="You are a deep research intelligence agent. Focus on granular technical details and identifying high-value follow-up vectors."
+                system_instruction="You are a deep research intelligence kus_bot. Focus on granular technical details and identifying high-value follow-up vectors."
             )
             
-            response = ResearchAgentService._call_with_fallback(prompt, config, sovereign_config=sovereign_config)
+            response = ResearchKusBotService._call_with_fallback(prompt, config, sovereign_config=sovereign_config)
             
             if isinstance(response, dict) and "error" in response:
                 return response
@@ -165,10 +165,10 @@ class ResearchAgentService:
             
             config = types.GenerateContentConfig(
                 tools=[types.Tool(google_search=types.GoogleSearchRetrieval())] if not sovereign_config else None,
-                system_instruction="You are a deep research intelligence agent. Provide exhaustive details for each task."
+                system_instruction="You are a deep research intelligence kus_bot. Provide exhaustive details for each task."
             )
             
-            response = ResearchAgentService._call_with_fallback(prompt, config, sovereign_config=sovereign_config)
+            response = ResearchKusBotService._call_with_fallback(prompt, config, sovereign_config=sovereign_config)
             
             if isinstance(response, dict) and "error" in response:
                 return response
@@ -217,7 +217,7 @@ class ResearchAgentService:
                 system_instruction="You are a senior analyst. Write a concise, high-impact executive report in Markdown. Synthesize the findings into a cohesive narrative."
             )
             
-            response = ResearchAgentService._call_with_fallback(
+            response = ResearchKusBotService._call_with_fallback(
                 f"Based on the following research findings, create a professional executive report. Include a Summary, Strategic Implications (how this affects institutional autonomy), Detailed Analysis, and Risks.\n\nResearch Findings:\n{research_text}",
                 config,
                 sovereign_config=sovereign_config

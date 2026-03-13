@@ -15,7 +15,7 @@ import pandas as pd
 import numpy as np
 import datetime
 from db import supabase_admin, safe_execute
-from services.research_agent import ResearchAgentService
+from services.research_agent import ResearchKusBotService
 
 sandbox_bp = Blueprint('sandbox', __name__)
 
@@ -165,7 +165,7 @@ def sandbox_view():
         # Render the investor template in Sandbox/Demo mode
         return render_template('client/investor.html', is_sandbox_demo=True)
 
-    # SPECIAL CASE: Deep Research Agent
+    # SPECIAL CASE: Deep Research kus_bot
     if 'research' in selected_demo.lower() or 'planner' in selected_demo.lower():
         return render_template('client/research_agent.html', user=session.get('user', {}))
 
@@ -594,7 +594,7 @@ def invoke_mcp_tool():
 
 # Calendar admin endpoints moved to routes/admin.py
 
-# --- DEEP RESEARCH AGENT API ---
+# --- DEEP RESEARCH kus_bot API ---
 @sandbox_bp.route('/api/research/plan', methods=['POST'])
 def research_plan():
     data = request.get_json() or {}
@@ -610,7 +610,7 @@ def research_plan():
         if node and node['status'] == 'active' and node.get('node_url'):
             sovereign_config = {"base_url": f"{node['node_url']}/v1", "api_key": node['api_key']}
 
-    result = ResearchAgentService.create_plan(goal, sovereign_config=sovereign_config)
+    result = ResearchKusBotService.create_plan(goal, sovereign_config=sovereign_config)
     return jsonify(result)
 
 @sandbox_bp.route('/api/research/execute_task', methods=['POST'])
@@ -632,7 +632,7 @@ def research_execute_task():
         if node and node['status'] == 'active' and node.get('node_url'):
             sovereign_config = {"base_url": f"{node['node_url']}/v1", "api_key": node['api_key']}
 
-    result = ResearchAgentService.execute_research_task(plan_id, task_text, previous_context, sovereign_config=sovereign_config)
+    result = ResearchKusBotService.execute_research_task(plan_id, task_text, previous_context, sovereign_config=sovereign_config)
     return jsonify(result)
 
 @sandbox_bp.route('/api/research/execute', methods=['POST'])
@@ -651,7 +651,7 @@ def research_execute():
         if node and node['status'] == 'active' and node.get('node_url'):
             sovereign_config = {"base_url": f"{node['node_url']}/v1", "api_key": node['api_key']}
 
-    result = ResearchAgentService.execute_research(plan_id, tasks, sovereign_config=sovereign_config)
+    result = ResearchKusBotService.execute_research(plan_id, tasks, sovereign_config=sovereign_config)
     return jsonify(result)
 
 @sandbox_bp.route('/api/research/report', methods=['POST'])
@@ -672,5 +672,5 @@ def research_report():
         if node and node['status'] == 'active' and node.get('node_url'):
             sovereign_config = {"base_url": f"{node['node_url']}/v1", "api_key": node['api_key']}
 
-    result = ResearchAgentService.generate_report(research_id, plan_id=plan_id, sovereign_config=sovereign_config)
+    result = ResearchKusBotService.generate_report(research_id, plan_id=plan_id, sovereign_config=sovereign_config)
     return jsonify(result)

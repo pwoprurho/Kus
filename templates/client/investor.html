@@ -695,7 +695,7 @@
 
         let loadingMsg = `<i class="fas fa-circle-notch fa-spin"></i> Retrieving Insider Filings and Market Narratives...`;
         if (isTicker) {
-            loadingMsg = `<i class="fas fa-satellite-dish fa-spin"></i> Re-tasking Krag_Bot Satellite for ${ticker} Analysis...`;
+            loadingMsg = `<i class="fas fa-satellite-dish fa-spin"></i> Re-tasking Krag_bot Satellite for ${ticker} Analysis...`;
         }
 
         appendChat("Sentinel", loadingMsg);
@@ -731,7 +731,7 @@ ${data.reasoning}`;
                         ticker: data.ticker,
                         action: data.decision,
                         total_value: 25000, // Simulation default
-                        message: "Krag_Bot AI Signal Confirmation"
+                        message: "Krag_bot AI Signal Confirmation"
                     };
                     promptExecution(orderData);
                 }

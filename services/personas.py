@@ -13,7 +13,7 @@ def get_solutions_kb():
 def get_main_assistant_instruction():
     kb = get_solutions_kb()
     return (
-        "You are the 'Kusmus AI Architect,' a lead systems engineer specializing in Sovereign AI infrastructure and autonomous agent orchestration. "
+        "You are the 'Kusmus AI Architect,' a lead systems engineer specializing in Sovereign AI infrastructure and autonomous kus_bot orchestration. "
         "Your tone is professional, authoritative, engineering-first, and highly strategic. \n\n"
         "### PRIMARY OPERATIONAL DIRECTIVES:\n"
         "1. **Strategic Stack Recommendation**: You must recommend specific, high-performance tech stacks based on the user's scale. Mention technologies like: \n"
@@ -143,7 +143,7 @@ DEMO_REGISTRY = {
     }
     ,
     "tax_compliance_agent": {
-        "name": "Tax Law RAG Agent",
+        "name": "Tax Law RAG kus_bot",
         "model": "gemini-2.5-flash",
         "instruction": (
             "You are an expert Nigerian Tax Consultant for the year 2025. Your goal is to assist clients with accurate tax advice and liability calculations.\n\n"
@@ -178,13 +178,13 @@ DEMO_REGISTRY = {
             "I earned 500k naira last month as a freelancer.",
             "Estimate my tax based on these uploaded bank statements."
         ],
-        "log_signature": "[TAX AGENT] Workflow active. Discovery/Calculation phase.",
+        "log_signature": "[TAX BOT] Workflow active. Discovery/Calculation phase.",
         "temperature": 0.1
     },
     "deep_research": {
-        "name": "Deep Research Agent",
+        "name": "Deep Research kus_bot",
         "model": "gemini-2.5-flash", # Special marker
-        "instruction": "Specialized agent for multi-step deep research using Google Gemini Interactions API.",
+        "instruction": "Specialized kus_bot for multi-step deep research using Google Gemini Interactions API.",
         "log_signature": "[DEEP_RESEARCH] Interactions API active. Planning/Execution phase.",
         "tools_allowed": ["google_search"]
     },

@@ -122,6 +122,43 @@ def method():
 def compliance():
     return render_template("compliance.html")
 
+@public_bp.route('/community')
+def community():
+    return render_template('community.html')
+
+@public_bp.route('/community/download/<platform>')
+def community_download(platform):
+    directory = os.path.join('static', 'downloads')
+    filename_map = {
+        'android': 'kusmus-ai-community.apk',
+        'windows': 'kusmus-ai-community-windows.zip',
+        'ios': 'kusmus-ai-community.ipa'
+    }
+    filename = filename_map.get(platform)
+    if not filename:
+        return "Invalid platform", 400
+    
+    # Return placeholder or file if exists
+    file_path = os.path.join(directory, filename)
+    if not os.path.exists(file_path):
+        # Create a tiny placeholder so the link doesn't 404
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        with open(file_path, 'w') as f:
+            f.write("Binary pending build completion.")
+            
+    return redirect(url_for('static', filename=f'downloads/{filename}'))
+
+@public_bp.route('/api/community/models')
+def community_models():
+    # Curated models for Kusmus AI Community Edition
+    models = [
+        {"name": "Llama-3.2-3B-Instruct", "author": "Meta", "url": "https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct-GGUF"},
+        {"name": "Gemma-2-2b-it", "author": "Google", "url": "https://huggingface.co/google/gemma-2-2b-it-GGUF"},
+        {"name": "Qwen2.5-1.5B-Instruct", "author": "Alibaba", "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF"}
+    ]
+    return jsonify(models)
+
 @public_bp.route("/ceo-profile")
 def ceo_profile():
     return render_template("ceo_profile.html")

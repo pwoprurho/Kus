@@ -124,3 +124,8 @@ supa_addmin.py
 services/krag_bot/data/
 tx_*.json
 *.db
+
+# Sub-projects
+pocketpal-ai/
+pocketpal-ai-1/
+Kusmus AI-win32-x64/
