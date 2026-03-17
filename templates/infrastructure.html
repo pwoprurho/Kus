@@ -20,77 +20,24 @@
 </header>
 
 <section class="container fade-in" style="margin-bottom: 100px;">
-    <!-- THE SOVEREIGN DATA FLOW VISUAL -->
+    <!-- THE SOVEREIGN DATA FLOW VISUAL (Updated with official diagram) -->
     <div class="glass-panel"
-        style="padding: 60px; border-radius: 24px; background: rgba(255,255,255,0.02); border: 1px solid rgba(0,255,136,0.05); margin-bottom: 80px;">
-        <div style="text-align: center; margin-bottom: 50px;">
-            <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 15px;">Sovereign System Architecture</h2>
+        style="padding: 40px; border-radius: 24px; background: rgba(255,255,255,0.02); border: 1px solid rgba(0,255,136,0.05); margin-bottom: 80px; text-align: center;">
+        <div style="margin-bottom: 40px;">
+            <h2 style="font-size: 2.5rem; color: #fff; margin-bottom: 15px;">Kusmus AI Architecture</h2>
             <p style="color: #94a3b8; max-width: 700px; margin: 0 auto;">
-                A high-fidelity visualization of how data moves from your perimeter to autonomous execution.
+                The foundational blueprint for Edge AI Computing. Our multi-layered stack ensures institutional autonomy from User Interface to Data Storage.
             </p>
         </div>
 
-        <div class="architecture-flow"
-            style="display: flex; justify-content: space-between; align-items: center; position: relative; padding: 40px 0;">
-            <!-- Node 1: Local Infrastructure -->
-            <div class="arch-node" style="flex: 1; text-align: center; z-index: 2;">
-                <div
-                    style="width: 120px; height: 120px; background: rgba(0, 255, 136, 0.1); border: 2px solid #00ff88; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);">
-                    <i class="fas fa-server" style="font-size: 3rem; color: #00ff88;"></i>
-                </div>
-                <h4 style="color: #fff; margin-bottom: 8px;">Local Infrastructure</h4>
-                <p style="font-size: 0.8rem; color: #94a3b8;">On-Prem/Air-Gapped Node</p>
-            </div>
-
-            <!-- Connector line 1 -->
-            <div
-                style="flex: 0.5; height: 2px; background: linear-gradient(to right, #00ff88, #0072ff); position: relative; margin-top: -60px;">
-                <div style="position: absolute; right: 0; top: -4px; color: #0072ff;"><i
-                        class="fas fa-chevron-right"></i></div>
-                <div
-                    style="position: absolute; width: 100%; text-align: center; top: -25px; font-size: 0.7rem; color: #00ff88; font-family: monospace;">
-                    Telemetric Feed</div>
-            </div>
-
-            <!-- Node 2: Sentinel Remediation -->
-            <div class="arch-node" style="flex: 1; text-align: center; z-index: 2;">
-                <div
-                    style="width: 120px; height: 120px; background: rgba(0, 114, 255, 0.1); border: 2px solid #0072ff; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 0 30px rgba(0, 114, 255, 0.2); transform: rotate(45deg);">
-                    <i class="fas fa-shield-halved"
-                        style="font-size: 3rem; color: #0072ff; transform: rotate(-45deg);"></i>
-                </div>
-                <h4 style="color: #fff; margin-bottom: 8px;">Sentinel Remediation</h4>
-                <p style="font-size: 0.8rem; color: #94a3b8;">Autonomous Governance Layer</p>
-            </div>
-
-            <!-- Connector line 2 -->
-            <div
-                style="flex: 0.5; height: 2px; background: linear-gradient(to right, #0072ff, #ffe600); position: relative; margin-top: -60px;">
-                <div style="position: absolute; right: 0; top: -4px; color: #ffe600;"><i
-                        class="fas fa-chevron-right"></i></div>
-                <div
-                    style="position: absolute; width: 100%; text-align: center; top: -25px; font-size: 0.7rem; color: #0072ff; font-family: monospace;">
-                    Validated Signal</div>
-            </div>
-
-            <!-- Node 3: Sovereign Vault -->
-            <div class="arch-node" style="flex: 1; text-align: center; z-index: 2;">
-                <div
-                    style="width: 140px; height: 140px; background: rgba(255, 230, 0, 0.1); border: 2px solid #ffe600; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 0 40px rgba(255, 230, 0, 0.3);">
-                    <i class="fas fa-vault" style="font-size: 3.5rem; color: #ffe600;"></i>
-                </div>
-                <h4 style="color: #fff; margin-bottom: 8px;">Sovereign Vault</h4>
-                <p style="font-size: 0.8rem; color: #94a3b8;">High-Fidelity Execution</p>
-            </div>
+        <div class="architecture-image-container" style="margin: 0 auto; max-width: 900px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+            <img src="{{ url_for('static', filename='images/architecture.png') }}" alt="Kusmus AI Architecture Diagram" style="width: 100%; height: auto; display: block;">
         </div>
 
         <div style="margin-top: 50px; padding: 30px; border-top: 1px solid rgba(255,255,255,0.05); text-align: center;">
-            <p style="color: #64748b; font-size: 0.9rem; line-height: 1.6;">
-                <i class="fas fa-info-circle"></i> <strong>CTO Briefing</strong>: The data flow is unidirectional and
-                air-gap compatible.
-                Raw telemetry enters the <strong>Sentinel</strong> layer for autonomous validation against your
-                institutional policy weights,
-                propagating a cryptographically signed signal to the <strong>Sovereign Vault</strong> for execution.
+            <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+                <i class="fas fa-info-circle" style="color: #0072ff; margin-right: 8px;"></i> 
+                <strong>High-Fidelity Edge Delivery</strong>: This architecture details our end-to-end delivery of edge technologies, moving from the <strong>Kusbot App</strong> (Control Plane) through <strong>Proprietary Pods</strong> and the <strong>Iron Claw Secure Execution Layer</strong>, all optimized for private enterprise clusters and cloud-distributed GPUs.
             </p>
         </div>
     </div>
@@ -121,7 +68,7 @@
 
         <!-- Data Orchestration (Kus_org) -->
         <div class="glass-panel" style="padding: 40px; border-radius: 20px;">
-            <i class="fas fa-layer-group" style="font-size: 2.5rem; color: #ffe600; margin-bottom: 25px;"></i>
+            <i class="fas fa-layer-group" style="font-size: 2.5rem; color: #00c3ff; margin-bottom: 25px;"></i>
             <h3 style="color: #fff; margin-bottom: 15px;">Kus_org Data Engine</h3>
             <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">
                 Integration with the <strong>Kus_org</strong> framework allows for seamless
@@ -143,13 +90,13 @@
         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; margin-bottom: 100px;">
 
         <!-- TELECOM SECTOR -->
-        <div class="glass-panel" style="padding: 40px; border-radius: 24px; border-top: 5px solid #ffcc00;">
+        <div class="glass-panel" style="padding: 40px; border-radius: 24px; border-top: 5px solid #00c3ff;">
             <div style="display: flex; gap: 20px; align-items: start; margin-bottom: 30px;">
-                <i class="fas fa-tower-broadcast" style="font-size: 2.5rem; color: #ffcc00;"></i>
+                <i class="fas fa-tower-broadcast" style="font-size: 2.5rem; color: #00c3ff;"></i>
                 <div>
                     <h3 style="color: #fff; margin-bottom: 5px;">Telecommunications</h3>
                     <span
-                        style="color: #ffcc00; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Sovereignty
+                        style="color: #00c3ff; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Sovereignty
                         & Uptime</span>
                 </div>
             </div>
@@ -159,7 +106,7 @@
             </p>
             <ul
                 style="color: #fff; font-size: 0.85rem; list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; opacity: 0.8;">
-                <li><i class="fas fa-user-gear" style="color: #ffcc00; margin-right: 10px;"></i> <strong>Field-Force
+                <li><i class="fas fa-user-gear" style="color: #00c3ff; margin-right: 10px;"></i> <strong>Field-Force
                         AI</strong>: Real-time support for distributed technicians.</li>
             </ul>
         </div>
@@ -271,8 +218,6 @@
 <section class="container" style="text-align: center; padding: 100px 0;">
     <h3 style="color: #fff; font-size: 2rem; margin-bottom: 30px;">Ready for Sovereign Independence?</h3>
     <p style="color: #94a3b8; margin-bottom: 40px;">Request a forensic audit of your current infrastructure.</p>
-    <a href="{{ url_for('public.audit_request') }}" class="cta-button"
-        style="padding: 16px 40px; font-size: 1.1rem;">Request Technical Audit &rarr;</a>
 </section>
 
 {% endblock %}

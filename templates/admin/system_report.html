@@ -85,7 +85,7 @@
             
             <div class="metric-row">
                 <div class="metric-header"><span>Disk Usage (SSD)</span><span>{{ stats.disk_usage }}%</span></div>
-                <div class="progress-bg"><div class="progress-fill" style="width: {{ stats.disk_usage }}%; background: #ffcc00;"></div></div>
+                <div class="progress-bg"><div class="progress-fill" style="width: {{ stats.disk_usage }}%; background: #00c3ff;"></div></div>
             </div>
             
             <div class="metric-row">
@@ -131,7 +131,7 @@
             {% for log in stats.logs %}
             <div style="margin-bottom: 5px;">
                 <span style="color: #555;">[{{ log.time }}]</span>
-                <span style="color: {% if log.level == 'INFO' %}#00ff88{% else %}#ffcc00{% endif %}; font-weight: bold; margin: 0 10px;">{{ log.level }}</span>
+                <span style="color: {% if log.level == 'INFO' %}#00ff88{% else %}#00c3ff{% endif %}; font-weight: bold; margin: 0 10px;">{{ log.level }}</span>
                 <span>{{ log.msg }}</span>
             </div>
             {% endfor %}

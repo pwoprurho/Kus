@@ -236,7 +236,17 @@ def blog_post(post_id):
     if not post:
         return render_template("404.html"), 404
         
-    return render_template("blog_post.html", post=post)
+    related_posts = []
+    if supabase_admin:
+        try:
+            # Fetch up to 3 related published posts (excluding the current one)
+            related_resp = safe_execute(supabase_admin.table('blog_posts').select("*").eq('status', 'Published').neq('id', post_id).order('published_at', desc=True).limit(3))
+            if related_resp and related_resp.data:
+                related_posts = related_resp.data
+        except Exception as e:
+            print(f"Related Posts Fetch Error: {e}")
+
+    return render_template("blog_post.html", post=post, related_posts=related_posts)
 
 # --- FIX: Added missing route to resolve BuildError in index.html ---
 @public_bp.route("/request-audit", methods=['GET', 'POST'])
