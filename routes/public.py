@@ -217,7 +217,22 @@ def blog():
     return render_template("blog.html", posts=posts)
 
 @public_bp.route("/blog/<string:post_id>")
-def blog_post(post_id):
+def blog_post_legacy(post_id):
+    """Redirect legacy ID-only URLs to new slugified URLs."""
+    post = None
+    if supabase_admin:
+        try:
+            res = safe_execute(supabase_admin.table('blog_posts').select('id, title').eq('id', post_id).limit(1))
+            if res.data: post = res.data[0]
+        except: pass
+    
+    if post:
+        from utils import slugify
+        return redirect(url_for('public.blog_post', post_id=post['id'], slug=slugify(post['title'])), code=301)
+    return render_template("404.html"), 404
+
+@public_bp.route("/blog/<string:post_id>/<string:slug>")
+def blog_post(post_id, slug):
     post = None
     if supabase_admin:
         try:
@@ -280,7 +295,7 @@ def audit_request():
                 'verification_code': verification_code
             }))
 
-            flash(f"Request Transmitted. Your Identity Token is: {verification_code}. Keep this secure.", "success")
+            flash("Successfully contacted. A representative would reach out to you.", "success")
             return redirect(url_for('public.home'))
 
         except Exception as e:
@@ -417,10 +432,11 @@ def sitemap():
     if supabase_admin:
         try:
             # Fetch from new schema
-            response = safe_execute(supabase_admin.table('blog_posts').select("id, published_at").eq('status', 'Published'))
+            response = safe_execute(supabase_admin.table('blog_posts').select("id, title, published_at").eq('status', 'Published'))
             if response.data:
+                from utils import slugify
                 for post in response.data:
-                    url = url_for('public.blog_post', post_id=post['id'], _external=True)
+                    url = url_for('public.blog_post', post_id=post['id'], slug=slugify(post.get('title', 'briefing')), _external=True)
                     escaped_url = saxutils.escape(url)
                     
                     # Hardened Date Parsing (Must be YYYY-MM-DD)
@@ -441,10 +457,11 @@ def sitemap():
         
         try:
             # Fallback for older schema
-            response2 = safe_execute(supabase_admin.table('posts').select("id, created_at, date").eq('published', True))
+            response2 = safe_execute(supabase_admin.table('posts').select("id, title, created_at, date").eq('published', True))
             if response2.data:
+                from utils import slugify
                 for post in response2.data:
-                    url = url_for('public.blog_post', post_id=post['id'], _external=True)
+                    url = url_for('public.blog_post', post_id=post['id'], slug=slugify(post.get('title', 'briefing')), _external=True)
                     escaped_url = saxutils.escape(url)
                     
                     raw_date = post.get('created_at') or post.get('date')
@@ -478,9 +495,21 @@ def robots():
         "Disallow: /client-dashboard",
         "Disallow: /client-chat",
         "Disallow: /crypto-wallet",
-        f"Sitemap: {url_for('public.sitemap', _external=True)}"
+        f"Sitemap: {url_for('public.sitemap', _external=True)}",
+        f"Llm-context: {url_for('public.llm_txt', _external=True)}"
     ]
     return Response('\n'.join(lines), mimetype='text/plain')
+
+@public_bp.route('/llm.txt', methods=['GET'])
+def llm_txt():
+    """Generates llm.txt for AI discovery."""
+    try:
+        with open(os.path.join(current_app.static_folder, 'llm.txt'), 'r', encoding='utf-8') as f:
+            content = f.read()
+        return Response(content, mimetype='text/plain')
+    except Exception:
+        # Fallback if file not found locally
+        return Response("Kusmus AI: The Operating System for Sovereign Intelligence. See /request-audit for strategy.", mimetype='text/plain')
 # === DIAGNOSTIC ROUTE ===
 @public_bp.route('/diag')
 def diag():

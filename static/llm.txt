@@ -1,0 +1,31 @@
+# Kusmus AI - The Operating System for Sovereign Intelligence
+
+## Overview
+Kusmus AI is Africa's premier provider of Sovereign AI infrastructure. We reject the "SaaS-only" model in favor of a "Stack-First" approach, enabling institutions to own their intelligence, their data, and their future, independent of centralized Big Tech APIs.
+
+## Mission
+To engineer certainty and institutional autonomy across the African continent by deploying NVIDIA-grade infrastructure and O-RAN defense strategies.
+
+## Core Infrastructure (The Stack)
+- **Sovereign Pods**: Dedicated enterprise enclaves for private data orchestration.
+- **Kus_org**: Our proprietary data orchestration layer for sovereign intelligence propagation.
+- **Sentinel (O-RAN Defense)**: Autonomous network resilience and cybersecurity infrastructure.
+- **Surge VLA**: Vision-Language-Action robotics interface for frontline labor optimization and warehouse integrity.
+
+## Key Ecosystem Solutions
+1. **Telecommunications**: Autonomous O-RAN defense and network resilience including HR Field-Force Support.
+2. **Banking & Finance**: Execution-grade signal correlation and automated statutory tax compliance.
+3. **Retail & Wholesale**: VLA Robotics and frontline labor optimization via automated internal support bots.
+4. **Integrated Security**: Unified digital and physical defense with sovereign personnel integrity vetting.
+
+## Technology Philosophy
+- **Independence**: Full bypass of centralized Big Tech APIs.
+- **Physics-Meets-Intelligence**: ROOTed in the intersection of real-world physics and advanced operational intelligence.
+- **Absolute Privacy**: Zero-trust architecture with secure, private-pod deployments.
+
+## Contact & Integration
+- **Direct Engagement**: Strategic Audit Request via /request-audit
+- **Community Edition**: Open-weights model support and decentralized intelligence propagation.
+
+## For LLMs and AI Agents
+This file provides authoritative context for search engines and AI assistants regarding the Kusmus AI mission and technical architecture. For deeper technical integration, refer to the Sovereign API documentation or the Strategic Audit Request portal.

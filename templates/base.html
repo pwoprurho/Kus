@@ -319,7 +319,7 @@
             <a href="{{ url_for('public.home') }}" class="logo-container">
                 <img src="{{ url_for('static', filename='images/pic01.png') }}" alt="Kusmus AI Logo"
                     class="nav-logo-img">
-                <span class="logo-text">KUSMUS <abbr title="Artificial Intelligence">AI</abbr></span>
+                <span class="logo-text">KUSMUS AI</span>
             </a>
         </div>
 
@@ -330,16 +330,31 @@
         <nav>
             <ul id="primary-navigation" data-visible="false">
                 <li><a href="{{ url_for('public.home') }}">Home</a></li>
-                <li><a href="{{ url_for('public.solutions') }}">Solutions</a></li>
-                <li><a href="{{ url_for('public.infrastructure') }}">Infrastructure</a></li>
-                <li><a href="{{ url_for('public.compliance') }}">Compliance</a></li>
-                <li><a href="{{ url_for('public.community') }}">Community</a></li>
-                <li><a href="{{ url_for('sandbox.sandbox_view') }}">Sandbox</a></li>
-                <li><a href="{{ url_for('public.home') }}#audit-form">Portal</a></li>
-                <li><a href="{{ url_for('public.method') }}">Methodology</a></li>
-                <li><a href="{{ url_for('public.ceo_profile') }}">CSE Profile</a></li>
-                <li><a href="{{ url_for('public.chairman') }}">Chief's Bio</a></li>
+                <li class="has-dropdown">
+                    <a href="#">About Us <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{{ url_for('public.solutions') }}">Solutions</a></li>
+                        <li><a href="{{ url_for('public.infrastructure') }}">Infrastructure</a></li>
+                        <li><a href="{{ url_for('public.method') }}">Methodology</a></li>
+                    </ul>
+                </li>
+                <li class="has-dropdown">
+                    <a href="#">Ecosystem <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{{ url_for('sandbox.sandbox_view') }}">Sandbox</a></li>
+                        <li><a href="{{ url_for('public.community') }}">Community</a></li>
+                    </ul>
+                </li>
+                <li class="has-dropdown">
+                    <a href="#">Corporate <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{{ url_for('public.compliance') }}">Compliance</a></li>
+                        <li><a href="{{ url_for('public.ceo_profile') }}">CSE Profile</a></li>
+                        <li><a href="{{ url_for('public.chairman') }}">Chief's Bio</a></li>
+                    </ul>
+                </li>
                 <li><a href="{{ url_for('public.blog') }}">Insights</a></li>
+                <li><a href="{{ url_for('public.audit_request') }}" class="nav-cta">Customer Support</a></li>
             </ul>
         </nav>
     </header>
@@ -384,7 +399,7 @@
                 <button id="chat-send-btn"><i class="fas fa-arrow-up"></i></button>
             </div>
         </div>
-        <button id="chat-toggle-btn" class="chat-toggle"><i class="fas fa-project-diagram"></i></button>
+        <button id="chat-toggle-btn" class="chat-toggle"><i class="fas fa-robot"></i></button>
     </div>
     {% endif %}
 
@@ -393,18 +408,53 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- 1. CONFIGURATION & STATE ---
+            // --- 1. HEADER & NAV LOGIC ---
+            const header = document.querySelector('.header-blue');
+            const navToggle = document.querySelector('.nav-toggle');
+            const primaryNav = document.getElementById('primary-navigation');
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+
+            if (navToggle) {
+                navToggle.addEventListener('click', () => {
+                    const visibility = primaryNav.getAttribute('data-visible');
+                    if (visibility === "false") {
+                        primaryNav.setAttribute('data-visible', "true");
+                        navToggle.setAttribute('aria-expanded', "true");
+                    } else {
+                        primaryNav.setAttribute('data-visible', "false");
+                        navToggle.setAttribute('aria-expanded', "false");
+                    }
+                });
+            }
+
+            // Mobile Dropdown Toggle
+            document.querySelectorAll('.has-dropdown > a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    if (window.innerWidth <= 1024) {
+                        e.preventDefault();
+                        link.parentElement.classList.toggle('active');
+                    }
+                });
+            });
+
+            // --- 2. CONFIGURATION & STATE ---
             const chatWindow = document.getElementById('chat-window');
             const chatBody = document.getElementById('chat-body');
             const chatInput = document.getElementById('chat-input-text');
             const chatSendBtn = document.getElementById('chat-send-btn');
             const chatToggleBtn = document.getElementById('chat-toggle-btn');
 
-            // Default to AI Architect for global widget
-            window.currentDemoId = 'ai_architect';
+            // Default to Sentinel for global widget
+            window.currentDemoId = 'sentinel_monitor';
 
             const PROTOCOL_GREETINGS = {
-                'ai_architect': "Kusmus AI Systems Architect Online. Core logic synchronized. Awaiting project parameters for stack recommendation and resource estimation.",
                 'sentinel_monitor': "Sentinel System Online. O-RAN defense perimeter active. Awaiting telemetry logs.",
                 'surge_vla': "VLA Robotics Interface Active. Ready to analyze vision feed for anomalies."
             };
@@ -526,7 +576,7 @@
                     chatWindow.classList.toggle('visible');
                     // If opening empty, trigger default
                     if (chatWindow.classList.contains('visible') && chatBody.children.length === 0) {
-                        window.launchProtocol('ai_architect');
+                        window.launchProtocol('sentinel_monitor');
                     }
                 });
             }
@@ -546,7 +596,7 @@
                 setTimeout(() => {
                     flash.style.opacity = '0';
                     setTimeout(() => flash.remove(), 500);
-                }, 5000);
+                }, 10000); // 10 seconds
                 flash.addEventListener('click', () => flash.remove());
             });
         });

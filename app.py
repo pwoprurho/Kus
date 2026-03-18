@@ -10,6 +10,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
 from werkzeug.middleware.proxy_fix import ProxyFix
 from models import User
+from utils import slugify
 
 # =========================================================
 # 1. ENVIRONMENT & APP FACTORY
@@ -21,6 +22,9 @@ app.secret_key = os.getenv("SECRET_KEY", "dev_secret_key_change_in_production")
 
 ENVIRONMENT = os.getenv('FLASK_ENV', 'development')
 IS_SECURE = ENVIRONMENT == 'production'
+
+# Jinja Filters
+app.jinja_env.filters['slugify'] = slugify
 
 # Domain & SEO
 if os.getenv("PREFERRED_URL_SCHEME"):

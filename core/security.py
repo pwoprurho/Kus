@@ -54,3 +54,19 @@ def sign_trade_execution(ticket_id, asset, action, quantity, price, conviction_s
     final_signature = hashlib.sha256((primary_hash + "SOVEREIGN_ROOT_KEY").encode()).hexdigest()
     
     return final_signature
+def verify_enclave_signature(payload_json: str, signature: str) -> bool:
+    """
+    Verifies that a sensitive action was signed by the Mobile Security Enclave.
+    In the prototype, we expect 'signed_{action_type}_{level}' as implemented in lib.rs.
+    In production, this would use ed25519.PublicKey.verify().
+    """
+    if not signature:
+        return False
+        
+    payload = json.loads(payload_json)
+    action_type = payload.get("action_type", "unknown")
+    level = payload.get("sensitivity_level", "LOW")
+    
+    # Prototype verification logic matching Rust HRManager.sign_action
+    expected_mock_sig = f"signed_{action_type}_{level}"
+    return signature == expected_mock_sig
