@@ -47,6 +47,7 @@ body {
     background-color: var(--bg-dark);
     color: #e0e6ed;
     font-family: var(--font-body);
+    font-size: 1.125rem; /* Increased readability (+2px from default 16px) */
     line-height: 1.6;
     overflow-x: hidden;
     min-height: 100vh;
@@ -58,7 +59,14 @@ body {
 }
 
 h1,
-h2,
+h2 {
+    font-family: var(--font-heading);
+    color: #ffd700;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 1.15;
+}
+
 h3,
 h4,
 h5,
@@ -827,7 +835,7 @@ footer {
     font-size: 4.5rem;
     /* Larger, more authoritative */
     font-weight: 700;
-    color: #ffffff;
+    color: #ffd700;
     margin-bottom: 24px;
     letter-spacing: -0.04em;
     line-height: 1.1;
@@ -1028,7 +1036,7 @@ footer {
 .page-header h2 {
     font-size: 3rem;
     margin-bottom: 20px;
-    color: #ffffff;
+    color: #ffd700;
 }
 
 .page-header p {
