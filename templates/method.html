@@ -3,85 +3,226 @@
 {% block title %}The Kusmus Method | De-Risking Strategy{% endblock %}
 
 {% block content %}
-<header class="page-header container fade-in">
-    <h2>The Kusmus Method: 4 Phases of Intelligence Engineering</h2>
-    <p>We eliminate friction by separating assessment from commitment. Our four-phase model ensures that your
-        institutional intelligence is blueprinted, deployed, and continuously reinforced.</p>
-</header>
 
-<section class="method-page container">
+<style>
+  .page-hero {
+    padding: 130px 0 70px;
+    text-align: center;
+  }
+  .page-hero .overline {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 215, 0, 0.08);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    padding: 8px 18px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffd700;
+    margin-bottom: 28px;
+  }
+  .page-hero h1 {
+    font-size: 3.8rem;
+    font-weight: 800;
+    color: #ffd700;
+    margin-bottom: 24px;
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+  .page-hero .subtitle {
+    font-size: 1.2rem;
+    color: #94a3b8;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+  .section-heading {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+  .section-heading h2 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #ffd700;
+    margin-bottom: 14px;
+  }
+  .section-heading p {
+    color: #94a3b8;
+    max-width: 750px;
+    margin: 0 auto;
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+  .phase-card {
+    background: rgba(15, 15, 20, 0.65);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 44px;
+    border-top: 4px solid;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+  }
+  .phase-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  }
+  .phase-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  .phase-card h3 {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+  .phase-card p {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 24px;
+  }
+  .phase-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 20px;
+  }
+  .phase-card ul li {
+    font-size: 0.88rem;
+    color: rgba(255,255,255,0.75);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .phase-card ul li i {
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+  .cta-section {
+    background: rgba(255, 215, 0, 0.03);
+    border: 1px solid rgba(255, 215, 0, 0.1);
+    border-radius: 20px;
+    padding: 70px;
+    text-align: center;
+    margin-bottom: 80px;
+  }
+  .cta-section h3 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #ffd700;
+    margin-bottom: 16px;
+  }
+  .cta-section p {
+    color: #94a3b8;
+    font-size: 1.05rem;
+    max-width: 580px;
+    margin: 0 auto 36px;
+    line-height: 1.7;
+  }
+</style>
 
-    <div class="method-steps"
-        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-        <!-- PHASE 1: AUDIT -->
-        <div class="method-step phase-1 fade-in">
-            <span class="step-number">Phase 1</span>
-            <h3>Strategic Audit (Audit)</h3>
-            <p class="step-description">
-                A low-risk, high-value engagement. We integrate with your existing logs and workflows to identify
-                bottlenecks and blueprint the intelligence transition.
-            </p>
-            <ul class="deliverables">
-                <li><i class="fas fa-check-circle" style="color: #00c3ff;"></i> Workflow & Bottleneck Analysis.</li>
-                <li><i class="fas fa-check-circle" style="color: #00c3ff;"></i> Guaranteed ROI Projection ($ Value).
-                </li>
-                <li><i class="fas fa-check-circle" style="color: #00c3ff;"></i> Custom Intelligence Roadmap.</li>
-            </ul>
-        </div>
+<div class="container">
+  <div class="page-hero">
+    <div class="overline"><i class="fas fa-sitemap"></i> THE KUSMUS METHOD</div>
+    <h1>4 Phases of<br>Intelligence Engineering</h1>
+    <p class="subtitle">
+      We eliminate friction by separating assessment from commitment. Our four-phase model ensures that your
+      institutional intelligence is blueprinted, deployed, and continuously reinforced.
+    </p>
+  </div>
+</div>
 
-        <!-- PHASE 2: DEPLOY -->
-        <div class="method-step phase-2 fade-in">
-            <span class="step-number">Phase 2</span>
-            <h3>Strategic Deployment (Deploy)</h3>
-            <p class="step-description">
-                Implementation of the selected architecture. We either fine-tune open-source foundations on your private
-                data for full sovereignty or rapidly integrate high-reasoning APIs for universal tasks.
-            </p>
-            <ul class="deliverables">
-                <li><i class="fas fa-check-circle" style="color: #00ff88;"></i> Sovereign Fine-Tuning & Model Weights.
-                </li>
-                <li><i class="fas fa-check-circle" style="color: #00ff88;"></i> Proprietary API Logic Integration.</li>
-                <li><i class="fas fa-check-circle" style="color: #00ff88;"></i> Secure Infrastructure & Gateway
-                    Hardening.</li>
-            </ul>
-        </div>
+<section class="container" style="margin-bottom: 100px;">
+  <div class="section-heading">
+    <h2>The Four Phases</h2>
+    <p>A proven, de-risked engagement model. Each phase has defined deliverables and a clear exit.</p>
+  </div>
 
-        <!-- PHASE 3: TRAIN -->
-        <div class="method-step phase-3 fade-in">
-            <span class="step-number">Phase 3</span>
-            <h3>Staff Integration (Train)</h3>
-            <p class="step-description">
-                We bridge the gap between code and operations. We train your internal teams to manage the stack,
-                optimize prompts, and monitor performance autonomously.
-            </p>
-            <ul class="deliverables">
-                <li><i class="fas fa-check-circle" style="color: #00c3ff;"></i> Advanced Prompt Engineering Workshops.
-                </li>
-                <li><i class="fas fa-check-circle" style="color: #00c3ff;"></i> Dashboard Certification (Admin/CSE).
-                </li>
-                <li><i class="fas fa-check-circle" style="color: #00c3ff;"></i> Internal Security & Audit Briefing.</li>
-            </ul>
-        </div>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px;">
 
-        <!-- PHASE 4: REINFORCE -->
-        <div class="method-step phase-4 fade-in">
-            <span class="step-number">Phase 4</span>
-            <h3>Continuous Evolution (Reinforce)</h3>
-            <p class="step-description">
-                Intelligence is dynamic. We implement Reinforcement Learning (RL) loops and conduct periodic
-                reassessments to ensure the stack evolves with your institution.
-            </p>
-            <ul class="deliverables">
-                <li><i class="fas fa-check-circle" style="color: #ff4444;"></i> Reinforcement Learning (RL) Loops.</li>
-                <li><i class="fas fa-check-circle" style="color: #ff4444;"></i> Strategic Performance Reassessments.
-                </li>
-                <li><i class="fas fa-check-circle" style="color: #ff4444;"></i> Continuous ROI Propagation Audits.</li>
-            </ul>
-        </div>
+    <!-- PHASE 1: AUDIT -->
+    <div class="phase-card" style="border-top-color: #00c3ff;">
+      <span class="phase-label" style="color: #00c3ff;">Phase 1</span>
+      <h3>Strategic Audit</h3>
+      <p>
+        A low-risk, high-value engagement. We integrate with your existing logs and workflows to identify
+        bottlenecks and blueprint the intelligence transition.
+      </p>
+      <ul>
+        <li><i class="fas fa-check-circle" style="color: #00c3ff;"></i>Workflow &amp; Bottleneck Analysis.</li>
+        <li><i class="fas fa-check-circle" style="color: #00c3ff;"></i>Guaranteed ROI Projection ($).</li>
+        <li><i class="fas fa-check-circle" style="color: #00c3ff;"></i>Custom Intelligence Roadmap.</li>
+      </ul>
     </div>
 
-    <div class="cta-bottom">
-        <h3 style="margin-bottom: 20px;">Stop guessing. Start engineering.</h3>
+    <!-- PHASE 2: DEPLOY -->
+    <div class="phase-card" style="border-top-color: #00ff88;">
+      <span class="phase-label" style="color: #00ff88;">Phase 2</span>
+      <h3>Strategic Deployment</h3>
+      <p>
+        Implementation of the selected architecture. We fine-tune open-source foundations on your private
+        data for full sovereignty or rapidly integrate high-reasoning APIs for universal tasks.
+      </p>
+      <ul>
+        <li><i class="fas fa-check-circle" style="color: #00ff88;"></i>Sovereign Fine-Tuning &amp; Model Weights.</li>
+        <li><i class="fas fa-check-circle" style="color: #00ff88;"></i>Proprietary API Logic Integration.</li>
+        <li><i class="fas fa-check-circle" style="color: #00ff88;"></i>Secure Infrastructure &amp; Gateway Hardening.</li>
+      </ul>
     </div>
+
+    <!-- PHASE 3: TRAIN -->
+    <div class="phase-card" style="border-top-color: #ffd700;">
+      <span class="phase-label" style="color: #ffd700;">Phase 3</span>
+      <h3>Staff Integration</h3>
+      <p>
+        We bridge the gap between code and operations. We train your internal teams to manage the stack,
+        optimize prompts, and monitor performance autonomously.
+      </p>
+      <ul>
+        <li><i class="fas fa-check-circle" style="color: #ffd700;"></i>Advanced Prompt Engineering Workshops.</li>
+        <li><i class="fas fa-check-circle" style="color: #ffd700;"></i>Dashboard Certification (Admin/CSE).</li>
+        <li><i class="fas fa-check-circle" style="color: #ffd700;"></i>Internal Security &amp; Audit Briefing.</li>
+      </ul>
+    </div>
+
+    <!-- PHASE 4: REINFORCE -->
+    <div class="phase-card" style="border-top-color: #ff4444;">
+      <span class="phase-label" style="color: #ff4444;">Phase 4</span>
+      <h3>Continuous Evolution</h3>
+      <p>
+        Intelligence is dynamic. We implement Reinforcement Learning (RL) loops and conduct periodic
+        reassessments to ensure the stack evolves with your institution.
+      </p>
+      <ul>
+        <li><i class="fas fa-check-circle" style="color: #ff4444;"></i>Reinforcement Learning (RL) Loops.</li>
+        <li><i class="fas fa-check-circle" style="color: #ff4444;"></i>Strategic Performance Reassessments.</li>
+        <li><i class="fas fa-check-circle" style="color: #ff4444;"></i>Continuous ROI Propagation Audits.</li>
+      </ul>
+    </div>
+
+  </div>
 </section>
+
+<section class="container">
+  <div class="cta-section">
+    <h3>Stop Guessing. Start Engineering.</h3>
+    <p>The first phase is low-commitment and high-value. Begin with a Strategic Audit and walk away with a concrete ROI projection.</p>
+    <a href="{{ url_for('public.audit_request') }}" class="btn">Request a Strategic Audit <i class="fas fa-arrow-right"></i></a>
+  </div>
+</section>
+
 {% endblock %}
