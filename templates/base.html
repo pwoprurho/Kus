@@ -323,10 +323,6 @@
             </a>
         </div>
 
-        <button class="nav-toggle" aria-controls="primary-navigation" aria-expanded="false">
-            <i class="fas fa-bars"></i>
-        </button>
-
         <nav>
             <ul id="primary-navigation" data-visible="false">
                 <li><a href="{{ url_for('public.home') }}">Home</a></li>
@@ -410,7 +406,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             // --- 1. HEADER & NAV LOGIC ---
             const header = document.querySelector('.header-blue');
-            const navToggle = document.querySelector('.nav-toggle');
             const primaryNav = document.getElementById('primary-navigation');
 
             window.addEventListener('scroll', () => {
@@ -421,27 +416,31 @@
                 }
             });
 
-            if (navToggle) {
-                navToggle.addEventListener('click', () => {
-                    const visibility = primaryNav.getAttribute('data-visible');
-                    if (visibility === "false") {
-                        primaryNav.setAttribute('data-visible', "true");
-                        navToggle.setAttribute('aria-expanded', "true");
-                    } else {
-                        primaryNav.setAttribute('data-visible', "false");
-                        navToggle.setAttribute('aria-expanded', "false");
-                    }
-                });
-            }
-
-            // Mobile Dropdown Toggle
+            // Touch/Click Dropdown Toggle
             document.querySelectorAll('.has-dropdown > a').forEach(link => {
                 link.addEventListener('click', (e) => {
-                    if (window.innerWidth <= 1024) {
+                    if (link.getAttribute('href') === '#') {
                         e.preventDefault();
-                        link.parentElement.classList.toggle('active');
                     }
+                    
+                    // Close others
+                    document.querySelectorAll('.has-dropdown').forEach(other => {
+                        if (other !== link.parentElement) {
+                            other.classList.remove('active');
+                        }
+                    });
+                    
+                    link.parentElement.classList.toggle('active');
                 });
+            });
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.has-dropdown')) {
+                    document.querySelectorAll('.has-dropdown.active').forEach(dropdown => {
+                        dropdown.classList.remove('active');
+                    });
+                }
             });
 
             // --- 2. CONFIGURATION & STATE ---
