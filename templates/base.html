@@ -291,7 +291,7 @@
 
 <body>
 
-    {% if request.endpoint in ['public.home', 'public.solutions', 'sandbox.sandbox_view'] %}
+    {% if request.endpoint != 'sandbox.sandbox_view' or request.args.get('demo') %}
     <div id="global-orbit-container">
         <div class="planet-core"></div>
         <div class="orbit-path path-1">
@@ -321,6 +321,9 @@
                     class="nav-logo-img">
                 <span class="logo-text">KUSMUS AI</span>
             </a>
+            <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
 
         <nav>
@@ -380,7 +383,7 @@
         <p>&copy; 2025 Kusmus <abbr title="Artificial Intelligence">AI</abbr>. Engineering Certainty.</p>
     </footer>
 
-    {% if request.endpoint in ['public.home', 'public.solutions', 'sandbox.sandbox_view'] %}
+    {% if request.endpoint != 'sandbox.sandbox_view' or request.args.get('demo') %}
     <div id="chat-widget-container">
         <div id="chat-window" class="chat-window">
             <div class="chat-header">

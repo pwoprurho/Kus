@@ -400,6 +400,22 @@ select:focus {
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.nav-toggle {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.3s ease;
+    z-index: 1001;
+}
+
+.nav-toggle:hover {
+    color: #ffd700;
+}
+
 .header-blue.scrolled {
     min-height: 70px;
     padding: 10px 5%;
@@ -1594,7 +1610,7 @@ footer {
         position: initial;
     }
 
-    /* Nav Slider */
+    /* Nav Slider (Premium Glassmorphism) */
     nav ul {
         display: flex;
         flex-direction: column;
@@ -1605,19 +1621,19 @@ footer {
         right: 0;
         bottom: 0;
         height: 100vh;
-        width: 75%;
-        max-width: 300px;
+        width: 80%;
+        max-width: 320px;
         margin: 0;
-        padding: 80px 20px;
-        background: rgba(0, 0, 0, 0.95);
-        backdrop-filter: blur(15px);
-        border-left: 1px solid #0072ff;
+        padding: 100px 30px;
+        background: rgba(10, 10, 10, 0.85);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+        border-left: 1px solid rgba(0, 114, 255, 0.3);
         z-index: 999;
         /* Toggled by JS logic via data-visible attribute */
         transform: translateX(100%);
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.8);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: -20px 0 50px rgba(0, 0, 0, 0.9);
     }
 
     /* Active State for Mobile Menu */
@@ -1638,8 +1654,19 @@ footer {
 
     nav ul li a {
         display: block;
-        padding: 15px 0;
-        font-size: 1.1rem;
+        padding: 18px 0;
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: #fff;
+        border-left: 0 solid #ffd700;
+        transition: all 0.3s ease;
+    }
+
+    nav ul li a:hover,
+    nav ul li.active > a {
+        color: #ffd700;
+        padding-left: 15px;
+        border-left: 3px solid #ffd700;
     }
 
     .nav-secondary {
@@ -1684,6 +1711,12 @@ footer {
 
     .hero-section h1 {
         font-size: 2.2rem;
+        margin-bottom: 20px;
+    }
+
+    .hero-section .subtitle {
+        font-size: 1.1rem;
+        margin-bottom: 30px;
     }
 
     .page-header h2 {
@@ -1755,7 +1788,8 @@ footer {
     }
 
     .hero-section {
-        padding-top: 50px;
+        padding-top: 80px;
+        text-align: center;
     }
 
     /* Mobile Typography Scaling */
@@ -1778,6 +1812,13 @@ footer {
     .hero-section h1 {
         font-size: 2.1rem;
         line-height: 1.2;
+        margin-bottom: 20px;
+    }
+
+    .hero-section .subtitle {
+        font-size: 1rem;
+        line-height: 1.5;
+        margin-bottom: 24px;
     }
 
     /* Adjust Section Padding */
