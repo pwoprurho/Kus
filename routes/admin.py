@@ -308,7 +308,106 @@ def admin_calendar_events():
 # === SECURE LIVE CHAT (ADMIN TERMINAL) ===
 # =========================================================
 
-# SECURE LIVE CHAT (ADMIN TERMINAL) - REMOVED for ecosystem cleanup
+@admin_bp.route('/live-chat')
+@login_required
+@role_required('supa_admin', 'admin')
+def live_chat():
+    clients = []
+    try:
+        res = supabase_admin.table('clients').select('id, full_name, email').order('created_at', desc=True).execute()
+        if res.data: clients = res.data
+    except Exception as e:
+        print(f"Chat Load Error: {e}")
+    return render_template('admin/live_chat.html', clients=clients)
+
+@admin_bp.route('/api/chat/<string:client_id>')
+@login_required
+@role_required('supa_admin', 'admin')
+def get_chat_history(client_id):
+    """Fetches history, DECRYPTS text, and SIGNS file URLs for viewing."""
+    audit_context = {'original_challenge': 'N/A', 'date_filed': 'N/A'}
+    
+    try:
+        client_res = supabase_admin.table('clients').select('email').eq('id', client_id).single().execute()
+        if client_res.data:
+            client_email = client_res.data['email']
+            audit_res = supabase_admin.table('audit_requests').select('message, created_at').eq('email', client_email).order('created_at', desc=True).limit(1).execute()
+            if audit_res.data:
+                audit_context['original_challenge'] = audit_res.data[0].get('message', 'N/A')
+                audit_context['date_filed'] = audit_res.data[0].get('created_at', 'N/A').split('T')[0]
+    except Exception: pass
+
+    chat_history = []
+    try:
+        res = supabase_admin.table('secure_chat_messages').select('*').eq('client_id', client_id).order('created_at', desc=False).execute()
+        if res.data:
+            chat_history = res.data
+            for msg in chat_history:
+                msg['message'] = decrypt_text(msg.get('encrypted_content'))
+                if msg.get('attachment_url'):
+                    signed = supabase_admin.storage.from_('secure-files').create_signed_url(msg['attachment_url'], 3600)
+                    msg['signed_attachment'] = signed.get('signedURL') if isinstance(signed, dict) else signed
+    except Exception as e: print(f"Chat History Error: {e}")
+
+    return jsonify({'history': chat_history, 'context': audit_context})
+
+@admin_bp.route('/api/chat/send', methods=['POST'])
+@login_required
+@role_required('supa_admin', 'admin')
+def send_admin_message():
+    """Handles Admin Text AND File Uploads."""
+    from services.mailer import send_notification_email
+    
+    client_id = request.form.get('client_id')
+    text = request.form.get('message')
+    uploaded_file = request.files.get('file')
+    
+    try:
+        attachment_path, attachment_type = None, None
+        if uploaded_file:
+            filename = secure_filename(uploaded_file.filename)
+            file_path = f"{client_id}/admin_uploads/{secrets.token_hex(4)}_{filename}"
+            supabase_admin.storage.from_('secure-files').upload(path=file_path, file=uploaded_file.read(), file_options={"content-type": uploaded_file.content_type})
+            attachment_path = file_path
+            attachment_type = 'image' if 'image' in uploaded_file.content_type else 'document'
+
+        encrypted_content = encrypt_text(text if text else "[FILE SENT]")
+        insert_res = supabase_admin.table('secure_chat_messages').insert({
+            'client_id': client_id, 'admin_id': current_user.id, 'sender_type': 'admin',
+            'encrypted_content': encrypted_content, 'attachment_url': attachment_path, 'attachment_type': attachment_type
+        }).execute()
+
+        # Emit Socket.IO event for real-time delivery
+        if insert_res.data:
+            new_msg = insert_res.data[0]
+            new_msg['message'] = text if text else "[FILE SENT]"
+            if attachment_path:
+                try:
+                    signed_res = supabase_admin.storage.from_('secure-files').create_signed_url(attachment_path, 3600)
+                    new_msg['signed_attachment'] = signed_res.get('signedURL') if isinstance(signed_res, dict) else signed_res
+                except Exception:
+                    new_msg['signed_attachment'] = None
+            
+            from extensions import socketio
+            socketio.emit('new_message', new_msg, room=f"client_{client_id}")
+
+        # Notify Client
+        try:
+            client_res = supabase_admin.table('clients').select('email').eq('id', client_id).single().execute()
+            if client_res.data:
+                client_email = client_res.data['email']
+                send_notification_email(
+                    recipient_email=client_email,
+                    title="New Message from Kusmus Admin",
+                    message="You have received a new secure message regarding your audit.",
+                    action_link="https://kusmus.ai/client/login", # Update with real URL
+                    action_text="View Secure Message"
+                )
+        except Exception as e:
+            print(f"Failed to notify client: {e}")
+
+        return jsonify({'status': 'sent'})
+    except Exception as e: return jsonify({'error': str(e)}), 500
 
 # =========================================================
 # === CMS & LEAD MANAGEMENT (FULL RESTORATION) ===

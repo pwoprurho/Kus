@@ -170,7 +170,7 @@
             <div class="card-date">{{ post.published_at.split('T')[0] if post.published_at else 'Draft' }}</div>
             <h3 class="card-title">{{ post.title }}</h3>
             <p class="card-summary">{{ post.summary }}</p>
-            <a href="{{ url_for('public.blog_post', post_id=post.id, slug=post.title|slugify) }}" class="btn-read">Read Declassified Briefing
+            <a href="{{ url_for('public.blog_post', post_id=post.id) }}" class="btn-read">Read Declassified Briefing
                 &rarr;</a>
         </div>
     </div>

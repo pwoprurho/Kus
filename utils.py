@@ -1,5 +1,4 @@
-import re
-import unicodedata
+import os
 from functools import wraps
 from flask import abort, current_app, redirect, url_for, session
 from flask_login import current_user
@@ -83,17 +82,3 @@ def decrypt_text(encrypted_text):
         return get_cipher_suite().decrypt(encrypted_text.encode()).decode()
     except Exception:
         return "[CONTENT LOCKED]"
-
-
-def slugify(value):
-    """
-    Normalizes string, converts to lowercase, removes non-alpha characters,
-    and converts spaces to hyphens.
-    """
-    if not value:
-        return ""
-    value = str(value)
-    # Correct normalization for slugification
-    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
-    value = re.sub(r'[^\w\s-]', '', value).strip().lower()
-    return re.sub(r'[-\s]+', '-', value)

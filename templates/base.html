@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Independence from Big Tech | Sovereign AI for Africa | Kusmus AI{% endblock %}
-    </title>
+    <title>{% block title %}Sovereign AI | Institutional Autonomy | Kusmus AI{% endblock %}</title>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -14,7 +13,7 @@
 
     <!-- SEO & Meta Tags -->
     <meta name="description"
-        content="{% block meta_description %}Kusmus AI offers the leading AI solutions in Nigeria. We provide sovereign enterprise intelligence using fine-tuned models and private data integration for African market leaders.{% endblock %}">
+        content="{% block meta_description %}Kusmus AI delivers high-fidelity sovereign AI solutions, private cluster orchestration, and institutional autonomy through our premium Sovereign Agent stack.{% endblock %}">
     <meta name="keywords"
         content="{% block meta_keywords %}AI solutions in Nigeria, Sovereign AI Nigeria, Custom AI Development Lagos, Enterprise AI Africa, Fine-Tuned AI Models, Private Data AI, Kusmus AI{% endblock %}">
     <meta name="author" content="Kusmus AI">
@@ -28,7 +27,7 @@
     <meta property="og:title"
         content="{% block og_title %}Kusmus AI - Nigeria's Leading AI Solutions Provider{% endblock %}">
     <meta property="og:description"
-        content="{% block og_description %}Independence from Big Tech. We provide the NVIDIA-grade stack for institutional autonomy, sovereign data residency, and high-performance AI orchestration.{% endblock %}">
+        content="{% block og_description %}Engineering institutional certainty through sovereign AI, private GPU clusters, and high-performance agentic orchestration.{% endblock %}">
     <meta property="og:image"
         content="{% block og_image %}{{ url_for('static', filename='images/pic01.png', _external=True) }}{% endblock %}">
 
@@ -124,6 +123,20 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
+        /* Global Universal Overrides (Gold Theme) */
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            color: #FFD700 !important;
+        }
+
+        p {
+            font-size: 1.15rem;
+        }
+
         #chat-window {
             height: 0;
             opacity: 0;
@@ -291,7 +304,7 @@
 
 <body>
 
-    {% if request.endpoint != 'sandbox.sandbox_view' or request.args.get('demo') %}
+    {% if request.endpoint in ['public.home', 'public.solutions', 'sandbox.sandbox_view'] %}
     <div id="global-orbit-container">
         <div class="planet-core"></div>
         <div class="orbit-path path-1">
@@ -319,41 +332,48 @@
             <a href="{{ url_for('public.home') }}" class="logo-container">
                 <img src="{{ url_for('static', filename='images/pic01.png') }}" alt="Kusmus AI Logo"
                     class="nav-logo-img">
-                <span class="logo-text">KUSMUS AI</span>
+                <span class="logo-text">KUSMUS <abbr title="Artificial Intelligence">AI</abbr></span>
             </a>
-            <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
-                <i class="fas fa-bars"></i>
-            </button>
         </div>
+
+        <button class="nav-toggle" aria-controls="primary-navigation" aria-expanded="false">
+            <i class="fas fa-bars"></i>
+        </button>
 
         <nav>
             <ul id="primary-navigation" data-visible="false">
                 <li><a href="{{ url_for('public.home') }}">Home</a></li>
                 <li class="has-dropdown">
-                    <a href="#">About Us <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i></a>
+                    <a href="#" class="dropdown-toggle">About <i class="fas fa-chevron-down"></i></a>
                     <ul class="dropdown-menu">
-                        <li><a href="{{ url_for('public.solutions') }}">Solutions</a></li>
-                        <li><a href="{{ url_for('public.infrastructure') }}">Infrastructure</a></li>
                         <li><a href="{{ url_for('public.method') }}">Methodology</a></li>
+                        <li><a href="{{ url_for('public.ceo_profile') }}">CSE Profile</a></li>
+                        <li><a href="{{ url_for('public.chairman') }}">Chief's Bio</a></li>
+
                     </ul>
                 </li>
+
                 <li class="has-dropdown">
-                    <a href="#">Ecosystem <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i></a>
+                    <a href="#" class="dropdown-toggle">Ecosystem <i class="fas fa-chevron-down"></i></a>
                     <ul class="dropdown-menu">
+                        <li><a href="{{ url_for('public.podhub') }}">PodHub</a></li>
                         <li><a href="{{ url_for('sandbox.sandbox_view') }}">Sandbox</a></li>
                         <li><a href="{{ url_for('public.community') }}">Community</a></li>
                     </ul>
                 </li>
+
                 <li class="has-dropdown">
-                    <a href="#">Corporate <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i></a>
+                    <a href="#" class="dropdown-toggle">Sovereign Stack <i class="fas fa-chevron-down"></i></a>
                     <ul class="dropdown-menu">
+                        <li><a href="{{ url_for('public.solutions') }}">Solutions</a></li>
+                        <li><a href="{{ url_for('public.infrastructure') }}">Infrastructure</a></li>
                         <li><a href="{{ url_for('public.compliance') }}">Compliance</a></li>
-                        <li><a href="{{ url_for('public.ceo_profile') }}">CSE Profile</a></li>
-                        <li><a href="{{ url_for('public.chairman') }}">Chief's Bio</a></li>
                     </ul>
                 </li>
+
                 <li><a href="{{ url_for('public.blog') }}">Insights</a></li>
-                <li><a href="{{ url_for('public.audit_request') }}" class="nav-cta">Customer Support</a></li>
+
+                <li><a href="{{ url_for('public.audit_request') }}" class="nav-cta">Request Support</a></li>
             </ul>
         </nav>
     </header>
@@ -383,7 +403,7 @@
         <p>&copy; 2025 Kusmus <abbr title="Artificial Intelligence">AI</abbr>. Engineering Certainty.</p>
     </footer>
 
-    {% if request.endpoint != 'sandbox.sandbox_view' or request.args.get('demo') %}
+    {% if request.endpoint in ['public.home', 'public.solutions', 'sandbox.sandbox_view'] %}
     <div id="chat-widget-container">
         <div id="chat-window" class="chat-window">
             <div class="chat-header">
@@ -398,7 +418,7 @@
                 <button id="chat-send-btn"><i class="fas fa-arrow-up"></i></button>
             </div>
         </div>
-        <button id="chat-toggle-btn" class="chat-toggle"><i class="fas fa-robot"></i></button>
+        <button id="chat-toggle-btn" class="chat-toggle"><i class="fas fa-project-diagram"></i></button>
     </div>
     {% endif %}
 
@@ -407,56 +427,18 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- 1. HEADER & NAV LOGIC ---
-            const header = document.querySelector('.header-blue');
-            const primaryNav = document.getElementById('primary-navigation');
-
-            window.addEventListener('scroll', () => {
-                if (window.scrollY > 50) {
-                    header.classList.add('scrolled');
-                } else {
-                    header.classList.remove('scrolled');
-                }
-            });
-
-            // Touch/Click Dropdown Toggle
-            document.querySelectorAll('.has-dropdown > a').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    if (link.getAttribute('href') === '#') {
-                        e.preventDefault();
-                    }
-                    
-                    // Close others
-                    document.querySelectorAll('.has-dropdown').forEach(other => {
-                        if (other !== link.parentElement) {
-                            other.classList.remove('active');
-                        }
-                    });
-                    
-                    link.parentElement.classList.toggle('active');
-                });
-            });
-
-            // Close dropdowns when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.has-dropdown')) {
-                    document.querySelectorAll('.has-dropdown.active').forEach(dropdown => {
-                        dropdown.classList.remove('active');
-                    });
-                }
-            });
-
-            // --- 2. CONFIGURATION & STATE ---
+            // --- 1. CONFIGURATION & STATE ---
             const chatWindow = document.getElementById('chat-window');
             const chatBody = document.getElementById('chat-body');
             const chatInput = document.getElementById('chat-input-text');
             const chatSendBtn = document.getElementById('chat-send-btn');
             const chatToggleBtn = document.getElementById('chat-toggle-btn');
 
-            // Default to Sentinel for global widget
-            window.currentDemoId = 'sentinel_monitor';
+            // Default to AI Architect for global widget
+            window.currentDemoId = 'ai_architect';
 
             const PROTOCOL_GREETINGS = {
+                'ai_architect': "Kusmus AI Systems Architect Online. Core logic synchronized. Awaiting project parameters for stack recommendation and resource estimation.",
                 'sentinel_monitor': "Sentinel System Online. O-RAN defense perimeter active. Awaiting telemetry logs.",
                 'surge_vla': "VLA Robotics Interface Active. Ready to analyze vision feed for anomalies."
             };
@@ -578,7 +560,7 @@
                     chatWindow.classList.toggle('visible');
                     // If opening empty, trigger default
                     if (chatWindow.classList.contains('visible') && chatBody.children.length === 0) {
-                        window.launchProtocol('sentinel_monitor');
+                        window.launchProtocol('ai_architect');
                     }
                 });
             }
@@ -598,7 +580,7 @@
                 setTimeout(() => {
                     flash.style.opacity = '0';
                     setTimeout(() => flash.remove(), 500);
-                }, 10000); // 10 seconds
+                }, 5000);
                 flash.addEventListener('click', () => flash.remove());
             });
         });
