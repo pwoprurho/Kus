@@ -1,11 +1,13 @@
 import json
 import os
+import re
 import hashlib
 from datetime import datetime
 from flask import Blueprint, request, jsonify, session, render_template, redirect, url_for, flash, Response, make_response
 from core.engine import KusmusAIEngine
 from services.personas import MAIN_ASSISTANT, DEMO_REGISTRY
 from db import supabase_admin, safe_execute
+import yaml
 
 public_bp = Blueprint('public', __name__)
 
@@ -102,9 +104,57 @@ def client_settings():
 # === CORE PAGE ROUTES ===
 # =========================================================
 
+def _get_skill_categories():
+    """Discover skill categories from kushub and map to pretty metadata."""
+    registry_path = os.path.join(os.getcwd(), 'kushub', 'tools')
+    if not os.path.exists(registry_path):
+        return []
+
+    # Map raw folder names to premium UI attributes
+    CATEGORY_MAP = {
+        'audio': {'name': 'Voice Intelligence', 'icon': 'fas fa-microphone', 'color': '#00c3ff', 'desc': 'Advanced speech-to-text and auditory analysis for real-time monitoring.'},
+        'image': {'name': 'Visual Computing', 'icon': 'fas fa-image', 'color': '#0072ff', 'desc': 'Computer vision and visual understanding for security and spatial awareness.'},
+        'llm': {'name': 'Core AI Engine', 'icon': 'fas fa-brain', 'color': '#FFD700', 'desc': 'Foundation models and reasoning cores that power the logic of every Pod.'},
+        'social': {'name': 'Social Intelligence', 'icon': 'fas fa-share-nodes', 'color': '#00ff88', 'desc': 'Automated community engagement and sentiment correlation across digital layers.'},
+        'video': {'name': 'Motion Analysis', 'icon': 'fas fa-video', 'color': '#ff4444', 'desc': 'Real-time video stream processing for behavioral detection and auditing.'},
+        'agent-tools': {'name': 'Autonomous Agency', 'icon': 'fas fa-robot', 'color': '#6a11cb', 'desc': 'Specialized toolsets for independent AI agents to perform multi-step tasks.'},
+        'utilities': {'name': 'Operational Utilities', 'icon': 'fas fa-toolbox', 'color': '#888', 'desc': 'Essential helper tools for data transformation, search, and maintenance.'},
+        'infsh-cli': {'name': 'Infrastructure Control', 'icon': 'fas fa-terminal', 'color': '#ffffff', 'desc': 'Command-line interfaces for direct management of sovereign hardware.'}
+    }
+
+    categories = []
+    try:
+        raw_folders = [f for f in os.listdir(registry_path) if os.path.isdir(os.path.join(registry_path, f))]
+        for folder in raw_folders:
+            meta = CATEGORY_MAP.get(folder, {
+                'name': folder.replace('-', ' ').title(),
+                'icon': 'fas fa-cube',
+                'color': '#555',
+                'desc': f'Deployment-ready skills for {folder} operations.'
+            })
+            categories.append(meta)
+    except Exception as e:
+        print(f"Skill Discovery Error: {e}")
+    
+    return categories
+
+def _get_curated_industries():
+    """Business-focused industry mapping for the main grid."""
+    return [
+        {'name': 'Telecommunications', 'icon': 'fas fa-tower-broadcast', 'color': '#00c3ff', 'desc': 'Autonomous O-RAN defense and network resilience including Support for regional leaders like MTN Group.'},
+        {'name': 'Banking & Finance', 'icon': 'fas fa-vault', 'color': '#0072ff', 'desc': 'Execution-grade signal correlation and automated statutory tax compliance for institutional finance.'},
+        {'name': 'Retail & Wholesale', 'icon': 'fas fa-shopping-cart', 'color': '#00ff88', 'desc': 'VLA Robotics for warehouse integrity and frontline labor optimization via automated support pods.'},
+        {'name': 'Integrated Security', 'icon': 'fas fa-shield-halved', 'color': '#ff4444', 'desc': 'Unified digital/physical defense with integrated personnel integrity vetting for critical facilities.'},
+        {'name': 'Entertainment & Media', 'icon': 'fas fa-clapperboard', 'color': '#ff00ff', 'desc': 'Personalized engagement pods, autonomous content synthesis, and decentralized rights management.'},
+        {'name': 'Advertising & Branding', 'icon': 'fas fa-ad', 'color': '#FFD700', 'desc': 'High-fidelity branding pods and sentiment-driven asset generation for global marketing campaigns.'},
+        {'name': 'Critical Infrastructure', 'icon': 'fas fa-city', 'color': '#64748b', 'desc': 'Building the foundational engine for autonomous success across power, logistics, and state operations.'}
+    ]
+
 @public_bp.route("/")
 def home():
-    return render_template("index.html")
+    industries = _get_curated_industries()
+    categories = _get_skill_categories()
+    return render_template("index.html", industries=industries, categories=categories)
 
 @public_bp.route("/solutions")
 def solutions():
@@ -190,6 +240,41 @@ def market_history_api():
     data = get_ticker_history(ticker, period, interval)
     return jsonify(data)
 
+@public_bp.route("/podhub")
+def podhub():
+    """Registry page for Kusmus Hub (Kushub) skills."""
+    hub_path = os.path.join(os.getcwd(), 'kushub')
+    skills_by_category = {}
+
+    if os.path.exists(hub_path):
+        for root, dirs, files in os.walk(hub_path):
+            if 'SKILL.md' in files:
+                skill_path = os.path.join(root, 'SKILL.md')
+                try:
+                    with open(skill_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        # Extract YAML frontmatter
+                        match = re.search(r'^---\s*\n(.*?)\n---\s*\n', content, re.DOTALL | re.MULTILINE)
+                        if match:
+                            metadata = yaml.safe_load(match.group(1))
+                            
+                            # Determine category from path
+                            rel_path = os.path.relpath(root, hub_path)
+                            category = rel_path.split(os.sep)[0].capitalize()
+                            
+                            if category not in skills_by_category:
+                                skills_by_category[category] = []
+                            
+                            skills_by_category[category].append({
+                                'name': metadata.get('name', os.path.basename(root)),
+                                'description': metadata.get('description', 'No description available.'),
+                                'rel_path': rel_path.replace(os.sep, '/')
+                            })
+                except Exception as e:
+                    print(f"Error parsing skill at {skill_path}: {e}")
+
+    return render_template("podhub.html", skills_by_category=skills_by_category)
+
 
 
 
@@ -216,23 +301,138 @@ def blog():
 
     return render_template("blog.html", posts=posts)
 
-@public_bp.route("/blog/<string:post_id>")
-def blog_post_legacy(post_id):
-    """Redirect legacy ID-only URLs to new slugified URLs."""
-    post = None
-    if supabase_admin:
-        try:
-            res = safe_execute(supabase_admin.table('blog_posts').select('id, title').eq('id', post_id).limit(1))
-            if res.data: post = res.data[0]
-        except: pass
+@public_bp.route("/podhub/skill/<category>/<string:skill_name>")
+def skill_detail(category, skill_name):
+    """Detailed view for a specific Kusmus Hub skill."""
+    import markdown
+    import bleach
     
-    if post:
-        from utils import slugify
-        return redirect(url_for('public.blog_post', post_id=post['id'], slug=slugify(post['title'])), code=301)
-    return render_template("404.html"), 404
+    hub_path = os.path.join(os.getcwd(), 'kushub')
+    # Reconstruct path safely (Category is capitalized in UI, but we need folder names)
+    skill_dir = None
+    for root, dirs, _ in os.walk(hub_path):
+        if os.path.basename(root).lower() == skill_name.lower():
+            rel_path = os.path.relpath(root, hub_path)
+            if rel_path.lower().startswith(category.lower()):
+                skill_dir = root
+                break
+    
+    if not skill_dir:
+        return render_template("404.html"), 404
+        
+    skill_file = os.path.join(skill_dir, 'SKILL.md')
+    if not os.path.exists(skill_file):
+        return render_template("404.html"), 404
+        
+    try:
+        with open(skill_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+            # 1. Extract Metadata
+            match = re.search(r'^---\s*\n(.*?)\n---\s*\n', content, re.DOTALL | re.MULTILINE)
+            metadata = {}
+            main_content = content
+            if match:
+                metadata = yaml.safe_load(match.group(1))
+                main_content = content[match.end():]
+                
+            # 2. Render Markdown
+            html_content = markdown.markdown(main_content, extensions=['fenced_code', 'tables'])
+            
+            # 3. Get JSON Definition if exists
+            def_path = os.path.join(skill_dir, 'tool_definition.json')
+            definition_json = None
+            if os.path.exists(def_path):
+                with open(def_path, 'r') as df:
+                    definition_json = df.read()
+                    
+            # 4. Sanitize (Allow premium UI elements but restrict dangerous tags)
+            allowed_tags = bleach.ALLOWED_TAGS | {
+                'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'hr', 
+                'pre', 'code', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 
+                'img', 'span', 'i', 'strong', 'em', 'ul', 'ol', 'li', 'blockquote'
+            }
+            allowed_attrs = bleach.ALLOWED_ATTRIBUTES
+            allowed_attrs.update({'img': ['src', 'alt', 'title'], 'a': ['href', 'title', 'target'], 'i': ['class'], 'span': ['class']})
+            
+            sanitized_html = bleach.clean(html_content, tags=allowed_tags, attributes=allowed_attrs)
+            
+            return render_template("skill_detail.html", 
+                                 skill=metadata, 
+                                 html_content=sanitized_html, 
+                                 category=category,
+                                 skill_name=skill_name,
+                                 definition_json=definition_json)
+    except Exception as e:
+        print(f"Detail Rendering Error: {e}")
+        return render_template("500.html"), 500
 
-@public_bp.route("/blog/<string:post_id>/<string:slug>")
-def blog_post(post_id, slug):
+@public_bp.route("/podhub/submit", methods=["GET", "POST"])
+def submit_skill():
+    """Form for community skill submissions."""
+    if request.method == "POST":
+        # In a real app, save to DB or trigger a PR. Here we'll simulate success.
+        flash("Thank you for your submission! Our team will review the skill for security and integration.", "success")
+        return redirect(url_for("public.podhub"))
+    return render_template("submit_skill.html")
+
+@public_bp.route("/api/podhub/skills")
+def api_podhub_skills():
+    """JSON API for mobile/agent discovery of skills."""
+    hub_path = os.path.join(os.getcwd(), 'kushub')
+    all_skills = []
+    
+    if os.path.exists(hub_path):
+        for root, dirs, files in os.walk(hub_path):
+            if 'SKILL.md' in files:
+                rel_path = os.path.relpath(root, hub_path)
+                category = rel_path.split(os.sep)[0].capitalize()
+                skill_name = os.path.basename(root)
+                
+                # Check for tool_definition.json
+                definition = {}
+                def_path = os.path.join(root, 'tool_definition.json')
+                if os.path.exists(def_path):
+                    with open(def_path, 'r') as df:
+                        definition = json.load(df)
+                
+                all_skills.append({
+                    "name": skill_name,
+                    "category": category,
+                    "path": rel_path.replace(os.sep, '/'),
+                    "definition": definition
+                })
+    return jsonify({"status": "success", "skills": all_skills})
+
+@public_bp.route("/api/podhub/skill/<category>/<string:skill_name>")
+def api_skill_detail(category, skill_name):
+    """JSON metadata for a specific skill (OS Model compatible)."""
+    hub_path = os.path.join(os.getcwd(), 'kushub')
+    skill_dir = None
+    for root, dirs, _ in os.walk(hub_path):
+        if os.path.basename(root).lower() == skill_name.lower():
+            if os.path.relpath(root, hub_path).lower().startswith(category.lower()):
+                skill_dir = root
+                break
+    
+    if not skill_dir:
+        return jsonify({"status": "error", "message": "Skill not found"}), 404
+        
+    def_path = os.path.join(skill_dir, 'tool_definition.json')
+    definition = {}
+    if os.path.exists(def_path):
+        with open(def_path, 'r') as f:
+            definition = json.load(f)
+            
+    return jsonify({
+        "status": "success",
+        "skill": skill_name,
+        "category": category,
+        "definition": definition
+    })
+
+@public_bp.route("/blog/<string:post_id>")
+def blog_post(post_id):
     post = None
     if supabase_admin:
         try:
@@ -295,7 +495,7 @@ def audit_request():
                 'verification_code': verification_code
             }))
 
-            flash("Successfully contacted. A representative would reach out to you.", "success")
+            flash(f"Request Transmitted. Your Identity Token is: {verification_code}. Keep this secure.", "success")
             return redirect(url_for('public.home'))
 
         except Exception as e:
@@ -432,11 +632,10 @@ def sitemap():
     if supabase_admin:
         try:
             # Fetch from new schema
-            response = safe_execute(supabase_admin.table('blog_posts').select("id, title, published_at").eq('status', 'Published'))
+            response = safe_execute(supabase_admin.table('blog_posts').select("id, published_at").eq('status', 'Published'))
             if response.data:
-                from utils import slugify
                 for post in response.data:
-                    url = url_for('public.blog_post', post_id=post['id'], slug=slugify(post.get('title', 'briefing')), _external=True)
+                    url = url_for('public.blog_post', post_id=post['id'], _external=True)
                     escaped_url = saxutils.escape(url)
                     
                     # Hardened Date Parsing (Must be YYYY-MM-DD)
@@ -457,11 +656,10 @@ def sitemap():
         
         try:
             # Fallback for older schema
-            response2 = safe_execute(supabase_admin.table('posts').select("id, title, created_at, date").eq('published', True))
+            response2 = safe_execute(supabase_admin.table('posts').select("id, created_at, date").eq('published', True))
             if response2.data:
-                from utils import slugify
                 for post in response2.data:
-                    url = url_for('public.blog_post', post_id=post['id'], slug=slugify(post.get('title', 'briefing')), _external=True)
+                    url = url_for('public.blog_post', post_id=post['id'], _external=True)
                     escaped_url = saxutils.escape(url)
                     
                     raw_date = post.get('created_at') or post.get('date')
@@ -481,12 +679,24 @@ def sitemap():
     xml_sitemap.append('</urlset>')
     return Response('\n'.join(xml_sitemap), mimetype='application/xml; charset=utf-8')
 
+@public_bp.route('/llm.txt', methods=['GET'])
+def llm_txt():
+    """Technical manifest for AI models/crawlers."""
+    content = ""
+    try:
+        with open(os.path.join('static', 'llm.txt'), 'r', encoding='utf-8') as f:
+            content = f.read()
+    except:
+        content = "Kusmus AI - Sovereign Engineering manifest pending."
+    return Response(content, mimetype='text/plain')
+
 @public_bp.route('/robots.txt', methods=['GET'])
 def robots():
     """Generates robots.txt for crawlers."""
     lines = [
         "User-agent: *",
         "Allow: /",
+        "Allow: /llm.txt",
         "Disallow: /admin/",
         "Disallow: /auth/",
         "Disallow: /sandbox/",
@@ -495,21 +705,9 @@ def robots():
         "Disallow: /client-dashboard",
         "Disallow: /client-chat",
         "Disallow: /crypto-wallet",
-        f"Sitemap: {url_for('public.sitemap', _external=True)}",
-        f"Llm-context: {url_for('public.llm_txt', _external=True)}"
+        f"Sitemap: {url_for('public.sitemap', _external=True)}"
     ]
     return Response('\n'.join(lines), mimetype='text/plain')
-
-@public_bp.route('/llm.txt', methods=['GET'])
-def llm_txt():
-    """Generates llm.txt for AI discovery."""
-    try:
-        with open(os.path.join(current_app.static_folder, 'llm.txt'), 'r', encoding='utf-8') as f:
-            content = f.read()
-        return Response(content, mimetype='text/plain')
-    except Exception:
-        # Fallback if file not found locally
-        return Response("Kusmus AI: The Operating System for Sovereign Intelligence. See /request-audit for strategy.", mimetype='text/plain')
 # === DIAGNOSTIC ROUTE ===
 @public_bp.route('/diag')
 def diag():

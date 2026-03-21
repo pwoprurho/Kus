@@ -13,9 +13,9 @@
     }
 
     body {
-        background-color: var(--bg-dark);
+        background-color: #000;
         color: #e0e0e0;
-        font-family: var(--font-body);
+        font-family: 'Inter', sans-serif;
         overflow: hidden;
         height: 100vh;
         margin: 0;
@@ -46,9 +46,8 @@
 
     /* --- GLASS PANELS --- */
     .glass-panel {
-        background: var(--glass-bg);
-        backdrop-filter: var(--glass-blur);
-        -webkit-backdrop-filter: var(--glass-blur);
+        background: rgba(5, 5, 5, 0.85);
+        backdrop-filter: blur(12px);
         display: flex;
         flex-direction: column;
         border-right: 1px solid rgba(255, 255, 255, 0.08);
@@ -56,7 +55,6 @@
         height: 100%;
         overflow: hidden;
         min-height: 0;
-        box-shadow: var(--glass-shadow);
     }
 
     /* --- SIDEBAR LEFT --- */
@@ -104,8 +102,8 @@
         font-size: 1.8rem;
         font-weight: 700;
         color: #fff;
-        font-family: var(--font-heading);
-        letter-spacing: var(--letter-spacing-tight);
+        font-family: 'Inter', sans-serif;
+        letter-spacing: -0.02em;
     }
 
     .stat-status {
@@ -195,10 +193,9 @@
 
     .user-bubble {
         align-self: flex-end;
-        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        background: rgba(0, 114, 255, 0.8);
         color: #fff;
-        border: 1px solid var(--primary-light);
-        box-shadow: 0 4px 15px var(--primary-dim);
+        border: 1px solid #005bb5;
     }
 
     /* ALERT BUBBLES */

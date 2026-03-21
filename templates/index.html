@@ -4,13 +4,17 @@
 
 {% block content %}
 <section id="hero" class="hero-section container">
-    <div class="hero-content" style="padding: 100px 0 60px;">
-        <span class="hero-os-headline fade-in" style="animation-delay: 0.1s; font-size: 1.1rem; letter-spacing: 3px;">THE OPERATING SYSTEM FOR SOVEREIGN INTELLIGENCE</span>
+    <div class="hero-content">
+        <span class="hero-os-headline fade-in" style="animation-delay: 0.1s;">The Operating System for Sovereign
+            Intelligence</span>
 
-        <h1 class="fade-in" style="animation-delay: 0.2s; font-size: 5rem; margin-bottom: 30px;">Independence from Big Tech.<br>Sovereign AI for Africa.</h1>
+        <h1 class="fade-in" style="animation-delay: 0.2s;">Independence from Big Tech.
+            <br>Sovereign AI for Africa.
+        </h1>
 
-        <p class="subtitle fade-in" style="animation-delay: 0.3s; font-size: 1.4rem; color: #94a3b8; line-height: 1.6;">
-            We don't provide a SaaS; we provide the stack. Deploy NVIDIA-grade infrastructure with <strong>Kus_org</strong> data orchestration to own your intelligence, your data, and your future.
+        <p class="subtitle fade-in" style="animation-delay: 0.3s;">
+            We don't provide a SaaS; we provide the stack. Deploy NVIDIA-grade infrastructure (NVIDIA NeMo, NIMs) with
+            <strong>Kus_org</strong> data orchestration to own your intelligence, your data, and your future.
         </p>
 
         <div class="hero-video-container fade-in">
@@ -50,50 +54,46 @@
     </div>
 
     <div class="agent-carousel-wrapper reveal">
-        <div class="agent-carousel">
-            <!-- Industry 1: Telecom -->
-            <div class="agent-card-glass glass-panel">
-                <div class="agent-icon" style="color: var(--accent);"><i class="fas fa-tower-broadcast"></i></div>
-                <h3 class="agent-name">Telecommunications</h3>
-                <p class="agent-desc">Autonomous O-RAN defense and network resilience including <strong>HR Field-Force
-                        Support</strong> for regional leaders like MTN Group.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; margin-bottom: 60px;">
+            {% for industry in industries %}
+            <div class="agent-card-glass">
+                <div class="agent-icon" style="color: {{ industry.color }};"><i class="{{ industry.icon }}"></i></div>
+                <h3 class="agent-name">{{ industry.name }}</h3>
+                <p class="agent-desc">{{ industry.desc }}</p>
                 <div class="pod-tag">
-                    <span class="dot" style="background: var(--accent);"></span> 24/7 Uptime Pod
+                    <span class="dot" style="background: {{ industry.color }};"></span> Core Sector
                 </div>
             </div>
+            {% endfor %}
+        </div>
+    </div>
 
-            <!-- Industry 2: Banking -->
-            <div class="agent-card-glass glass-panel">
-                <div class="agent-icon" style="color: var(--primary);"><i class="fas fa-vault"></i></div>
-                <h3 class="agent-name">Banking & Finance</h3>
-                <p class="agent-desc">Execution-grade signal correlation and automated statutory tax compliance with
-                    integrated <strong>Confidential Talent Intelligence</strong>.</p>
-                <div class="pod-tag">
-                    <span class="dot" style="background: var(--primary);"></span> Compliance Pod
+    <!-- TECHNICAL CAPABILITIES SLIDER -->
+    <div class="capabilities-slider-section reveal">
+        <div style="text-align: center; margin-bottom: 40px;">
+            <div class="infra-layer-badge">
+                <i class="fas fa-tools"></i> PODHUB TECHNICAL CAPABILITIES
+            </div>
+            <h2 class="reveal-alternate" style="font-size: 2rem;">Real-Time Skill Infrastructure</h2>
+        </div>
+        
+        <div class="capabilities-slider">
+            {% for category in categories %}
+            <div class="capability-card">
+                <div class="capability-icon" style="color: {{ category.color }};">
+                    <i class="{{ category.icon }}"></i>
+                </div>
+                <h4 class="capability-name">{{ category.name }}</h4>
+                <p class="capability-desc">{{ category.desc }}</p>
+                <div style="font-size: 0.75rem; color: #444; margin-top: 15px; text-transform: uppercase; letter-spacing: 1px;">
+                    Protocol: {{ category.name.split(' ')[0] }} Pod
                 </div>
             </div>
-
-            <!-- Industry 3: Retail -->
-            <div class="agent-card-glass glass-panel">
-                <div class="agent-icon" style="color: #00ff88;"><i class="fas fa-shopping-cart"></i></div>
-                <h3 class="agent-name">Retail & Wholesale</h3>
-                <p class="agent-desc">VLA Robotics for warehouse integrity and <strong>Frontline Labor
-                        Optimization</strong> via automated internal support kus_bots.</p>
-                <div class="pod-tag">
-                    <span class="dot" style="background: #00ff88;"></span> Efficiency Pod
-                </div>
-            </div>
-
-            <!-- Industry 4: Critical Infrastructure -->
-            <div class="agent-card-glass glass-panel">
-                <div class="agent-icon" style="color: #ff4444;"><i class="fas fa-shield-halved"></i></div>
-                <h3 class="agent-name">Integrated Security</h3>
-                <p class="agent-desc">Unified digital/physical defense with integrated <strong>Sovereign Personnel
-                        Integrity Vetting</strong> for critical facilities.</p>
-                <div class="pod-tag">
-                    <span class="dot" style="background: #ff4444;"></span> Defense Pod
-                </div>
-            </div>
+            {% endfor %}
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; color: #555; font-size: 0.9rem;">
+            <i class="fas fa-arrow-left-long"></i> Scroll to explore capabilities <i class="fas fa-arrow-right-long"></i>
         </div>
     </div>
 </section>
@@ -103,7 +103,7 @@
     <div class="infra-layer-badge reveal" style="margin-bottom: 20px;">
         <i class="fas fa-layer-group"></i> STRATEGIC CERTAINTY LAYER
     </div>
-    <h2 class="reveal reveal-alternate">Engineering Certainty. Scalable Autonomy.</h2>
+    <h2 class="text-gradient reveal reveal-alternate">Engineering Certainty. Scalable Autonomy.</h2>
     <p class="reveal reveal-alternate"
         style="margin-bottom: 30px; color: #a0a0a0; font-size: 1.1rem; max-width: 700px; margin-left: auto; margin-right: auto;">
         Our methodology is rooted in the intersection of physics and intelligence. We provide the
@@ -111,7 +111,7 @@
         institutional autonomy across your entire operational stack.
     </p>
     <div class="reveal reveal-alternate" style="display: flex; justify-content: center; gap: 20px;">
-        <a href="{{ url_for('public.audit_request') }}" class="secondary-button">Initiate Diagnostic Audit &rarr;</a>
+        <a href="{{ url_for('public.audit_request') }}" class="secondary-button">Request Support &rarr;</a>
     </div>
 </section>
 

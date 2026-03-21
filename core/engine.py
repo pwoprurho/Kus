@@ -6,8 +6,6 @@ from google import genai
 from google.genai import types
 from services.mcp_tools import MCP_TOOLKIT
 from core.key_manager import key_manager
-from core.management import ManagementCore
-from core.security import verify_enclave_signature
 
 class KusmusAIEngine:
     def __init__(self, system_instruction, model_name="gemini-2.5-flash", tools=None, enable_google_search=False, api_key=None, base_url=None):
@@ -33,17 +31,6 @@ class KusmusAIEngine:
                 self.tools.append(search_tool)
             except Exception as e:
                 print(f"Warning: Failed to enable Google Search: {e}")
-        
-        # Initialize Management Engine
-        self.manager = ManagementCore(self)
-        
-        # Sensitivity Map for Tools
-        self.sensitivity_map = {
-            "execute_ssh_command": "HIGH",
-            "execute_trade": "HIGH",
-            "send_email": "MEDIUM",
-            "read_file": "LOW"
-        }
 
     def generate_response(self, message, history=[], context_logs=[]):
         # 0. Sovereign Routing
@@ -341,22 +328,9 @@ class KusmusAIEngine:
                                 
                                 yield {"type": "thought", "content": f"Invoking Tool: `{f_name}` with args: {str(args_dict)}"}
 
-                                # execute Tool from Registry
+                                # Execute Tool from Registry
                                 if f_name in MCP_TOOLKIT:
                                     try:
-                                        # SIGNATURE GATE: Check sensitivity
-                                        level = self.sensitivity_map.get(f_name, "LOW")
-                                        if level == "HIGH":
-                                            # Check for signature in the message metadata or history
-                                            # (In a real flow, this would pause and yield a wait event)
-                                            has_valid_sig = False # Placeholder for actual signature check logic
-                                            
-                                            if not has_valid_sig:
-                                                yield {"type": "thought", "content": f"⚠️ [SIGNATURE_GATE] `{f_name}` requires High-Sensitivity Authorization."}
-                                                yield {"type": "signature_request", "content": f_name, "level": "HIGH", "payload": json.dumps(args_dict)}
-                                                # For the build demo, we stop here or wait
-                                                return 
-
                                         tool_func = MCP_TOOLKIT[f_name]
                                         # Call the function with unpacked args
                                         result = tool_func(**args_dict)

@@ -198,7 +198,7 @@ def client_access():
                         rotate_session()
                         session['supabase_token'] = auth_res.session.access_token
                         login_user(user)
-                        flash("Access Granted.", "success")
+                        flash("Secure Channel Established.", "success")
                         return redirect(url_for('admin.dashboard'))
                 elif last_error:
                     raise last_error

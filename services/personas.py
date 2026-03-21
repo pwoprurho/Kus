@@ -44,6 +44,12 @@ MAIN_ASSISTANT = {
 
 # --- SANDBOX SPECIALISTS (Demo Page) ---
 DEMO_REGISTRY = {
+    "ai_architect": {
+        "name": "Kusmus AI Systems Architect",
+        "model": "gemini-2.5-flash-lite",
+        "instruction": MAIN_ASSISTANT_INSTRUCTION,
+        "log_signature": "[ARCHITECT] Systems design matrix synchronized. High-fidelity operational intelligence propagation active."
+    },
     "sentinel_monitor": {
         "name": "Sentinel (O-RAN Defense)",
         "model": "gemini-2.5-flash",

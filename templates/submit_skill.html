@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Submit a Skill | PodHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .submit-container {
+        padding: 120px 0 100px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .submit-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+
+    .submit-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 15px;
+    }
+
+    .form-box {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 40px;
+        backdrop-filter: blur(10px);
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.9rem;
+        color: #aaa;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .form-group input, .form-group textarea, .form-group select {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 12px 15px;
+        color: #fff;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+    }
+
+    .form-group input:focus, .form-group textarea:focus {
+        border-color: var(--accent-blue);
+        outline: none;
+    }
+
+    .submit-btn {
+        width: 100%;
+        background: linear-gradient(135deg, var(--accent-blue), #00d2ff);
+        color: #fff;
+        border: none;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 114, 255, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="submit-container reveal">
+    <div class="submit-header">
+        <h1>Contribute to PodHub</h1>
+        <p style="color: #666;">Expand the sovereign AI workforce by suggesting new tools, SDKs, or UI components.</p>
+    </div>
+
+    <div class="form-box">
+        <form method="POST">
+            <div class="form-group">
+                <label for="name">Skill Name</label>
+                <input type="text" id="name" name="name" placeholder="e.g. news-aggregator" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Category</label>
+                <select id="category" name="category">
+                    <option value="tools">Tools</option>
+                    <option value="sdk">SDK</option>
+                    <option value="ui">UI Components</option>
+                    <option value="guides">Guides</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="repo_url">Repository or Documentation URL</label>
+                <input type="url" id="repo_url" name="repo_url" placeholder="https://github.com/your-username/your-skill" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Brief Description</label>
+                <textarea id="description" name="description" rows="4" placeholder="What does this skill do?" required></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit for Security Review</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
