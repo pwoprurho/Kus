@@ -60,14 +60,16 @@ h4,
 h5,
 h6 {
     font-family: var(--font-heading);
-    color: #FFD700; /* Premium Gold */
+    color: #FFD700;
+    /* Premium Gold */
     font-weight: 600;
     letter-spacing: -0.025em;
     line-height: 1.25;
 }
 
 p {
-    font-size: 1.15rem; /* Increased readability (+2pt approx) */
+    font-size: 1.15rem;
+    /* Increased readability (+2pt approx) */
     margin-bottom: 1.5rem;
 }
 
@@ -433,7 +435,8 @@ nav {
 }
 
 #primary-navigation a:hover {
-    color: #FFD700; /* Match Gold Theme */
+    color: #FFD700;
+    /* Match Gold Theme */
 }
 
 /* Dropdown Logic */
@@ -477,9 +480,21 @@ nav {
     color: #FFD700 !important;
 }
 
-/* Nav Toggle (Strictly Mobile) */
+/* Nav Toggle (Mobile only) */
 .nav-toggle {
-    display: none !important;
+    display: none;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.3s ease;
+    z-index: 1001;
+}
+
+.nav-toggle:hover {
+    color: #ffd700;
 }
 
 /* Technical Capabilities Slider Styles */
@@ -495,12 +510,15 @@ nav {
     gap: 20px;
     padding: 20px 4%;
     scroll-behavior: smooth;
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
 }
 
 .capabilities-slider::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    display: none;
+    /* Chrome, Safari, Opera */
 }
 
 .capability-card {
@@ -630,19 +648,7 @@ nav a:hover {
     box-shadow: 0 4px 12px rgba(0, 114, 255, 0.25);
 }
 
-/* Nav Toggle (Visible Everywhere) */
-.nav-toggle {
-    display: block;
-    /* Shown on desktop now */
-    background: none;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
-    padding: 8px 10px;
-    color: #fff;
-    font-size: 1.2rem;
-    cursor: pointer;
-    z-index: 1001;
-}
+/* Removed redundant Nav Toggle block */
 
 /* 6. Utility & Typography Helpers */
 .reveal {
@@ -780,6 +786,7 @@ footer {
     position: relative;
     z-index: 10;
 }
+
 /* --- REVEAL EFFECTS (IntersectionObserver based) --- */
 .reveal {
     opacity: 0;
