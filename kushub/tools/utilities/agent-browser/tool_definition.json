@@ -1,0 +1,52 @@
+{
+  "name": "agent-browser",
+  "description": "Browser automation for AI agents. Navigate web pages, interact with elements, take screenshots, and record video.",
+  "functions": [
+    {
+      "name": "open",
+      "description": "Navigate to a URL and initialize the browser session.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string", "description": "The URL to navigate to." },
+          "record_video": { "type": "boolean", "default": false },
+          "show_cursor": { "type": "boolean", "default": false }
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "snapshot",
+      "description": "Re-fetch the current page state and element @e references.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "interact",
+      "description": "Perform an action on a page element using its @e reference.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": { 
+            "type": "string", 
+            "enum": ["click", "dblclick", "fill", "type", "press", "select", "hover", "check", "uncheck", "drag", "upload", "scroll", "back", "wait", "goto"],
+            "description": "The type of interaction to perform."
+          },
+          "ref": { "type": "string", "description": "The @e element reference." },
+          "text": { "type": "string", "description": "Text input for fill/type/press actions." },
+          "target_ref": { "type": "string", "description": "Target element for drag and drop." }
+        },
+        "required": ["action"]
+      }
+    }
+  ],
+  "output_format": "JSON",
+  "output_example": {
+    "status": "success",
+    "session_id": "sess_12345",
+    "elements": ["@e1 [input] Search", "@e2 [button] Submit"],
+    "screenshot": "base64_data..."
+  }
+}

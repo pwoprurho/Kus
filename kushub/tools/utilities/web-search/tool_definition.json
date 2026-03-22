@@ -1,0 +1,26 @@
+{
+  "name": "web-search",
+  "description": "Perform web searches to retrieve real-time information, news, and research data.",
+  "functions": [
+    {
+      "name": "search",
+      "description": "Execute a web search query.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "The search terms or question." },
+          "num_results": { "type": "integer", "default": 5, "description": "Number of results to return." },
+          "search_depth": { "type": "string", "enum": ["basic", "advanced"], "default": "basic" }
+        },
+        "required": ["query"]
+      }
+    }
+  ],
+  "output_format": "JSON",
+  "output_example": {
+    "status": "success",
+    "results": [
+      { "title": "Kusmus AI Overview", "url": "https://kusmus.ai", "snippet": "Sovereign AI infrastructure for Africa..." }
+    ]
+  }
+}
